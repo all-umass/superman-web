@@ -1,0 +1,46 @@
+{% extends "_common.html" %}
+{% block head_matter %}
+<style type="text/css">
+#page_nav { text-align: center; }
+.footer { font-size: smaller; }
+.subpage {
+  padding: 0.5em;
+  margin: 0.5em 1.5em;
+  font-size: 1.2em;
+  text-align: center;
+  display: inline-block;
+  width: 30%;
+  border: 1px solid black;
+  border-radius: 1em;
+  color: black;
+  text-decoration: none;
+  background-color: #f7d3b2;
+}
+.subpage_title {
+  font-weight: bold;
+  display: block;
+}
+</style>
+{% end %}
+
+{% block body_matter %}
+<div id="page_nav">
+{% for title, link, desc in subpage_info %}
+  <a href='{{link}}' class="subpage"><p>
+    <span class='subpage_title'>{{title}}</span>
+    {{desc}}
+  </p></a>
+{% end %}
+</div>
+
+<hr />
+<p class="footer">
+{% if logged_in %}
+Source code available at the
+<a href='http://nemo.cs.umass.edu:1234/?p=darby_projects.git;a=tree;f=webserver'>
+git repo on nemo</a>.
+{% else %}
+<a href='/login?next=/'>Log in</a> to view non-public data.
+{% end %}
+</p>
+{% end %}

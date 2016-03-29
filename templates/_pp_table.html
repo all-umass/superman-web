@@ -1,0 +1,62 @@
+<div id="pp_steps">
+<table id="pp_table" class="pp_table">
+<!-- TODO: allow re-ordering / adding of steps -->
+<tr class="uline"><th colspan=3>Preprocessing Steps</th></tr>
+<!-- normalization -->
+<tr class="uline"><td class="rline vcenter">
+<button onclick="add_pp_step('normalize')">Normalize</button>
+</td><td colspan=2>
+<label><input type="radio" name="normalize" value="max">max</label>
+<label><input type="radio" name="normalize" value="l1">L1</label>
+<label><input type="radio" name="normalize" value="l2">L2</label>
+<label><input type="radio" name="normalize" value="cum">cumulative</label>
+<label><input type="radio" name="normalize" value="norm3">norm-3 (LIBS only)</label>
+</td></tr>
+<!-- squashing -->
+<tr class="uline"><td class="rline vcenter">
+<button onclick="add_pp_step('squash')">Squash</button>
+</td><td colspan=2>
+<!-- TODO: hinge squash, with argument? -->
+<label><input type="radio" name="squash" value="sqrt">square root</label>
+<label><input type="radio" name="squash" value="cos">cosine</label>
+<label><input type="radio" name="squash" value="log">log</label>
+<label><input type="radio" name="squash" value="tanh">tanh</label>
+</td></tr>
+<!-- TODO: row(s) for generalized squashing (poly,bezier) -->
+<!-- smoothing -->
+<tr><td class="rline uline vcenter" rowspan=2>
+<button onclick="add_pp_step('smooth')">Smooth</button>
+</td><td>
+<input type="range" min=5 max=41 value=9 step=2 name="smooth" checked
+       oninput="$('#smooth_window').text(this.value);">
+</td><td>
+<input type="range" min=1 max=10 value=4 step=1 name="smooth" checked
+       oninput="$('#smooth_order').text(this.value);">
+</td></tr>
+<tr class="uline">
+<td>Savitzky-Golay window = <span id="smooth_window">9</span></td>
+<td>Savitzky-Golay order = <span id="smooth_order">4</span></td></tr>
+<!-- derivative -->
+<tr><td class="rline uline vcenter" rowspan=2>
+<button onclick="add_pp_step('deriv')">Derivative</button>
+</td><td>
+<input type="range" min=5 max=41 value=9 step=2 name="deriv" checked
+       oninput="$('#deriv_window').text(this.value);">
+</td><td>
+<input type="range" min=1 max=10 value=4 step=1 name="deriv" checked
+       oninput="$('#deriv_order').text(this.value);">
+</td></tr>
+<tr class="uline">
+<td>Savitzky-Golay window = <span id="deriv_window">9</span></td>
+<td>Savitzky-Golay order = <span id="deriv_order">4</span></td></tr>
+<!-- staging area for pp steps -->
+<tr class="uline"><td colspan=3>
+<ol id='pp_staging'></ol>
+</td></tr>
+<!-- big button to apply pp steps -->
+<tr class="uline"><td colspan=3>
+<button class="needs_plot" onclick="do_pp(collect_pp_args())" disabled>
+Apply Preprocessing</button></td></tr>
+</table>
+<div id="pp_messages"></div>
+</div>

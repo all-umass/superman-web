@@ -1,0 +1,30 @@
+{% extends "_common.html" %}
+{% block head_matter %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
+<script type="text/javascript">
+function download_baseline() {
+  window.open('/'+fig.id+'/baseline.txt', '_blank');
+}
+$(document).ready(function(){
+  onready_boilerplate("{{ws_uri}}", {{ fig_id }});
+});
+</script>
+<style type="text/css">
+#ds_selector_wrapper { padding-top: 1em; }
+#baseline_steps { float: left; }
+#fig_wrapper { clear: none; float: left; padding: 0 2em; display: inline-block;}
+</style>
+{% end %}
+
+{% block body_matter %}
+{% include '_dataset_selector.html' %}
+{% include '_baseline_table.html' %}
+
+<div id="fig_wrapper">
+<div id="figure"></div>
+<br />
+<button class="needs_plot" onclick="download_baseline();" disabled>
+Download original &amp; baseline</button>
+</div>
+{% end %}

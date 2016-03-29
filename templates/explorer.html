@@ -1,0 +1,229 @@
+{% extends "_common.html" %}
+{% block head_matter %}
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
+<style type="text/css">
+div.box {
+  border: 1px solid black;
+  border-radius: 1em;
+  display: inline-block;
+  vertical-align: top;
+  background-color: lightgray;
+  margin: 0.25em;
+}
+</style>
+<script type='text/javascript'>
+function ds_loaded(name, kind) {
+  ds_name = name;
+  ds_kind = kind
+  var url = "/explorer?ds="+encodeURIComponent(ds_name+" ["+ds_kind+"]");
+  history.replaceState(null, "", url);
+  $('#dl_metadata').chosen({search_contains: true});
+}
+function changed(kind, val) {
+  $('td.'+val).hide();
+  $('td.'+val+'.'+kind).show();
+}
+function child_vals(selector){
+  return "[" + $(selector).children().map(function(i,x){
+    return x.value;
+  }).filter(function(i,x){
+    return x;
+  }).toArray() + "]";
+}
+function collect_plot_options() {
+  var opts = {
+    xaxis: $("#xaxis").val(),
+    yaxis: $("#yaxis").val(),
+    color: $("#color").val(),
+    x_metadata: $("td.x.metadata").children().val(),
+    x_line_ratio: child_vals("td.x.line_ratio"),
+    y_metadata: $("td.y.metadata").children().val(),
+    y_line_ratio: child_vals("td.y.line_ratio"),
+    fixed_color: $("td.color.default").children().val(),
+    color_by: $("td.color.metadata").children().val(),
+    color_line_ratio: child_vals("td.color.line_ratio"),
+    color_computed: $("td.color.computed").children().val(),
+    alpha: $("#plt_alpha").val(),
+    clear: +$("#plt_clear").is(":checked"),
+    legend: +$("#plt_legend").is(":checked"),
+    line_width: $("#plt_lw").val(),
+    cmap: $("#plt_cmap").val(),
+    chan_mask: +$("#chan_mask").is(":checked"),
+    pp: collect_pp_args(),
+  };
+  return add_baseline_args(opts);
+}
+function do_filtered_plot() {
+  $('#plot_button>.dots').text("...").fadeIn();
+  var post_data = collect_plot_options();
+  post_data['ds_name'] = ds_name;
+  post_data['ds_kind'] = ds_kind;
+  post_data['fignum'] = fig.id;
+
+  $.post('/_filterplot', post_data, make_plot_cb('#plot_button>.dots'), 'json');
+}
+function download_data() {
+  var meta_keys = $('#dl_metadata option:selected').map(function(){
+    return this.value;
+  }).toArray().join(',');
+  var args = {ds_name: ds_name, ds_kind: ds_kind, meta_keys: meta_keys};
+  var url = '/'+fig.id+'/spectra.csv?' + $.param(args);
+  window.open(url, '_blank');
+}
+$(document).ready(function(){
+  onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
+{% if selected_ds %}
+  $('#ds_select option').filter(function(i,e){
+    return $(e).text() == "{{selected_ds}}";
+  }).prop('selected', true).change();
+{% end %}
+});
+</script>
+{% end %}
+
+{% block body_matter %}
+<div id="easter_egg" onclick="$('body,div.box').toggleClass('darby');"></div>
+<div>
+  <select id="ds_select" onchange="load_ds_filters(this.value, ds_loaded)">
+    <option value="">Select a dataset</option>
+  {% for ds in sorted(datasets, key=str) %}
+    <option value="{{ds.name}},{{ds.kind}}">{{ds}}</option>
+  {% end %}
+  </select>
+</div>
+<br style="clear:both">
+
+<div id='ds_filter_container' class='box'></div>
+<div id='ds_plot_options_container' class='box'></div>
+
+<!-- BLR / PP -->
+<div class='box'>
+<table class='ds_table'>
+  <caption>Baseline Correction &amp; Preprocessing</caption>
+  <!-- BLR method dropdown -->
+  <tr><td class="rline vcenter" rowspan=3>
+    Method:<br />
+    <select id="blr_method" onchange="$('td.param').hide();if(this.value){$('td.param.'+this.value).show();}">
+      <option value="">none</option>
+    {% for key, bl in bl_classes %}
+      <option value="{{key}}">{{bl.__class__.__name__}}</option>
+    {% end %}
+    </select>
+  </td>
+  <!-- General options -->
+  <td>
+    <label>Segmented: <input type="checkbox" id="blr_segmented"></label>
+  </td><td>
+    Bounds: <input id="blr_lb" type="number">
+      to    <input id="blr_ub" type="number">
+  </td>
+  </tr><tr>
+  <!-- slider row -->
+  {% for key, bl in bl_classes %}
+    {% for param, (lb,ub,scale) in bl.param_ranges().items() %}
+      <td class="param {{key}}" style="display: none;">
+        <input type="range"
+               step={{compute_step(lb,ub,scale)}}
+        {% if scale == 'log' %}
+               min={{log10(lb)}} max={{log10(ub)}}
+               value={{log10(getattr(bl,param))}}
+               oninput="update_1eX(this.value, '#{{key}}_{{param}}', {{str(ub>1e5).lower()}});">
+        {% else %}
+               min={{lb}} max={{ub}}
+               value={{getattr(bl,param)}}
+               oninput="$('#{{key}}_{{param}}').text(this.value);">
+        {% end %}
+      </td>
+    {% end %}
+  {% end %}
+  </tr>
+  <!-- label row -->
+  <tr>
+  {% for key, bl in bl_classes %}
+    {% for param in bl.param_ranges() %}
+      <td class="param {{key}}" style="display: none;">
+        {{param.strip('_')}} = <span id="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
+      </td>
+    {% end %}
+  {% end %}
+  </tr>
+  <!-- pp rows follow -->
+  <tr class="uline oline"><td colspan=4></td></tr>
+  <!-- normalization -->
+  <tr class="uline"><td class="rline vcenter">
+  <button onclick="add_pp_step('normalize')">Normalize</button>
+  </td><td colspan=2>
+  <label><input type="radio" name="normalize" value="max">max</label>
+  <label><input type="radio" name="normalize" value="l1">L1</label>
+  <label><input type="radio" name="normalize" value="l2">L2</label>
+  <label><input type="radio" name="normalize" value="cum">cumulative</label>
+  <label><input type="radio" name="normalize" value="norm3">norm-3 (LIBS only)
+  </label>
+  </td><td></td></tr>
+  <!-- squashing -->
+  <!-- TODO: row(s) for generalized squashing (poly,bezier) -->
+  <!-- TODO: hinge squash, with argument? -->
+  <tr class="uline"><td class="rline vcenter">
+  <button onclick="add_pp_step('squash')">Squash</button>
+  </td><td colspan=2>
+  <label><input type="radio" name="squash" value="sqrt">square root</label>
+  <label><input type="radio" name="squash" value="cos">cosine</label>
+  <label><input type="radio" name="squash" value="log">log</label>
+  <label><input type="radio" name="squash" value="tanh">tanh</label>
+  </td><td></td></tr>
+  <!-- smoothing / derivative -->
+  <tr><td class="rline uline vcenter" rowspan=2>
+  <button onclick="add_pp_step('smooth', 'sg')">Smooth</button><br />
+  <button onclick="add_pp_step('deriv', 'sg')">Derivative</button>
+  </td><td>
+  <input type="range" min=5 max=41 value=9 step=2 name="sg" checked
+         oninput="$('#sg_window').text(this.value);">
+  </td><td>
+  <input type="range" min=1 max=10 value=4 step=1 name="sg" checked
+         oninput="$('#sg_order').text(this.value);">
+  </td><td></td></tr>
+  <tr class="uline">
+  <td>Savitzky-Golay window = <span id="sg_window">9</span></td>
+  <td>Savitzky-Golay order = <span id="sg_order">4</span></td>
+  <td></td></tr>
+  <!-- staging area for pp steps -->
+  <tr class="uline"><td colspan=4>
+  <ol id='pp_staging'></ol>
+  </td></tr>
+</table>
+</div>
+
+<div class='box'>
+<table class="ds_table">
+<caption>Plot Options</caption>
+
+<tr><td>Line Width<br />
+  <input id="plt_lw" type="range" min=1 max=50 value={{default_lw}} step=0.5>
+</td><td>Transparency<br />
+  <input id="plt_alpha" type="range" min=0 max=1 value=1 step=0.05>
+</td></tr>
+
+<tr><td>Color Map
+<a href="http://matplotlib.org/examples/color/colormaps_reference.html"
+ class="small">[?]</a><br />
+  <select id="plt_cmap">
+  {% for cmap in cmaps %}
+    <option value="{{cmap}}"
+    {% if cmap == default_cmap %}selected{% end %}
+    >{{cmap}}</option>
+  {% end %}
+  </select>
+</td><td>
+  Clear plot:<input id="plt_clear" type="checkbox" checked><br />
+  Show legend:<input id="plt_legend" type="checkbox" checked>
+</td></tr>
+
+</table>
+</div>
+
+<div id="figure"></div>
+<br style="clear:both">
+{% include '_zoom_control.html' %}
+{% end %}

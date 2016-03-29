@@ -1,0 +1,11 @@
+<html>
+<head><title>Log in</title></head>
+<body>
+  <p>{{message}}</p>
+  <form action="/login" method="post">
+    Password: <input type="password" name="pw">
+    <input type="hidden" value="{{next}}" name="next">
+    <input type="submit" value="Sign in">
+  </form>
+</body>
+</html>

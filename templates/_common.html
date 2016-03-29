@@ -1,0 +1,19 @@
+<html><head>
+<link rel="stylesheet" href="_static/css/page.css" type="text/css">
+<link rel="stylesheet" href="_static/css/boilerplate.css" type="text/css" />
+<link rel="stylesheet" href="_static/css/fbm.css" type="text/css" />
+<link rel="stylesheet" href="_static/jquery/css/themes/base/jquery-ui.min.css" >
+<link rel="stylesheet" type="text/css" href="styles.css">
+{% for src in mpl_js %}
+  <script src="_static/jquery/js/{{src}}"></script>
+{% end %}
+<script src="mpl.js"></script>
+<script src="handlers.js"></script>
+<title>{{ page_title }}</title>
+{% block head_matter %}{% end %}
+</head><body>
+<div><a href="/"><img id="logo" src="logo.png"/></a>
+<span class="title">{{ page_title }}</span></div>
+
+{% block body_matter %}{% end %}
+</body></html>

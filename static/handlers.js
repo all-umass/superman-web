@@ -1,0 +1,196 @@
+// Global variables!
+//  fig: figure number for the page's figure
+//  ds_name: name of the selected dataset ('RRUFF', 'IRUG', etc.)
+//  ds_kind: kind of the selected dataset ('Raman', 'LIBS', 'FTIR')
+var fig, ds_name, ds_kind;
+
+function update_zoom_ctrl(data) {
+  $('#zoom_control input[name=xmin]').val(data[0]);
+  $('#zoom_control input[name=xmax]').val(data[1]);
+  $('#zoom_control input[name=ymin]').val(data[2]);
+  $('#zoom_control input[name=ymax]').val(data[3]);
+  $('.needs_plot').prop('disabled', false);
+}
+function make_plot_cb(msg_selector) {
+  return function(data, status) {
+    var msg = $(msg_selector);
+    msg.text(msg.text() + " " + status + ".").delay(3000).fadeOut();
+    if (status === 'success' && data.length == 4) {
+      update_zoom_ctrl(data);
+    }
+  }
+}
+var upload_cb = make_plot_cb('#upload_messages');
+function do_upload(files) {
+  if (files.length != 1) {
+    $('#upload_messages').text("Choose a file first!").fadeIn();
+    return
+  }
+  var f = files[0];
+  if (f.size > 5000000) {
+    $('#upload_messages').text("File must be <5mb").fadeIn();
+    return
+  }
+  $('#upload_messages').text("Uploading...").fadeIn();
+  var post_data = new FormData();
+  post_data.append('fignum', fig.id);
+  post_data.append('query', f);
+  $.ajax({
+    url: '/_upload',
+    data: post_data,
+    processData: false,
+    contentType: false,
+    dataType: 'json',
+    type: 'POST',
+    error: function(jqXHR, textStatus, errorThrown) {
+      var msg = $('#upload_messages');
+      var out = msg.text() + " " + textStatus + ". " + errorThrown;
+      msg.text(out);  // no delay, keep the error message up
+    },
+    success: upload_cb
+  });
+}
+function get_dataset(info) {
+  var parts = info.split(',');
+  ds_name = parts[0];
+  ds_kind = parts[1];
+  var post_data = {
+    name: ds_name, kind: ds_kind, fignum: fig.id
+  };
+  function do_select(name, idx) {
+    $('#upload_messages').text("Selecting...").fadeIn();
+    $.post('/_select', {
+      name: name, idx: idx, ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id
+    }, upload_cb, 'json');
+  }
+  $('#spinner').show();
+  $('#selector').load('/_dataset_selector', post_data, function(){
+    $('#spinner').hide();
+    // If we have a numeric spinner
+    $("#selector input").change(function(evt){
+      do_select(undefined, evt.target.value)
+    });
+    // If we have a chosen <select> dropdown
+    $("#selector .chosen-select").chosen({search_contains: true}).change(
+    function(evt){
+      if (evt.target.value.length > 0) {
+        do_select(evt.target.value, undefined);
+      }
+    }).next().css('width', '+=15');
+  });
+}
+function load_ds_filters(info, cb) {
+  if (info == '') return;
+  var parts = info.split(',');
+  var post_data = {name: parts[0], kind: parts[1]};
+  var num_responses = 0;
+  function got_response() {
+    num_responses++;
+    if (num_responses == 2) {
+      cb(ds_name, ds_kind);
+    }
+  }
+  $('#ds_filter_container').load('/_dataset_filterer', post_data, function(){
+    ds_name = parts[0];
+    ds_kind = parts[1];
+    got_response();
+  });
+  $('#ds_plot_options_container').load('/_dataset_plot_options', post_data,
+                                       got_response);
+}
+function do_filter() {
+  $('#filter_button').prop('disabled', true);
+  $('#filter_button>.ing').text("ing...").fadeIn();
+  var post_data = collect_filter_params();
+  post_data['ds_name'] = ds_name;
+  post_data['ds_kind'] = ds_kind;
+  post_data['fignum'] = fig.id;
+
+  $.post('_filter', post_data, function(data, status) {
+    $('#filter_button>.ing').text("ing... "+status).delay(2000).fadeOut();
+    $('#filter_button').prop('disabled', false);
+    if (status === 'success') {
+      var num_spectra = parseInt(data);
+      if (num_spectra <= 99999) {
+        $('#plot_button').prop('disabled', false);
+      }
+      $('#plot_button >.num').text(num_spectra);
+    }
+  }, 'json');
+}
+function do_pp(pp) {
+  $('#messages').text("Preprocessing...").fadeIn();
+  var post_data = { pp: pp, fignum: fig.id };
+  $.post('/_pp', post_data, function(data, status) {
+    $('#messages').text("Preprocessing... "+status).delay(2000).fadeOut();
+  });
+}
+function do_baseline(method) {
+  var msg = $('#baseline_messages');
+  msg.text("Correcting baseline...").fadeIn();
+  var post_data = add_baseline_args({fignum: fig.id}, method);
+  $.post('/_baseline', post_data, function() {
+    msg.text("Correcting baseline... done.").delay(3000).fadeOut();
+  }).fail(function() {
+    msg.text("Error correcting baseline! Try something else.")
+  })
+}
+function update_1eX(val, selector, show_e) {
+  var x = Math.pow(10, val);
+  $(selector).text(show_e ? x.toExponential(3) : x.toFixed(3));
+}
+function onready_boilerplate(ws_uri, fignum) {
+  function ondownload(figure, format) {
+    window.open('/'+figure.id+'/download.' + format, '_blank');
+  }
+  $('body').on('contextmenu', '#figure', function(e){ return false; });
+  var websocket_type = mpl.get_websocket_type();
+  var websocket = new websocket_type(ws_uri + fignum + "/ws");
+  fig = new mpl.figure(fignum, websocket, ondownload, $('div#figure'));
+  $('.mpl-toolbar-option option')[2].disabled = true;  // Hack to disable pgf
+}
+function do_zoom() {
+  var post_data = {
+    xmin: $('#zoom_control input[name=xmin]').val(),
+    xmax: $('#zoom_control input[name=xmax]').val(),
+    ymin: $('#zoom_control input[name=ymin]').val(),
+    ymax: $('#zoom_control input[name=ymax]').val(),
+    fignum: fig.id
+  };
+  $.post('/_zoom', post_data);
+}
+function add_pp_step(name, input_name) {
+  if (input_name === undefined) {
+    input_name = name;
+  }
+  var step = $('input[name="'+input_name+'"]').filter(function(){
+    return this.checked;
+  }).map(function(){
+    return this.value;
+  }).toArray().join(':');
+  if (step === "") return;
+  step = name + ':' + step;
+  $('#pp_staging').append(
+    '<li class="'+name+'" onclick="$(this).remove()">'+step+'</li>');
+}
+function collect_pp_args() {
+  return $('#pp_staging > li').map(function(){
+    return $(this).text();
+  }).toArray().join(',');
+}
+function add_baseline_args(post_data, method) {
+  if (method === undefined) {
+    method = $('#blr_method').val();
+  }
+  if (!method) return post_data;
+  post_data['blr_method'] = method;
+  post_data['blr_segmented'] = $('#blr_segmented').is(':checked');
+  post_data['blr_lb'] = $('#blr_lb').val();
+  post_data['blr_ub'] = $('#blr_ub').val();
+  var idx = method.length + 1;
+  $('td.param.'+method+'>span').each(function(i,e){
+    var param = e.id.substr(idx);
+    post_data['blr_' + param] = e.innerHTML;
+  });
+  return post_data;
+}

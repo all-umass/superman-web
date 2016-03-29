@@ -1,0 +1,79 @@
+{% extends "_common.html" %}
+{% block head_matter %}
+<script src="http://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
+<style type="text/css">
+#datasets {
+  margin: 1em auto;
+  border-collapse: collapse;
+  border: 1px solid black;
+}
+#datasets td {
+  vertical-align: middle;
+  background-color: #f7d3b2;
+  border: 1px solid black;
+  text-align: center;
+  padding: 6px;
+  word-wrap: break-word;
+}
+#datasets td.ds_title {
+  font-weight: bold;
+  text-align: left;
+}
+#datasets td.ds_title a {
+  color: black;
+}
+#datasets td.numeric {
+  text-align: right;
+}
+#datasets th {
+  background-color: #6E9297;
+  border: 1px solid black;
+  text-align:center;
+  font-weight:bold;
+  padding: 0.5em;
+  cursor: pointer;
+}
+</style>
+{% end %}
+
+{% block body_matter %}
+<div>
+<table class='sortable' id='datasets'>
+  <caption>
+    A listing of all available spectroscopy datasets.
+    Click a heading to sort by that column.
+  </caption>
+  <tr>
+    <th>Dataset</th>
+    <th>Type</th>
+    <th># Spectra</th>
+    <th># Channels</th>
+    <th>Unique Keys?</th>
+    <th>Last Updated</th>
+    <th>Metadata</th>
+    </tr>
+{% for d in sorted(datasets, key=str) %}
+  <tr>
+    <td class='ds_title'>
+      <a href="/explorer?ds={{url_escape(str(d))}}">{{d.name}}</a>
+    </td>
+    <td>{{d.kind}}</td>
+    <td class='numeric'>{{d.num_spectra()}}</td>
+    {% if d.num_dimensions() is None %}
+      <td>&mdash;</td>
+    {% else %}
+      <td class='numeric'>{{d.num_dimensions()}}</td>
+    {% end %}
+    {% if d.pkey is None %}
+      <td>&#x2718;</td>
+    {% else %}
+      <td>&#x2714;</td>
+    {% end %}
+    <td>{{dt(int(d.load_time)).strftime("%Y-%m-%d %H:%M")}}</td>
+    <td>{{', '.join(sorted(m.display_name(k) for k,m in d.metadata.items()))}}
+  </tr>
+{% end %}
+</table>
+</div>
+
+{% end %}

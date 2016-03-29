@@ -1,0 +1,23 @@
+<div id='ds_selector_wrapper'>
+
+<!-- dataset selector -->
+<div class="data_input">
+  Select a spectrum:
+  <select onchange="if(this.value.length>0){get_dataset(this.value)}">
+  <option value="">Choose a dataset</option>
+  {% for ds in sorted(datasets, key=str) %}
+    <option value="{{ds.name}},{{ds.kind}}">{{ds}}</option>
+  {% end %}
+  </select>
+  <img id='spinner' src='/loading_bar.gif' style='display:none'>
+  <div id='selector'></div>
+</div>
+
+<!-- upload -->
+<div class="data_input">
+  or upload your own:
+  <input type="file" name="query" onchange="do_upload(this.files);"/>
+</div>
+<div id="upload_messages" style="display: inline"></div>
+
+</div>

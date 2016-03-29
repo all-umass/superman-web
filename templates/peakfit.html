@@ -1,0 +1,149 @@
+{% extends "_common.html" %}
+{% block head_matter %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
+<script type="text/javascript">
+function new_get_dataset(info) {
+  old_get_dataset(info);
+  load_ds_filters(info, function(){});
+}
+old_get_dataset = get_dataset;
+get_dataset = new_get_dataset;
+function collect_peakfit_args(alg) {
+  var bounds = $('input[name=peakrange]').map(
+      function(i,e){return +e.value;}).toArray();
+  var basetype = $('input[name=basetype]:checked').val();
+  var loc = $('#peakloc').val();
+  var peaktype = $('input[name=peaktype]:checked').val();
+  return {
+    basetype: basetype, lb: bounds[0], ub: bounds[1], alg: alg,
+    fitloc: loc, fitkind: peaktype, ds_kind: ds_kind, ds_name: ds_name
+  };
+}
+function do_batch_download() {
+  var alg = $('input[name=batch_algo]:checked').val();
+  var args = collect_peakfit_args(alg);
+  var url = '/'+fig.id+'/peak_area.csv?'+$.param(args);
+  window.open(url, '_blank');
+}
+function do_peakfit(alg) {
+  var post_data = collect_peakfit_args(alg);
+  post_data['fignum'] = fig.id;
+  $('#fit_result').hide();
+  $.post('/_peak', post_data, function(data, status) {
+    if (status !== 'success') return;
+    var area = data['area'].toFixed(2);
+    var height = data['height'].toFixed(2);
+    var center = '', fwhm = '';
+    if ('area_std' in data) {
+      area += ' ± ' + data['area_std'].toFixed(2);
+    }
+    if ('height_std' in data) {
+      height += ' ± ' + data['height_std'].toFixed(2);
+    }
+    if ('center' in data) {
+      center = data['center'].toFixed(2) +' ± '+ data['center_std'].toFixed(2);
+    }
+    if ('fwhm' in data) {
+      fwhm = data['fwhm'].toFixed(2) + ' ± ' + data['fwhm_std'].toFixed(2);
+    }
+    $('#fit_area').text(area);
+    $('#fit_height').text(height);
+    $('#fit_center').text(center);
+    $('#fit_fwhm').text(fwhm);
+    $('#fit_result').show();
+  }, 'json');
+}
+$(document).ready(function(){
+  $('#baseline_steps,#pp_steps').toggle();
+  onready_boilerplate("{{ws_uri}}", {{ fig_id }});
+});
+</script>
+<style type="text/css">
+#ds_selector_wrapper { padding-top: 1em; }
+#lhs { float: left; }
+#fig_wrapper { clear: none; float: left; padding: 0 2em; display: inline-block;}
+#fit_result { float: right; margin-right: 1em; }
+#fit_result td { padding: 0.2em 1em; }
+#fit_result td:last-child { text-align: right; }
+</style>
+{% end %}
+
+{% block body_matter %}
+{% include '_dataset_selector.html' %}
+
+<div id='lhs'>
+<p>
+(Optional) apply baseline correction:
+<button onclick="$('#baseline_steps').toggle()">show/hide table</button>
+{% include '_baseline_short.html' %}
+</p>
+
+<p>
+(Optional) apply preprocessing:
+<button onclick="$('#pp_steps').toggle()">show/hide table</button>
+{% include '_pp_table.html' %}
+</p>
+
+<div id="peak_steps">
+<table class="pp_table">
+<tr class="uline"><th colspan=3>Peak Fitting Algorithms</th></tr>
+<!-- manual peak -->
+<tr><td class="rline vcenter" rowspan=2>
+<button class="needs_plot" onclick="do_peakfit('manual');" disabled>Manual</button></td>
+<td colspan=2>Peak range:
+<input type="text" name="peakrange" value="0.0" size=5> -
+<input type="text" name="peakrange" value="1000.0" size=5>
+</td></tr>
+<tr class="uline"><td colspan=2>Peak bottom:
+<label><input type="radio" name="basetype" value="endpoint" checked>min(endpoints)</label>
+<label><input type="radio" name="basetype" value="region">min(region)</label>
+</td></tr>
+<!-- peak fitting -->
+<tr><td class="uline rline vcenter" rowspan=2>
+<button class="needs_plot" onclick="do_peakfit('fit');" disabled>Fit Peak</button></td>
+<td colspan=2>Peak location (approx.):
+<input type="text" id="peakloc" value="500.0" size=5>
+</td></tr>
+<tr class="uline"><td colspan=2>Peak type:
+<label><input type="radio" name="peaktype" value="lorentzian" checked>Lorentzian</label>
+<label><input type="radio" name="peaktype" value="gaussian">Gaussian</label>
+</td></tr>
+</table>
+</div>
+
+<table id='fit_result' style='display: none'>
+<tr class='uline'><th class='bold' colspan=2>Fitted Peak</th></tr>
+<tr><td class='rline'>Height</td><td id='fit_height'></td></tr>
+<tr><td class='rline'>Center</td><td id='fit_center'></td></tr>
+<tr><td class='rline'>FWHM</td><td id='fit_fwhm'></td></tr>
+<tr><td class='rline'>Area</td><td id='fit_area'></td></tr>
+</table>
+
+</div>  <!-- lhs -->
+
+<div id="fig_wrapper">
+<div id="figure"></div>
+<br style="clear:both">
+{% include '_zoom_control.html' %}
+</div>
+
+<!-- batch mode -->
+<div style="clear:both">
+<b>Batch Mode</b>
+<p>
+Download all peak data for the filtered subset using the settings above.
+</p>
+<div id='ds_filter_container'></div>
+
+<div>
+Algorithm type:
+<label><input type="radio" name="batch_algo" value="manual" checked>Manual</label>
+<label><input type="radio" name="batch_algo" value="fit">Fitted</label>
+<br />
+<button id="plot_button" onclick="do_batch_download();" disabled>
+Download peak data for <span class="num">0</span> spectra</button>
+</div>
+</div>
+
+{% end %}
