@@ -6,10 +6,19 @@ function ip_info() {
 }
 export -f ip_info
 
+function find_server_pid() {
+  pgrep -f 'superman_server.py' | head -1
+}
+
 function start_server() {
   echo "Starting new server..."
   nohup python superman_server.py &>logs/errors.out &
   echo "Use 'tail -f logs/server.log' to check on it"
+  sleep 1
+  if [[ -z "$(find_server_pid)" ]]; then
+    echo "Error: server died immediately!"
+    cat logs/errors.out
+  fi
 }
 
 # Use gawk if available, otherwise use awk
@@ -22,7 +31,7 @@ if [[ $1 = "--dry-run" ]]; then
 fi
 
 # Check if the webserver is still running
-server_pid=$(pgrep -f 'superman_server.py' | head -1)
+server_pid=$(find_server_pid)
 if [[ -z "$server_pid" ]]; then
   echo "No currently running server found."
   $dry_run || start_server
@@ -78,7 +87,7 @@ $dry_run && exit
 echo "Killing old server (pid: $server_pid)"
 while [[ -n "$server_pid" ]]; do
   kill "$server_pid"
-  server_pid=$(pgrep -f 'superman_server.py' | head -1)
+  server_pid=$(find_server_pid)
 done
 
 start_server

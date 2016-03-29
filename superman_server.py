@@ -2,6 +2,8 @@
 import logging
 import os.path
 import itertools
+import shutil
+import time
 import tornado.web
 from argparse import ArgumentParser
 
@@ -28,7 +30,10 @@ def main():
   args = ap.parse_args()
 
   if not args.debug:
-    logging.basicConfig(filename=os.path.join(webserver_dir, 'logs/server.log'),
+    logfile = os.path.join(webserver_dir, 'logs/server.log')
+    if os.path.isfile(logfile):
+      shutil.move(logfile, '%s.%d' % (logfile, time.time()))
+    logging.basicConfig(filename=logfile,
                         format='[%(asctime)s] %(levelname)s: %(message)s',
                         filemode='w',
                         level=logging.INFO)
