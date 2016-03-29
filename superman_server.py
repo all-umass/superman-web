@@ -1,16 +1,12 @@
 #!/usr/bin/env python
 import logging
 import os.path
-import itertools
 import shutil
 import time
 import tornado.web
 from argparse import ArgumentParser
 
-from server.mpl_server import MatplotlibServer
-from server.load_data import load_datasets
-from server.handlers import all_routes
-from server.handlers.base import BaseHandler
+from server import MatplotlibServer, load_datasets, all_routes, BaseHandler
 
 
 def main():

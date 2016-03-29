@@ -25,4 +25,8 @@ Or simply run it directly, and handle the details yourself:
 ### Testing
 
 Tests live in the `test/` directory.
-Run them directly, or use `python -m unittest discover`.
+Run them directly, or use `python -m unittest discover -s test`.
+To generate a nice coverage report:
+
+    coverage run --source server -m unittest discover -s test
+    coverage html
