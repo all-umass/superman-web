@@ -4,7 +4,6 @@ import h5py
 import logging
 import numpy as np
 import os.path
-from glob import glob
 from six.moves import xrange
 
 from .web_datasets import (
