@@ -5,10 +5,11 @@ from mock import Mock
 from numpy.testing import assert_array_equal
 
 # import this first to make sure we call matplotlib.use() right away
-from mpl_server import MatplotlibServer
-from baseline_handlers import BaselineHandler
-from handlers import BaseHandler, SelectHandler
-from web_datasets import (
+from server.mpl_server import MatplotlibServer
+from server.handlers.base import BaseHandler
+from server.handlers.baseline_handlers import BaselineHandler
+from server.handlers.handlers import SelectHandler
+from server.web_datasets import (
     DATASETS, WebTrajDataset, WebVectorDataset,
     LookupMetadata, NumericMetadata, BooleanMetadata, PrimaryKeyMetadata,
     CompositionMetadata
