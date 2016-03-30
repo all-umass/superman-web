@@ -62,7 +62,8 @@ function do_filtered_plot() {
   post_data['ds_kind'] = ds_kind;
   post_data['fignum'] = fig.id;
 
-  $.post('/_filterplot', post_data, make_plot_cb('#plot_button>.dots'), 'json');
+  var cbs = make_post_callbacks('#plot_button>.dots');
+  $.post('/_filterplot', post_data, cbs['success'], 'json').fail(cbs['fail']);
 }
 function download_data() {
   var meta_keys = $('#dl_metadata option:selected').map(function(){

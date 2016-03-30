@@ -11,16 +11,23 @@ function update_zoom_ctrl(data) {
   $('#zoom_control input[name=ymax]').val(data[3]);
   $('.needs_plot').prop('disabled', false);
 }
-function make_plot_cb(msg_selector) {
-  return function(data, status) {
-    var msg = $(msg_selector);
-    msg.text(msg.text() + " " + status + ".").delay(3000).fadeOut();
-    if (status === 'success' && data.length == 4) {
-      update_zoom_ctrl(data);
+function make_post_callbacks(msg_selector) {
+  return {
+    success: function(data, status) {
+      var msg = $(msg_selector);
+      msg.text(msg.text() + " " + status + ".").delay(3000).fadeOut();
+      if (status === 'success' && data.length == 4) {
+        update_zoom_ctrl(data);
+      }
+    },
+    fail: function(jqXHR, textStatus, errorThrown) {
+      var msg = $(msg_selector);
+      var out = msg.text() + " " + textStatus + ". " + errorThrown;
+      msg.text(out);  // no delay, keep the error message up
     }
-  }
+  };
 }
-var upload_cb = make_plot_cb('#upload_messages');
+var upload_cbs = make_post_callbacks('#upload_messages');
 function do_upload(files) {
   if (files.length != 1) {
     $('#upload_messages').text("Choose a file first!").fadeIn();
@@ -42,12 +49,8 @@ function do_upload(files) {
     contentType: false,
     dataType: 'json',
     type: 'POST',
-    error: function(jqXHR, textStatus, errorThrown) {
-      var msg = $('#upload_messages');
-      var out = msg.text() + " " + textStatus + ". " + errorThrown;
-      msg.text(out);  // no delay, keep the error message up
-    },
-    success: upload_cb
+    error: upload_cbs['fail'],
+    success: upload_cbs['success']
   });
 }
 function get_dataset(info) {
@@ -61,7 +64,7 @@ function get_dataset(info) {
     $('#upload_messages').text("Selecting...").fadeIn();
     $.post('/_select', {
       name: name, idx: idx, ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id
-    }, upload_cb, 'json');
+    }, upload_cbs['success'], 'json').fail(upload_cbs['fail']);
   }
   $('#spinner').show();
   $('#selector').load('/_dataset_selector', post_data, function(){
@@ -121,19 +124,15 @@ function do_filter() {
 function do_pp(pp) {
   $('#messages').text("Preprocessing...").fadeIn();
   var post_data = { pp: pp, fignum: fig.id };
-  $.post('/_pp', post_data, function(data, status) {
-    $('#messages').text("Preprocessing... "+status).delay(2000).fadeOut();
-  });
+  var cbs = make_post_callbacks('#messages');
+  $.post('/_pp', post_data, cbs['success'], 'json').fail(cbs['fail']);
 }
 function do_baseline(method) {
   var msg = $('#baseline_messages');
   msg.text("Correcting baseline...").fadeIn();
   var post_data = add_baseline_args({fignum: fig.id}, method);
-  $.post('/_baseline', post_data, function() {
-    msg.text("Correcting baseline... done.").delay(3000).fadeOut();
-  }).fail(function() {
-    msg.text("Error correcting baseline! Try something else.")
-  })
+  var cbs = make_post_callbacks('#baseline_messages');
+  $.post('/_baseline', post_data, cbs['success']).fail(cbs['fail']);
 }
 function update_1eX(val, selector, show_e) {
   var x = Math.pow(10, val);
