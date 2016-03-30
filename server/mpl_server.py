@@ -29,10 +29,19 @@ class FigData(object):
     self.title = ''
     self.filter_mask = Ellipsis
     self.baseline = None
-    self.explorer_data = []
     self.hist_data = []
     self._ds_view = None
     self._transformations = [None, None, None]
+    # HACK: cache keys/data for the explorer page
+    self.clear_explorer_cache()
+
+  def clear_explorer_cache(self):
+    self.explorer_xaxis = None
+    self.explorer_yaxis = None
+    self.explorer_caxis = None
+    self.explorer_data = None
+    self.explorer_color = None
+    self.explorer_view_params = None
 
   def set_selected(self, ds_view, title=''):
     self.title = title

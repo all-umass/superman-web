@@ -3,7 +3,6 @@ import ast
 import logging
 import numpy as np
 from superman.file_io import parse_spectrum
-from superman.preprocess import preprocess
 from tornado.escape import json_encode
 
 from .base import BaseHandler
@@ -61,6 +60,10 @@ class FilterHandler(BaseHandler):
     fig_data.filter_mask = mask
     num_spectra = np.count_nonzero(mask)
     logging.info('Filtered to %d spectra', num_spectra)
+
+    # blow away any cached explorer data
+    fig_data.clear_explorer_cache()
+
     return self.write(str(num_spectra))
 
 

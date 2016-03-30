@@ -3,7 +3,7 @@ import ast
 import logging
 import numpy as np
 import os
-from itertools import cycle
+from collections import namedtuple
 from matplotlib import rcParams
 from matplotlib.collections import LineCollection
 from matplotlib.patches import Rectangle
@@ -13,10 +13,23 @@ from six.moves import xrange
 from .base import BaseHandler
 from .baseline_handlers import setup_blr_object
 
-if 'axes.prop_cycle' in rcParams:
-  COLOR_CYCLE = rcParams['axes.prop_cycle'].by_key()['color']
-else:
+# old matplotlib used a different key
+if 'axes.prop_cycle' not in rcParams:
   COLOR_CYCLE = rcParams['axes.color_cycle']
+else:
+  ccycle = rcParams['axes.prop_cycle']
+  # newest matplotlib has a convenience wrapper
+  if hasattr(ccycle, 'by_key'):
+    COLOR_CYCLE = ccycle.by_key()['color']
+  else:
+    COLOR_CYCLE = [c['color'] for c in ccycle]
+
+# helper for storing validated/processed inputs
+AxisInfo = namedtuple('AxisInfo', ('type', 'argument'))
+# helpers for storing computed data
+ColorData = namedtuple('ColorData', ('color', 'label', 'names', 'needs_cbar'))
+PlotData = namedtuple('PlotData', ('trajs', 'xlabel', 'ylabel', 'xticks',
+                                   'yticks', 'scatter'))
 
 
 class FilterPlotHandler(BaseHandler):
@@ -26,8 +39,10 @@ class FilterPlotHandler(BaseHandler):
     if fig_data is None:
       self.write('Oops, something went wrong. Try again?')
       return
+    if fig_data.explorer_data is None:
+      self.write('No plotted data to download.')
 
-    lines = fig_data.explorer_data
+    lines = fig_data.explorer_data.trajs
     ax = fig_data.figure.gca()
     xlabel = _sanitize_csv(ax.get_xlabel()) or 'x'
     ylabel = _sanitize_csv(ax.get_ylabel()) or 'y'
@@ -48,13 +63,11 @@ class FilterPlotHandler(BaseHandler):
     meta_keys = filter(None, self.get_argument('meta_keys').split(','))
     for meta_key in meta_keys:
       try:
-        data, label, names = _masked_metadata(ds_view, meta_key)
+        data, label = ds_view.get_metadata(meta_key)
       except KeyError:
         logging.warn('Invalid meta_key: %r', meta_key)
         continue
       header.append(label)
-      if names is not None:
-        data = names[data]
       meta_data.append(data)
 
     # set up for writing the response file
@@ -89,76 +102,163 @@ class FilterPlotHandler(BaseHandler):
       logging.warning('Data not plottable, %d spectra chosen', num_spectra)
       return
 
-    bl_obj, segmented, lb, ub, _ = setup_blr_object(self)
+    # set up the dataset view object
+    bl_obj, segmented, lb, ub, params = setup_blr_object(self)
     chan_mask = bool(int(self.get_argument('chan_mask', 0)))
     ds_view = ds.view(mask=mask, pp=self.get_argument('pp', ''),
                       blr_obj=bl_obj, blr_segmented=segmented,
                       crop=(lb, ub), chan_mask=chan_mask)
 
-    color, color_label, color_names = _get_color(
-        ds_view, self.get_argument('color'),
-        self.get_argument('fixed_color'),
-        self.get_argument('color_by'),
-        ast.literal_eval(self.get_argument('color_line_ratio')),
-        self.get_argument('color_computed'))
+    # check to see if anything changed since the last view we had
+    view_keys = ['chan_mask', 'pp', 'blr_method', 'blr_segmented',
+                 'blr_lb', 'blr_ub']
+    for k in sorted(params):
+      view_keys.append('blr_' + k)
+    view_params = tuple(self.get_argument(k, '') for k in view_keys)
+    # if the view changed, invalidate the cache
+    if view_params != fig_data.explorer_view_params:
+      fig_data.clear_explorer_cache()
+      fig_data.explorer_view_params = view_params
 
-    xaxis_type = self.get_argument('xaxis')
-    yaxis_type = self.get_argument('yaxis')
-
-    lw = float(self.get_argument('line_width'))
+    # parse plot information from request arguments
+    xaxis = self._get_axis_info('x')
+    yaxis = self._get_axis_info('y')
+    caxis = self._get_color_info()
     plot_kwargs = dict(
         cmap=self.get_argument('cmap'),
         alpha=float(self.get_argument('alpha')),
+        lw=float(self.get_argument('line_width')),
     )
 
-    if bool(int(self.get_argument('clear'))):
-      fig_data.figure.clf(keep_observers=True)
-    ax = fig_data.figure.gca()
-    legend = bool(int(self.get_argument('legend')))
-
-    if xaxis_type == 'default' and yaxis_type == 'default':
-      plot_kwargs['legend'] = legend
-      trajs = ds_view.get_trajectories()
-      _plot_trajs(fig_data.figure, ax, trajs, color,
-                  color_label, color_names, lw=lw, **plot_kwargs)
-      xlabel = ds.x_axis_units()
-      ylabel = 'Intensity'
-      fig_data.explorer_data = trajs
+    # get the plot data (trajs or scatter points), possibly cached
+    if xaxis != fig_data.explorer_xaxis or yaxis != fig_data.explorer_yaxis:
+      plot_data = _get_plot_data(ds_view, xaxis, yaxis)
+      if plot_data is None:
+        logging.error('Invalid axis combo: %s vs %s', xaxis, yaxis)
+        self.set_status(400)  # bad request
+        return self.write('Bad axis type combination.')
+      fig_data.explorer_xaxis = xaxis
+      fig_data.explorer_yaxis = yaxis
+      fig_data.explorer_data = plot_data
     else:
-      xdata, xlabel, xticks = _get_axis_data(
-          ds_view, xaxis_type, self.get_argument('x_metadata'),
-          ast.literal_eval(self.get_argument('x_line_ratio')))
-      ydata, ylabel, yticks = _get_axis_data(
-          ds_view, yaxis_type, self.get_argument('y_metadata'),
-          ast.literal_eval(self.get_argument('y_line_ratio')))
-      if xdata is None or ydata is None:
-        logging.error('Invalid axis type combo: xaxis=%s, yaxis=%s',
-                      xaxis_type, yaxis_type)
-        self.set_status(403)
-        return self.finish(dict(message='Invalid axis type combination'))
+      plot_data = fig_data.explorer_data
 
-      logging.info('Scatter plot: %d x, %d y', len(xdata), len(ydata))
-      sc = ax.scatter(xdata, ydata, marker='o', c=color, edgecolor='none',
-                      s=lw*20, **plot_kwargs)
-      fig_data.explorer_data = [np.column_stack((xdata, ydata))]
+    # get the color data, possibly cached
+    if caxis != fig_data.explorer_caxis:
+      color_data = _get_color_data(ds_view, caxis)
+      fig_data.explorer_caxis = caxis
+      fig_data.explorer_color = color_data
+    else:
+      color_data = fig_data.explorer_color
 
-      if xticks is not None:
-        ax.set_xticks(np.arange(len(xticks)))
-        ax.set_xticklabels(xticks)
-      if yticks is not None:
-        ax.set_yticks(np.arange(len(yticks)))
-        ax.set_yticklabels(yticks)
-      _apply_plot_labels(fig_data.figure, ax, sc, color_label, color_names,
-                         legend=legend)
+    # prepare the figure
+    fig = fig_data.figure
+    if bool(int(self.get_argument('clear'))):
+      fig.clf(keep_observers=True)
 
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    # generate and decorate the plot
+    ax = fig.gca()
+    artist = _add_plot(fig, ax, plot_data, color_data, **plot_kwargs)
+    _decorate_plot(fig, ax, artist, plot_data, color_data,
+                   bool(int(self.get_argument('legend'))))
+
+    # draw it, then return the axis limits
     fig_data.manager.canvas.draw()
-
-    # return the axis limits
     xmin,xmax = ax.get_xlim()
     ymin,ymax = ax.get_ylim()
     return self.write(json_encode([xmin,xmax,ymin,ymax]))
+
+  def _get_axis_info(self, ax_char):
+    atype = self.get_argument(ax_char + 'axis')
+    if atype == 'metadata':
+      argument = self.get_argument(ax_char + '_metadata')
+    elif atype == 'line_ratio':
+      argument = ast.literal_eval(self.get_argument(ax_char + '_line_ratio'))
+    elif atype in ('default', 'cardinal'):
+      argument = None
+    else:
+      raise ValueError('Invalid axis type: %s' % atype)
+    return AxisInfo(type=atype, argument=argument)
+
+  def _get_color_info(self):
+    ctype = self.get_argument('color')
+    if ctype == 'default':
+      argument = self.get_argument('fixed_color')
+    elif ctype == 'cycled':
+      argument = None
+    elif ctype == 'metadata':
+      argument = self.get_argument('color_by')
+    elif ctype == 'line_ratio':
+      argument = ast.literal_eval(self.get_argument('color_line_ratio'))
+    elif ctype == 'computed':
+      argument = self.get_argument('color_computed')
+    else:
+      raise ValueError('Invalid color type: %s' % ctype)
+    return AxisInfo(type=ctype, argument=argument)
+
+
+def _get_plot_data(ds_view, xaxis, yaxis):
+  logging.info('Getting new plot data: %s, %s', xaxis, yaxis)
+  if xaxis.type == 'default' and yaxis.type == 'default':
+    return PlotData(trajs=ds_view.get_trajectories(),
+                    xlabel=ds_view.ds.x_axis_units(),
+                    ylabel='Intensity', xticks=None, yticks=None, scatter=False)
+  # scatter
+  xdata, xlabel, xticks = _get_axis_data(ds_view, xaxis)
+  ydata, ylabel, yticks = _get_axis_data(ds_view, yaxis)
+  if xdata is None or ydata is None:
+    return None
+  return PlotData(trajs=[np.column_stack((xdata, ydata))], xlabel=xlabel,
+                  ylabel=ylabel, xticks=xticks, yticks=yticks, scatter=True)
+
+
+def _get_color_data(ds_view, caxis):
+  logging.info('Getting new color data: %s', caxis)
+  color, label, names = _get_axis_data(ds_view, caxis)
+  return ColorData(color=color, label=label, names=names,
+                   needs_cbar=(names is None and label is not None))
+
+
+def _add_plot(fig, ax, plot_data, color_data, lw=1, cmap='jet', alpha=1):
+  if plot_data.scatter:
+    data, = plot_data.trajs
+    return ax.scatter(*data.T, marker='o', c=color_data.color, edgecolor='none',
+                      s=lw*20, cmap=cmap, alpha=alpha)
+  # trajectory plot
+  lc = LineCollection(plot_data.trajs, linewidths=lw, cmap=cmap)
+  if color_data.label is None:
+    lc.set_color(color_data.color)
+  else:
+    lc.set_array(color_data.color)
+  ax.add_collection(lc, autolim=True)
+  lc.set_alpha(alpha)
+  ax.autoscale_view()
+  # Force ymin -> 0
+  ax.set_ylim((0, ax.get_ylim()[1]))
+  return lc
+
+
+def _decorate_plot(fig, ax, artist, plot_data, color_data, legend):
+  ax.set_xlabel(plot_data.xlabel)
+  ax.set_ylabel(plot_data.ylabel)
+
+  if plot_data.xticks is not None:
+    ax.set_xticks(np.arange(len(plot_data.xticks)))
+    ax.set_xticklabels(plot_data.xticks)
+  if plot_data.yticks is not None:
+    ax.set_yticks(np.arange(len(plot_data.yticks)))
+    ax.set_yticklabels(plot_data.yticks)
+
+  if color_data.needs_cbar:
+    cbar = fig.colorbar(artist)
+    cbar.set_label(color_data.label)
+    return
+
+  if legend and color_data.names is not None and len(color_data.names) <= 20:
+    # using trick from http://stackoverflow.com/a/19881647/10601
+    scale = np.linspace(0, 1, len(color_data.names))
+    proxies = [Rectangle((0,0), 1, 1, fc=c) for c in artist.cmap(scale)]
+    ax.legend(proxies, color_data.names)
 
 
 def _sanitize_csv(s):
@@ -167,75 +267,29 @@ def _sanitize_csv(s):
   return s
 
 
-def _get_axis_data(ds_view, axis_type, key, lines):
-  ticks = None
-  if axis_type == 'metadata':
-    data, label, ticks = _masked_metadata(ds_view, key)
+def _get_axis_data(ds_view, axis):
+  label, tick_names = None, None
+  if axis.type == 'default':
+    data = axis.argument
+  elif axis.type == 'metadata':
+    data, label = ds_view.get_metadata(axis.argument)
+    if not np.issubdtype(data.dtype, np.number):
+      # Categorical case
+      tick_names, data = np.unique(data, return_inverse=True)
     label = label.decode('utf8', 'ignore')
-  elif axis_type == 'line_ratio':
-    data, label = _compute_line_ratios(ds_view, lines)
-  elif axis_type == 'cardinal':
+  elif axis.type == 'line_ratio':
+    data, label = _compute_line_ratios(ds_view, axis.argument)
+  elif axis.type == 'cardinal':
     data = np.arange(np.count_nonzero(ds_view.mask))
-    label = ''
-  else:
-    data, label = None, None
-  return data, label, ticks
-
-
-def _get_color(ds_view, ctype, fixed, key, lines, expr):
-  names, label = None, None
-  if ctype == 'default':
-    color = fixed
-  elif ctype == 'cycled':
+    label = ''  # TODO: find a reasonable label for this
+  elif axis.type == 'computed':
+    data, label = _compute_expr(ds_view, axis.argument)
+  elif axis.type == 'cycled':
     # use the default color cycle from matplotlib
-    color = COLOR_CYCLE
+    data = COLOR_CYCLE
     if ds_view.ds.pkey is not None:
-      names = ds_view.ds.pkey.index2key(ds_view.mask)
-  elif ctype == 'metadata':
-    color, label, names = _masked_metadata(ds_view, key)
-  elif ctype == 'line_ratio':
-    color, label = _compute_line_ratios(ds_view, lines)
-  elif ctype == 'computed':
-    color = _compute_expr(ds_view, expr)
-    label = expr
-  else:
-    raise ValueError('Invalid color type: %s' % ctype)
-  return color, label, names
-
-
-def _plot_trajs(fig, ax, trajs, color, color_label, color_names,
-                lw=1, cmap='jet', alpha=1, legend=True):
-  do_legend = (legend and color_names is not None and
-               len(trajs) < 20 and len(color_names) == len(trajs) and
-               not isinstance(color, np.ndarray))
-  if do_legend:
-    # plot manually to avoid proxy lines for legend
-    # see http://stackoverflow.com/q/19877666/10601
-    for t,c,l in zip(trajs, cycle(color), color_names):
-      ax.plot(t[:,0], t[:,1], color=c, label=l, lw=lw, alpha=alpha)
-    ax.legend()
-  else:
-    # no legend, or too many lines, so use a line collection
-    lc = LineCollection(trajs, linewidths=lw, cmap=cmap)
-    if color_label is None:
-      lc.set_color(color)
-    else:
-      lc.set_array(color)
-    ax.add_collection(lc, autolim=True)
-    _apply_plot_labels(fig, ax, lc, color_label, color_names, legend=legend)
-    lc.set_alpha(alpha)
-    ax.autoscale_view()
-  # Force ymin -> 0
-  ax.set_ylim((0, ax.get_ylim()[1]))
-
-
-def _masked_metadata(ds_view, meta_key):
-  data, label = ds_view.get_metadata(meta_key)
-  if not np.issubdtype(data.dtype, np.number):
-    # Categorical case
-    names, data = np.unique(data, return_inverse=True)
-    return data, label, names
-  return data, label, None
+      tick_names = ds_view.ds.pkey.index2key(ds_view.mask)
+  return data, label, tick_names
 
 
 def _compute_line_ratios(ds_view, lines):
@@ -248,6 +302,7 @@ def _compute_line_ratios(ds_view, lines):
 
 
 def _compute_expr(ds_view, expr):
+  # TODO: use existing plot data here, instead of recomputing it
   trajs = ds_view.get_trajectories()
   logging.info('Compiling user expression: %r', expr)
   expr_code = compile(expr, '<string>', 'eval')
@@ -255,21 +310,7 @@ def _compute_expr(ds_view, expr):
   def _expr_eval(t):
     res = eval(expr_code, np.__dict__, dict(x=t[:,0],y=t[:,1]))
     return float(res)
-  return np.array(list(map(_expr_eval, trajs)))
-
-
-def _apply_plot_labels(fig, ax, artist, label, names, legend=True):
-  if names is None:
-    if label is not None:
-      cbar = fig.colorbar(artist)
-      cbar.set_label(label)
-    return
-  if not legend or len(names) > 20:
-    return
-  # using trick from http://stackoverflow.com/a/19881647/10601
-  proxies = [Rectangle((0,0), 1, 1, fc=c)
-             for c in artist.cmap(np.linspace(0, 1, len(names)))]
-  ax.legend(proxies, names)
+  return np.array(list(map(_expr_eval, trajs))), expr
 
 
 routes = [
