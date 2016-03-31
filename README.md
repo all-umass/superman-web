@@ -14,13 +14,21 @@ Or simply run it directly, and handle the details yourself:
     python superman_server.py
 
 
+### Adding a dataset
+
+Datasets are the basic unit of data in the superman server.
+Add one by modifying the `datasets.yml` configuration file,
+then optionally adding a loader function to the `dataset_loaders.py` module.
+Relative paths are evaluated starting from the current working directory
+of the process running `superman_server.py`.
+
 ### Dependencies
 
- * `superman` (and its dependencies)
- * `matplotlib >= 1.4.0` (which is higher than the minimum for superman)
- * `tornado`
  * `h5py`
+ * `matplotlib >= 1.4.0` (which is higher than the minimum for superman)
  * `pyyaml`
+ * `superman` (and its dependencies)
+ * `tornado`
 
 
 ### Testing
