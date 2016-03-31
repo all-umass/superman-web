@@ -13,22 +13,42 @@ function find_server_pid() {
 function start_server() {
   echo "Starting new server..."
   nohup python superman_server.py &>logs/errors.out &
-  echo "Use 'tail -f logs/server.log' to check on it"
+  $follow_log || echo "Use 'tail -f logs/server.log' to check on it"
   sleep 1
   if [[ -z "$(find_server_pid)" ]]; then
     echo "Error: server died immediately!"
     cat logs/errors.out
+  else
+    $follow_log && tail -f logs/server.log
   fi
 }
 
 # Use gawk if available, otherwise use awk
 AWK=$(gawk -V >/dev/null 2>&1 && echo "gawk" || echo "awk")
 
+# parse command line options
 # if --dry-run is passed, don't kill or start anything
+# if --tail is passed, finish by calling `tail -f logs/server.log`
 dry_run=false
-if [[ $1 = "--dry-run" ]]; then
-  dry_run=true
-fi
+follow_log=false
+for arg in "$@"; do
+  case $arg in
+    --dry-run)
+    dry_run=true
+    ;;
+    --tail)
+    follow_log=true
+    ;;
+    -h|--help)
+    echo "Usage: $0 [--dry-run] [--tail]"
+    exit 1
+    ;;
+    *)
+    echo "Unexpected argument: $arg"
+    exit 1
+    ;;
+  esac
+done
 
 # Check if the webserver is still running
 server_pid=$(find_server_pid)
