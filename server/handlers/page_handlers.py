@@ -42,9 +42,13 @@ class MainPage(BaseHandler):
 
 class LoginPage(BaseHandler):
   def get(self):
-    self.render('login.html',
-                message=self.get_argument('msg', ''),
-                next=self.get_argument('next', '/'))
+    if self.get_argument('logout', False):
+      self.clear_cookie('user')
+      self.redirect('/')
+    else:
+      self.render('login.html',
+                  message=self.get_argument('msg', ''),
+                  next=self.get_argument('next', '/'))
 
   def post(self):
     password = self.get_argument('pw')

@@ -38,7 +38,8 @@
 {% if logged_in %}
 Source code available at the
 <a href='http://nemo.cs.umass.edu:1234/?p=darby_projects.git;a=tree;f=webserver'>
-git repo on nemo</a>.
+git repo on nemo</a>.<br />
+<a href='/login?logout=1'>Log out</a>
 {% else %}
 <a href='/login?next=/'>Log in</a> to view non-public data.
 {% end %}
