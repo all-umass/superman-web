@@ -4,24 +4,26 @@ import os.path
 import shutil
 import time
 import tornado.web
+import yaml
 from argparse import ArgumentParser
 
-from server import MatplotlibServer, load_datasets, all_routes, BaseHandler
+from server import MatplotlibServer, all_routes, BaseHandler
+from server.web_datasets import (
+    DATASETS, WebLIBSDataset, WebVectorDataset, WebTrajDataset)
+import dataset_loaders
 
 
 def main():
   webserver_dir = os.path.dirname(__file__)
-  darby_dir = os.path.join(webserver_dir, '..', 'darby_projects')
-  msl_ccs_dir = '/srv/nfs/common/msl_data/ccs_data'
   ap = ArgumentParser()
-  ap.add_argument('--port', type=int, default=54321, help='Port to listen on')
-  ap.add_argument('--darby-dir', type=str, default=darby_dir,
-                  help='Path to the darby_projects root (%(default)s)')
-  ap.add_argument('--msl-ccs-dir', type=str, default=msl_ccs_dir,
-                  help='Path to MSL CCS LIBS data (%(default)s)')
+  ap.add_argument('--port', type=int, default=54321,
+                  help='Port to listen on. [%(default)s]')
+  ap.add_argument('--datasets', type=open,
+                  default=os.path.join(webserver_dir, 'datasets.yml'),
+                  help='YAML file specifying datasets to load. [%(default)s]')
   ap.add_argument('--debug', action='store_true',
                   help='Start an IPython shell instead of starting the server.')
-  ap.add_argument('--public', action='store_true',
+  ap.add_argument('--public-only', action='store_true',
                   help='Exclude any non-public datasets and disable login.')
   args = ap.parse_args()
 
@@ -34,12 +36,12 @@ def main():
                         filemode='w',
                         level=logging.INFO)
 
-  load_datasets(args.darby_dir, args.msl_ccs_dir, public=args.public)
+  load_datasets(args.datasets, public_only=args.public_only)
 
   if args.debug:
     return debug()
 
-  if args.public:
+  if args.public_only:
     BaseHandler.is_public = True
 
   logging.info('Starting server...')
@@ -55,9 +57,35 @@ def main():
 
 
 def debug():
-  from server.web_datasets import DATASETS
   import IPython
-  IPython.embed(header='Note: Datasets are still loading asynchronously.')
+  IPython.embed(header=('Note: Datasets are still loading asynchronously.\n'
+                        'They will appear in DATASETS: %s' % DATASETS))
+
+
+def load_datasets(config_fh, public_only=False):
+  config = yaml.safe_load(config_fh)
+
+  for kind, entries in config.items():
+    for name, info in entries.items():
+      # skip this entry if it shouldn't be included
+      is_public = info.get('public', True)
+      if public_only and not is_public:
+        continue
+
+      # look up the loader function from the module namespace
+      loader_fn = getattr(dataset_loaders, info['loader'])
+      if 'files' in info:
+        files = info['files']
+      else:
+        files = [info['file']]
+
+      if kind == 'LIBS':
+        ds = WebLIBSDataset(name, loader_fn, *files)
+      elif info.get('vector', False):
+        ds = WebVectorDataset(name, kind, loader_fn, *files)
+      else:
+        ds = WebTrajDataset(name, kind, loader_fn, *files)
+      ds.is_public = is_public
 
 
 if __name__ == '__main__':

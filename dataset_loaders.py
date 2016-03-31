@@ -1,113 +1,18 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
 import h5py
 import logging
 import numpy as np
 import os.path
+from six import string_types
 from six.moves import xrange
 
-from .web_datasets import (
-    WebTrajDataset, WebVectorDataset, WebLIBSDataset,
+from server.web_datasets import (
     LookupMetadata, NumericMetadata, BooleanMetadata, PrimaryKeyMetadata,
     CompositionMetadata
 )
 
 
-def load_datasets(darby_dir, msl_ccs_dir, public=False):
-  raman_dir = os.path.join(darby_dir, 'raman', 'data')
-  ftir_dir = os.path.join(darby_dir, 'ftir', 'data')
-  mars_dir = os.path.join(darby_dir, 'mars', 'data')
-  xray_dir = os.path.join(darby_dir, 'xray', 'data')
-  libs_dir = os.path.join(darby_dir, 'libs', 'data')
-
-  WebTrajDataset('RRUFF', 'Raman', _load_rruff,
-                 os.path.join(raman_dir, 'rruff-spectra.hdf5'))
-  WebTrajDataset('RRUFF (raw)', 'Raman', _load_rruff,
-                 os.path.join(raman_dir, 'rruff-spectra-raw.hdf5'))
-  WebTrajDataset('RRUFF', 'FTIR', _load_rruff,
-                 os.path.join(ftir_dir, 'rruff-spectra.hdf5'))
-  WebTrajDataset('RRUFF', 'XRD', _load_rruff,
-                 os.path.join(xray_dir, 'rruff-spectra.hdf5'))
-  WebTrajDataset('RRUFF (raw)', 'XRD', _load_rruff,
-                 os.path.join(xray_dir, 'rruff-spectra-raw.hdf5'))
-  WebTrajDataset('IRUG', 'Raman', _load_irug,
-                 os.path.join(raman_dir, 'irug.npz'))
-  WebTrajDataset('IRUG', 'FTIR', _load_irug, os.path.join(ftir_dir, 'irug.npz'))
-  WebTrajDataset('USGS', 'FTIR', _load_usgs, os.path.join(ftir_dir, 'USGS.npz'))
-  WebTrajDataset('Parma', 'Raman', _load_no_metadata,
-                 os.path.join(raman_dir, 'parma.npz'))
-  WebTrajDataset('Lyon (LST)', 'Raman', _load_keys_names,
-                 os.path.join(raman_dir, 'LST.npz'))
-  WebTrajDataset('RDRS', 'Raman', _load_keys_names,
-                 os.path.join(raman_dir, 'RDRS.npz'))
-  WebTrajDataset('UCL', 'Raman', _load_ucl,
-                 os.path.join(raman_dir, 'UCL.npz'))
-  WebTrajDataset('Dyar 96', 'Raman', _load_dyar96,
-                 os.path.join(raman_dir, 'dyar96.hdf5'))
-  WebTrajDataset('Mineral Mixtures', 'Raman', _load_mineral_mixes,
-                 os.path.join(raman_dir, 'mineral_mixtures.hdf5'))
-  WebTrajDataset('Synthetic Pyroxenes', 'Raman', _load_synth_pyrox,
-                 os.path.join(raman_dir, 'synth_pyroxenes.npz'))
-  WebTrajDataset('Silicate Glass', 'XAS', _load_silicate_glass,
-                 os.path.join(xray_dir, 'glass_full_noSA.npz'))
-  WebTrajDataset('Silicate Glass (SA-corrected)', 'XAS', _load_silicate_glass,
-                 os.path.join(xray_dir, 'glass_full_withSA.npz'))
-  WebVectorDataset('USDA', 'FTIR', _load_usda,
-                   os.path.join(ftir_dir, 'usda_soil.npz'))
-  WebVectorDataset('Amphibole', 'XAS', _load_amphibole,
-                   os.path.join(xray_dir, 'amphiboleFe3.npz'))
-  WebVectorDataset('Garnet', 'XAS', _load_garnet,
-                   os.path.join(xray_dir, 'garnetFe3.npz'))
-  WebVectorDataset('Corn', 'NIR', _load_corn,
-                   os.path.join(ftir_dir, 'corn.hdf5'))
-
-  if not public:
-    mars_preds_dir = os.path.join(os.path.dirname(msl_ccs_dir),
-                                  'models_predictions')
-    WebLIBSDataset('Mars (big)', _load_mars_big, msl_ccs_dir,
-                   os.path.join(mars_preds_dir,'msl_model_mars_preds.npz'),
-                   os.path.join(mars_preds_dir,'mixed_model_mars_preds.npz'),
-                   os.path.join(mars_preds_dir,'moc_model_mars_preds.npz'),
-                   os.path.join(mars_preds_dir,'dust_classifier_mars_preds.npz')
-                   ).is_public = False
-
-    WebLIBSDataset('MHC multipower (no BLR)', _load_mhc_multipower,
-                   os.path.join(libs_dir, 'mhc_multi_power.hdf5'), False
-                   ).is_public = False
-    WebLIBSDataset('MHC multipower', _load_mhc_multipower,
-                   os.path.join(libs_dir, 'mhc_multi_power.hdf5'), True
-                   ).is_public = False
-
-  try:
-    bands = np.loadtxt(os.path.join(libs_dir, 'prepro_wavelengths.csv'))
-    raw_bands = np.loadtxt(os.path.join(libs_dir, 'raw_wavelengths.csv'))
-  except IOError as e:
-    logging.warning('Failed to load LIBS wavelength data!')
-    logging.warning(str(e))
-    return  # The rest depend on band info, so bail out now.
-
-  WebLIBSDataset('LANL New', _load_new_lanl,
-                 os.path.join(mars_dir, 'new_lanl.hdf5'), bands)
-  WebLIBSDataset('LANL New (raw)', _load_new_lanl_raw,
-                 os.path.join(mars_dir, 'raw_big_new_lanl.npz'), raw_bands)
-  WebLIBSDataset('LANL Cleanroom', _load_cleanroom,
-                 os.path.join(mars_dir, 'cleanroom.hdf5'), bands)
-  WebLIBSDataset('LANL New caltargets', _load_lanl_caltargets,
-                 os.path.join(mars_dir, 'new_lanl_ccct.npz'), bands)
-
-  if not public:
-    WebLIBSDataset('MHC caltargets', _load_mhc_caltargets,
-                   os.path.join(mars_dir, 'mhc_caltargets.hdf5'),
-                   bands).is_public = False
-    WebLIBSDataset('MHC Doping', _load_doped,
-                   os.path.join(libs_dir, 'doped_full.hdf5'),
-                   bands).is_public = False
-    WebLIBSDataset('MHC Doping (no BLR)', _load_doped,
-                   os.path.join(libs_dir, 'doped_processed.hdf5'),
-                   bands).is_public = False
-
-
-def _load_rruff(ds, filepath):
+def load_rruff(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -130,7 +35,7 @@ def _load_rruff(ds, filepath):
   return True
 
 
-def _load_no_metadata(ds, filepath):
+def load_no_metadata(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -138,7 +43,7 @@ def _load_no_metadata(ds, filepath):
   return True
 
 
-def _load_keys_names(ds, filepath):
+def load_keys_names(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -146,7 +51,7 @@ def _load_keys_names(ds, filepath):
   return True
 
 
-def _load_ucl(ds, filepath):
+def load_ucl(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -157,10 +62,12 @@ def _load_ucl(ds, filepath):
   return True
 
 
-def _load_new_lanl(ds, filepath, bands):
+def load_new_lanl(ds, filepath, bands):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
+  if isinstance(bands, string_types):
+    bands = np.loadtxt(bands)
   names = PrimaryKeyMetadata(data['/meta/names'])
   comp_meta = {name: NumericMetadata(arr, display_name=name) for name, arr
                in data['/composition'].items()}
@@ -169,10 +76,12 @@ def _load_new_lanl(ds, filepath, bands):
   return True
 
 
-def _load_new_lanl_raw(ds, filepath, bands):
+def load_new_lanl_raw(ds, filepath, bands):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
+  if isinstance(bands, string_types):
+    bands = np.loadtxt(bands)
   names = PrimaryKeyMetadata(data['names'])
   comp_keys = [k for k in data.files if k not in ('names', 'spectra')]
   comp_meta = {k: NumericMetadata(data[k], display_name=k) for k in comp_keys}
@@ -181,10 +90,12 @@ def _load_new_lanl_raw(ds, filepath, bands):
   return True
 
 
-def _load_cleanroom(ds, filepath, bands):
+def load_cleanroom(ds, filepath, bands):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
+  if isinstance(bands, string_types):
+    bands = np.loadtxt(bands)
   names = PrimaryKeyMetadata(data['/meta/names'])
   comp_meta = {name: NumericMetadata(arr, display_name=name) for name, arr
                in data['/composition'].items()}
@@ -193,10 +104,12 @@ def _load_cleanroom(ds, filepath, bands):
   return True
 
 
-def _load_lanl_caltargets(ds, filepath, bands):
+def load_lanl_caltargets(ds, filepath, bands):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
+  if isinstance(bands, string_types):
+    bands = np.loadtxt(bands)
 
   mineral_data = []
   mineral_names = []
@@ -210,10 +123,12 @@ def _load_lanl_caltargets(ds, filepath, bands):
   return True
 
 
-def _load_mhc_caltargets(ds, filepath, bands):
+def load_mhc_caltargets(ds, filepath, bands):
   mhc_ct = _try_load(filepath, str(ds))
   if mhc_ct is None:
     return False
+  if isinstance(bands, string_types):
+    bands = np.loadtxt(bands)
   ds.set_data(
       bands, mhc_ct['/spectra'],
       name=LookupMetadata(mhc_ct['/meta/names'], 'Mineral Name'),
@@ -223,10 +138,12 @@ def _load_mhc_caltargets(ds, filepath, bands):
   return True
 
 
-def _load_doped(ds, filepath, bands):
+def load_doped(ds, filepath, bands):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
+  if isinstance(bands, string_types):
+    bands = np.loadtxt(bands)
   comps = data['/composition']
   meta = data['/meta']
   kwargs = {
@@ -250,7 +167,7 @@ def _load_doped(ds, filepath, bands):
   return True
 
 
-def _load_mhc_multipower(ds, filepath, with_blr=False):
+def load_mhc_multipower(ds, filepath, with_blr=False):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -275,8 +192,8 @@ def _load_mhc_multipower(ds, filepath, with_blr=False):
   return True
 
 
-def _load_mars_big(ds, msl_ccs_dir, pred_file, mixed_pred_file,
-                   moc_pred_file, dust_pred_file):
+def load_mars_big(ds, msl_ccs_dir, pred_file, mixed_pred_file,
+                  moc_pred_file, dust_pred_file):
   logging.info('Loading Mars (big) LIBS data...')
   file_pattern = os.path.join(msl_ccs_dir, 'ccs.%03d.hdf5')
   meta_file = os.path.join(msl_ccs_dir, 'ccs_meta.npz')
@@ -345,7 +262,7 @@ def _load_mars_big(ds, msl_ccs_dir, pred_file, mixed_pred_file,
   return True
 
 
-def _load_irug(ds, filepath):
+def load_irug(ds, filepath):
   irug = _try_load(filepath, str(ds))
   if irug is None:
     return False
@@ -356,7 +273,7 @@ def _load_irug(ds, filepath):
   return True
 
 
-def _load_usgs(ds, filepath):
+def load_usgs(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -365,7 +282,7 @@ def _load_usgs(ds, filepath):
   return True
 
 
-def _load_usda(ds, filepath):
+def load_usda(ds, filepath):
   usda = _try_load(filepath, str(ds))
   if usda is None:
     return False
@@ -383,7 +300,7 @@ def _load_usda(ds, filepath):
   return True
 
 
-def _load_dyar96(ds, filepath):
+def load_dyar96(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -395,7 +312,7 @@ def _load_dyar96(ds, filepath):
   return True
 
 
-def _load_mineral_mixes(ds, filepath):
+def load_mineral_mixes(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -411,7 +328,7 @@ def _load_mineral_mixes(ds, filepath):
   return True
 
 
-def _load_synth_pyrox(ds, filepath):
+def load_synth_pyrox(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -423,7 +340,7 @@ def _load_synth_pyrox(ds, filepath):
   return True
 
 
-def _load_silicate_glass(ds, filepath):
+def load_silicate_glass(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -433,7 +350,7 @@ def _load_silicate_glass(ds, filepath):
   return True
 
 
-def _load_amphibole(ds, filepath):
+def load_amphibole(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -448,7 +365,7 @@ def _load_amphibole(ds, filepath):
   return True
 
 
-def _load_garnet(ds, filepath):
+def load_garnet(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -458,7 +375,7 @@ def _load_garnet(ds, filepath):
   return True
 
 
-def _load_corn(ds, filepath):
+def load_corn(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
@@ -477,6 +394,10 @@ def _load_corn(ds, filepath):
 
 def _try_load(filepath, data_name):
   logging.info('Loading %s data...' % data_name)
+  if not os.path.exists(filepath):
+    logging.warning('Data file for %s not found.' % data_name)
+    return None
+
   load_fn = (np.load if filepath.endswith('.npz') else
              lambda f: h5py.File(f, mode='r'))
   try:

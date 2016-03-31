@@ -20,6 +20,7 @@ Or simply run it directly, and handle the details yourself:
  * `matplotlib >= 1.4.0` (which is higher than the minimum for superman)
  * `tornado`
  * `h5py`
+ * `pyyaml`
 
 
 ### Testing
