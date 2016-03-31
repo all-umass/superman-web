@@ -86,10 +86,10 @@ LIBS:
     public: false
     files:
       - /srv/nfs/common/msl_data/ccs_data
-      - /srv/nfs/common/msl_data/ccs_data/models_predictions/msl_model_mars_preds.npz
-      - /srv/nfs/common/msl_data/ccs_data/models_predictions/mixed_model_mars_preds.npz
-      - /srv/nfs/common/msl_data/ccs_data/models_predictions/moc_model_mars_preds.npz
-      - /srv/nfs/common/msl_data/ccs_data/models_predictions/dust_classifier_mars_preds.npz
+      - /srv/nfs/common/msl_data/models_predictions/msl_model_mars_preds.npz
+      - /srv/nfs/common/msl_data/models_predictions/mixed_model_mars_preds.npz
+      - /srv/nfs/common/msl_data/models_predictions/moc_model_mars_preds.npz
+      - /srv/nfs/common/msl_data/models_predictions/dust_classifier_mars_preds.npz
   MHC multipower (no BLR):
     loader: load_mhc_multipower
     vector: true
