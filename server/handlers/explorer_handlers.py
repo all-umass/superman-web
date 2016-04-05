@@ -71,6 +71,13 @@ class FilterPlotHandler(BaseHandler):
         line_names.extend(list(map(_sanitize_csv, names)))
     meta_data = [line_names]
 
+    # make a dataset column, if there are multiple datasets
+    if len(all_ds_views) > 1:
+      header.append('Dataset')
+      ds_names = map(str, all_ds)
+      counts = [np.count_nonzero(dv.mask) for dv in all_ds_views]
+      meta_data.append(np.repeat(ds_names, counts))
+
     # collect the requested meta info
     for meta_key in self.get_arguments('meta_keys[]'):
       data = []
@@ -287,15 +294,7 @@ def _get_axis_data(all_ds_views, axis):
   if axis.type == 'default':
     data = axis.argument
   elif axis.type == 'metadata':
-    data = []
-    for dv in all_ds_views:
-      x, label = dv.get_metadata(axis.argument)
-      data.append(x)
-    data = np.concatenate(data)
-    if not np.issubdtype(data.dtype, np.number):
-      # Categorical case
-      tick_names, data = np.unique(data, return_inverse=True)
-    label = label.decode('utf8', 'ignore')
+    data, label, tick_names = _get_all_metadata(all_ds_views, axis.argument)
   elif axis.type == 'line_ratio':
     data, label = _compute_line_ratios(all_ds_views, axis.argument)
   elif axis.type == 'cardinal':
@@ -310,6 +309,29 @@ def _get_axis_data(all_ds_views, axis):
     if all(dv.ds.pkey is not None for dv in all_ds_views):
       tick_names = np.concatenate([dv.ds.pkey.index2key(dv.mask)
                                    for dv in all_ds_views])
+  return data, label, tick_names
+
+
+def _get_all_metadata(all_ds_views, meta_key):
+  # semi-hack: this is hard-coded for the "color-by-dataset" case
+  if meta_key == '_ds':
+    tick_names = [dv.ds.name for dv in all_ds_views]
+    counts = [np.count_nonzero(dv.mask) for dv in all_ds_views]
+    data = np.repeat(np.arange(len(counts)), counts)
+    label = 'Dataset'
+    return data, 'Dataset', tick_names
+  # normal metadata lookup
+  data = []
+  for dv in all_ds_views:
+    x, label = dv.get_metadata(axis.argument)
+    data.append(x)
+  data = np.concatenate(data)
+  if not np.issubdtype(data.dtype, np.number):
+    # Categorical case
+    tick_names, data = np.unique(data, return_inverse=True)
+  else:
+    tick_names = None
+  label = label.decode('utf8', 'ignore')
   return data, label, tick_names
 
 

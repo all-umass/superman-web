@@ -52,11 +52,15 @@ class DatasetFiltererHandler(DatasetHandler):
 class DatasetPlotOptionsHandler(DatasetHandler):
   def post(self):
     all_ds = self.get_all_ds()
-    is_libs = any(ds.kind == 'LIBS' for ds in all_ds)
-    meta_names = set.intersection(*[set(ds.metadata_names()) for ds in all_ds])
     logging.info('Generating plot options HTML for: %s', map(str, all_ds))
+    is_libs = any(ds.kind == 'LIBS' for ds in all_ds)
+    meta_names = sorted(set.intersection(*[set(ds.metadata_names())
+                                           for ds in all_ds]))
+    if len(all_ds) > 1:
+      # Allow coloring by dataset origin in multi-ds case
+      meta_names.append(('_ds', 'Dataset'))
     return self.render('_plot_options_table.html', is_libs=is_libs,
-                       metadata_names=sorted(meta_names))
+                       metadata_names=meta_names)
 
 
 routes = [

@@ -83,7 +83,9 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
 </td><td>
   <select id='dl_metadata' data-placeholder='with metadata' multiple>
   {% for key,name in metadata_names %}
-    <option value="{{key}}">{{name}}</option>
+    {% if key != '_ds' %}
+      <option value="{{key}}">{{name}}</option>
+    {% end %}
   {% end %}
   </select>
 </td>
