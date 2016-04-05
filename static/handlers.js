@@ -101,17 +101,15 @@ function load_ds_filters(info, cb) {
   $('#ds_plot_options_container').load('/_dataset_plot_options', post_data,
                                        got_response);
 }
-function do_filter() {
-  $('#filter_button').prop('disabled', true);
-  $('#filter_button>.ing').text("ing...").fadeIn();
-  var post_data = collect_filter_params();
-  post_data['ds_name'] = ds_name;
-  post_data['ds_kind'] = ds_kind;
+function do_filter(filter_element, post_data) {
+  var elt = $(filter_element);
+  elt.prop('disabled', true);
+  elt.children('.ing').text("ing...").fadeIn();
   post_data['fignum'] = fig.id;
 
   $.post('_filter', post_data, function(data, status) {
-    $('#filter_button>.ing').text("ing... "+status).delay(2000).fadeOut();
-    $('#filter_button').prop('disabled', false);
+    elt.children('.ing').text("ing... "+status).delay(2000).fadeOut();
+    elt.prop('disabled', false);
     if (status === 'success') {
       var num_spectra = parseInt(data);
       if (num_spectra <= 99999) {

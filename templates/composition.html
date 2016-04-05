@@ -44,13 +44,6 @@ function plot_compositions() {
 function download_data() {
   window.open('/'+fig.id+'/compositions.csv', '_blank');
 }
-function collect_filter_params(){
-  return {
-  {% for name, js in collect_js %}
-    {{name}}: JSON.stringify({% raw js %}),
-  {% end %}
-  };
-}
 $(document).ready(function(){
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
   // Initialize filters
@@ -110,7 +103,13 @@ $(document).ready(function(){
 {% end %}
   <tr>
     <td colspan="{{num_cols}}">
-      <button onclick="do_filter();">Filter</button>
+      <button onclick='do_filter(this, {
+        {% for name, js in collect_js %}
+          {{name}}: JSON.stringify({% raw js %}),
+        {% end %}
+        ds_name: {{ds.name}},
+        ds_kind: {{ds.kind}} } );'>
+        Filter<span class='ing'></span></button>
     </td>
   </tr>
 </table>

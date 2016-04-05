@@ -9,7 +9,12 @@
 {% end %}
   <tr>
     <td colspan="{{num_cols}}">
-      <button id="filter_button" onclick="do_filter();">
+      <button onclick='do_filter(this, {
+        {% for name, js in collect_js %}
+          {{name}}: JSON.stringify({% raw js %}),
+        {% end %}
+        ds_name: {{ds.name}},
+        ds_kind: {{ds.kind}} } );'>
         Filter<span class='ing'></span>
       </button>
     </td>
@@ -21,12 +26,4 @@
 {% for js in init_js %}
   {% raw js %}
 {% end %}
-
-function collect_filter_params(){
-  return {
-  {% for name, js in collect_js %}
-    {{name}}: JSON.stringify({% raw js %}),
-  {% end %}
-  };
-}
 </script>
