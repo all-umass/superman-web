@@ -11,6 +11,48 @@ from server.web_datasets import (
 )
 
 
+def _generic_traj_loader(*meta_mapping):
+  def _load(ds, filepath):
+    data = _try_load(filepath, str(ds))
+    if data is None:
+      return False
+    meta = data['/meta']
+    kwargs = {}
+    for key, cls, display_name in meta_mapping:
+      kwargs[key] = cls(meta[key], display_name)
+    ds.set_data(meta['pkey'], data['/spectra'], **kwargs)
+    return True
+  return _load
+
+load_no_meta = _generic_traj_loader()
+load_names = _generic_traj_loader(('names', LookupMetadata, 'Name'))
+load_usgs = _generic_traj_loader(('ids', LookupMetadata, 'Sample ID'))
+load_ucl = _generic_traj_loader(
+    ('color', LookupMetadata, 'Color'),
+    ('power', LookupMetadata, 'Laser Power'),
+    ('wavelength', LookupMetadata, 'Laser Frequency'))
+load_irug = _generic_traj_loader(
+    ('ids', LookupMetadata, 'ID'),
+    ('names', LookupMetadata, 'Name'),
+    ('materials', LookupMetadata, 'Material'))
+load_synth_pyrox = _generic_traj_loader(
+    ('mineral', LookupMetadata, 'Mineral'),
+    ('formula', LookupMetadata, 'Formula'),
+    ('dana', LookupMetadata, 'Dana Number'),
+    ('source', LookupMetadata, 'Source'))
+load_dyar96 = _generic_traj_loader(
+    ('laser', LookupMetadata, 'Laser Type'),
+    ('id', LookupMetadata, 'ID'),
+    ('mineral', LookupMetadata, 'Mineral'))
+load_mineral_mixes = _generic_traj_loader(
+    ('sample', LookupMetadata, 'Sample ID'),
+    ('laser', LookupMetadata, 'Laser Type'),
+    ('mineral_1', LookupMetadata, 'Mineral A'),
+    ('mineral_2', LookupMetadata, 'Mineral B'),
+    ('ratio', LookupMetadata, 'Mix Ratio (A:B)'),
+    ('grain_size', LookupMetadata, 'Grain Size (µm)'))
+
+
 def load_rruff(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
@@ -29,33 +71,6 @@ def load_rruff(ds, filepath):
   if 'dana' in meta:
     metadata['dana'] = LookupMetadata(meta['dana/species'], 'Dana Number')
   ds.set_data(names, data['/spectra'], **metadata)
-  return True
-
-
-def load_no_metadata(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  ds.set_data(data['names'], data)
-  return True
-
-
-def load_keys_names(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  ds.set_data(data['keys'], data, Name=LookupMetadata(data['names']))
-  return True
-
-
-def load_ucl(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  ds.set_data(data['name'], data,
-              Color=LookupMetadata(data['color']),
-              power=LookupMetadata(data['power'], 'Laser Power'),
-              wave=LookupMetadata(data['wavelength'], 'Laser Frequency'))
   return True
 
 
@@ -218,26 +233,6 @@ def load_mars_big(ds, msl_ccs_dir, pred_file, mixed_pred_file,
   return True
 
 
-def load_irug(ds, filepath):
-  irug = _try_load(filepath, str(ds))
-  if irug is None:
-    return False
-  ds.set_data(irug['keys'], irug,
-              IDs=LookupMetadata(irug['ids']),
-              Names=LookupMetadata(irug['names']),
-              Materials=LookupMetadata(irug['materials']))
-  return True
-
-
-def load_usgs(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  ds.set_data(data['names'], data,
-              ids=LookupMetadata(data['sample_ids'], 'Sample IDs'))
-  return True
-
-
 def load_usda(ds, filepath):
   usda = _try_load(filepath, str(ds))
   if usda is None:
@@ -253,46 +248,6 @@ def load_usda(ds, filepath):
   ds.set_data(bands, usda['data'], pkey=PrimaryKeyMetadata(filenames),
               key=LookupMetadata(keys, 'Natural Key'),
               Composition=CompositionMetadata(comp_meta))
-  return True
-
-
-def load_dyar96(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  meta = data['/meta']
-  ds.set_data(meta['pkey'], data['/spectra'],
-              laser=LookupMetadata(meta['laser'], 'Laser Type'),
-              ID=LookupMetadata(meta['id']),
-              Mineral=LookupMetadata(meta['mineral']))
-  return True
-
-
-def load_mineral_mixes(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  spectra = data['/spectra']
-  meta = data['/meta']
-  ds.set_data(meta['pkey'], spectra,
-              sample=LookupMetadata(meta['sample'], 'Sample ID'),
-              laser=LookupMetadata(meta['laser'], 'Laser Type'),
-              minA=LookupMetadata(meta['mineral_1'], 'Mineral A'),
-              minB=LookupMetadata(meta['mineral_2'], 'Mineral B'),
-              ratio=LookupMetadata(meta['ratio'], 'Mix Ratio (A:B)'),
-              grainsize=LookupMetadata(meta['grain_size'], 'Grain Size (µm)'))
-  return True
-
-
-def load_synth_pyrox(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  ds.set_data(data['pkey'], data,
-              Mineral=LookupMetadata(data['mineral']),
-              Formula=LookupMetadata(data['formula']),
-              dana=LookupMetadata(data['dana'], 'Dana Number'),
-              Source=LookupMetadata(data['source']))
   return True
 
 

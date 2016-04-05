@@ -16,19 +16,19 @@ Raman:
     file: /srv/nfs/common/spectra/Raman/rruff-spectra-raw.hdf5
   IRUG:
     loader: load_irug
-    file: /srv/nfs/common/spectra/Raman/irug.npz
+    file: /srv/nfs/common/spectra/Raman/IRUG.hdf5
   Parma:
-    loader: load_no_metadata
-    file: /srv/nfs/common/spectra/Raman/parma.npz
+    loader: load_no_meta
+    file: /srv/nfs/common/spectra/Raman/parma.hdf5
   Lyon (LST):
-    loader: load_keys_names
-    file: /srv/nfs/common/spectra/Raman/LST.npz
+    loader: load_names
+    file: /srv/nfs/common/spectra/Raman/LST.hdf5
   RDRS:
-    loader: load_keys_names
-    file: /srv/nfs/common/spectra/Raman/RDRS.npz
+    loader: load_names
+    file: /srv/nfs/common/spectra/Raman/RDRS.hdf5
   UCL:
     loader: load_ucl
-    file: /srv/nfs/common/spectra/Raman/UCL.npz
+    file: /srv/nfs/common/spectra/Raman/UCL.hdf5
   Dyar 96:
     loader: load_dyar96
     file: /srv/nfs/common/spectra/Raman/dyar96.hdf5
@@ -37,7 +37,7 @@ Raman:
     file: /srv/nfs/common/spectra/Raman/mineral_mixtures.hdf5
   Synthetic Pyroxenes:
     loader: load_synth_pyrox
-    file: /srv/nfs/common/spectra/Raman/synth_pyroxenes.npz
+    file: /srv/nfs/common/spectra/Raman/synth_pyroxenes.hdf5
 FTIR:
   RRUFF:
     loader: load_rruff
@@ -47,7 +47,7 @@ FTIR:
     file: /srv/nfs/common/spectra/FTIR/irug.npz
   USGS:
     loader: load_usgs
-    file: /srv/nfs/common/spectra/FTIR/USGS.npz
+    file: /srv/nfs/common/spectra/FTIR/USGS.hdf5
   USDA:
     loader: load_usda
     vector: true
