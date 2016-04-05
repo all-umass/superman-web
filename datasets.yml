@@ -10,75 +10,75 @@
 Raman:
   RRUFF:
     loader: load_rruff
-    file: ../darby_projects/raman/data/rruff-spectra.hdf5
+    file: /srv/nfs/common/spectra/Raman/rruff-spectra.hdf5
   RRUFF (raw):
     loader: load_rruff
-    file: ../darby_projects/raman/data/rruff-spectra-raw.hdf5
+    file: /srv/nfs/common/spectra/Raman/rruff-spectra-raw.hdf5
   IRUG:
     loader: load_irug
-    file: ../darby_projects/raman/data/irug.npz
+    file: /srv/nfs/common/spectra/Raman/irug.npz
   Parma:
     loader: load_no_metadata
-    file: ../darby_projects/raman/data/parma.npz
+    file: /srv/nfs/common/spectra/Raman/parma.npz
   Lyon (LST):
     loader: load_keys_names
-    file: ../darby_projects/raman/data/LST.npz
+    file: /srv/nfs/common/spectra/Raman/LST.npz
   RDRS:
     loader: load_keys_names
-    file: ../darby_projects/raman/data/RDRS.npz
+    file: /srv/nfs/common/spectra/Raman/RDRS.npz
   UCL:
     loader: load_ucl
-    file: ../darby_projects/raman/data/UCL.npz
+    file: /srv/nfs/common/spectra/Raman/UCL.npz
   Dyar 96:
     loader: load_dyar96
-    file: ../darby_projects/raman/data/dyar96.hdf5
+    file: /srv/nfs/common/spectra/Raman/dyar96.hdf5
   Mineral Mixtures:
     loader: load_mineral_mixes
-    file: ../darby_projects/raman/data/mineral_mixtures.hdf5
+    file: /srv/nfs/common/spectra/Raman/mineral_mixtures.hdf5
   Synthetic Pyroxenes:
     loader: load_synth_pyrox
-    file: ../darby_projects/raman/data/synth_pyroxenes.npz
+    file: /srv/nfs/common/spectra/Raman/synth_pyroxenes.npz
 FTIR:
   RRUFF:
     loader: load_rruff
-    file: ../darby_projects/ftir/data/rruff-spectra.hdf5
+    file: /srv/nfs/common/spectra/FTIR/rruff-spectra.hdf5
   IRUG:
     loader: load_irug
-    file: ../darby_projects/ftir/data/irug.npz
+    file: /srv/nfs/common/spectra/FTIR/irug.npz
   USGS:
     loader: load_usgs
-    file: ../darby_projects/ftir/data/USGS.npz
+    file: /srv/nfs/common/spectra/FTIR/USGS.npz
   USDA:
     loader: load_usda
     vector: true
-    file: ../darby_projects/ftir/data/usda_soil.npz
+    file: /srv/nfs/common/spectra/FTIR/USDA/soil.npz
 NIR:
   Corn:
     loader: load_corn
     vector: true
-    file: ../darby_projects/ftir/data/corn.hdf5
+    file: /srv/nfs/common/spectra/misc/corn.hdf5
 XRD:
   RRUFF:
     loader: load_rruff
-    file: ../darby_projects/xray/data/rruff-spectra.hdf5
+    file: /srv/nfs/common/spectra/misc/rruff-xrd.hdf5
   RRUFF (raw):
     loader: load_rruff
-    file: ../darby_projects/xray/data/rruff-spectra-raw.hdf5
+    file: /srv/nfs/common/spectra/misc/rruff-xrd-raw.hdf5
 XAS:
   Silicate Glass:
     loader: load_silicate_glass
-    file: ../darby_projects/xray/data/glass_full_noSA.npz
+    file: /srv/nfs/common/spectra/misc/glass_full_noSA.npz
   Silicate Glass (SA-corrected):
     loader: load_silicate_glass
-    file: ../darby_projects/xray/data/glass_full_withSA.npz
+    file: /srv/nfs/common/spectra/misc/glass_full_withSA.npz
   Amphibole:
     loader: load_amphibole
     vector: true
-    file: ../darby_projects/xray/data/amphiboleFe3.npz
+    file: /srv/nfs/common/spectra/misc/amphiboleFe3.npz
   Garnet:
     loader: load_garnet
     vector: true
-    file: ../darby_projects/xray/data/garnetFe3.npz
+    file: /srv/nfs/common/spectra/misc/garnetFe3.npz
 LIBS:
   Mars (big):
     loader: load_mars_big
@@ -95,57 +95,43 @@ LIBS:
     vector: true
     public: false
     files:
-      - ../darby_projects/libs/data/mhc_multi_power.hdf5
+      - /srv/nfs/common/spectra/LIBS/mhc_multi_power.hdf5
       - false
   MHC multipower:
     loader: load_mhc_multipower
     vector: true
     public: false
     files:
-      - ../darby_projects/libs/data/mhc_multi_power.hdf5
+      - /srv/nfs/common/spectra/LIBS/mhc_multi_power.hdf5
       - true
   LANL New:
-    loader: load_new_lanl
+    loader: load_lanl_generic
     vector: true
-    files:
-      - ../darby_projects/mars/data/new_lanl.hdf5
-      - ../darby_projects/libs/data/prepro_wavelengths.csv
+    file: /srv/nfs/common/spectra/LIBS/lanl_new.hdf5
   LANL New (raw):
-    loader: load_new_lanl_raw
+    loader: load_lanl_generic
     vector: true
-    files:
-      - ../darby_projects/mars/data/raw_big_new_lanl.hdf5
-      - ../darby_projects/libs/data/raw_wavelengths.csv
+    file: /srv/nfs/common/spectra/LIBS/lanl_new_raw.hdf5
   LANL Cleanroom:
-    loader: load_cleanroom
+    loader: load_lanl_generic
     vector: true
-    files:
-      - ../darby_projects/mars/data/cleanroom.hdf5
-      - ../darby_projects/libs/data/prepro_wavelengths.csv
+    file: /srv/nfs/common/spectra/LIBS/lanl_cleanroom.hdf5
   LANL New caltargets:
     loader: load_lanl_caltargets
     vector: true
-    files:
-      - ../darby_projects/mars/data/new_lanl_ccct.npz
-      - ../darby_projects/libs/data/prepro_wavelengths.csv
+    file: /srv/nfs/common/spectra/LIBS/lanl_caltargets.hdf5
   MHC caltargets:
     loader: load_mhc_caltargets
     vector: true
     public: false
-    files:
-      - ../darby_projects/mars/data/mhc_caltargets.hdf5
-      - ../darby_projects/libs/data/prepro_wavelengths.csv
+    file: /srv/nfs/common/spectra/LIBS/mhc_caltargets.hdf5
   MHC Doping:
     loader: load_doped
     vector: true
     public: false
-    files:
-      - ../darby_projects/libs/data/doped_full.hdf5
-      - ../darby_projects/libs/data/prepro_wavelengths.csv
+    file: /srv/nfs/common/spectra/LIBS/doped_full.hdf5
   MHC Doping (no BLR):
     loader: load_doped
     vector: true
     public: false
-    files:
-      - ../darby_projects/libs/data/doped_processed.hdf5
-      - ../darby_projects/libs/data/prepro_wavelengths.csv
+    file: /srv/nfs/common/spectra/LIBS/doped_processed.hdf5

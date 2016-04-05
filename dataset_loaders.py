@@ -3,7 +3,6 @@ import h5py
 import logging
 import numpy as np
 import os.path
-from six import string_types
 from six.moves import xrange
 
 from server.web_datasets import (
@@ -28,9 +27,7 @@ def load_rruff(ds, filepath):
   if 'laser' in meta:
     metadata['lasers'] = LookupMetadata(meta['laser'], 'Laser')
   if 'dana' in meta:
-    metadata['danaC'] = LookupMetadata(meta['dana/class'], 'Dana Class')
-    metadata['danaT'] = LookupMetadata(meta['dana/type'], 'Dana Type')
-    metadata['danaG'] = LookupMetadata(meta['dana/group'], 'Dana Group')
+    metadata['dana'] = LookupMetadata(meta['dana/species'], 'Dana Number')
   ds.set_data(names, data['/spectra'], **metadata)
   return True
 
@@ -62,88 +59,47 @@ def load_ucl(ds, filepath):
   return True
 
 
-def load_new_lanl(ds, filepath, bands):
+def load_lanl_generic(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
-  if isinstance(bands, string_types):
-    bands = np.loadtxt(bands)
-  names = PrimaryKeyMetadata(data['/meta/names'])
+
   comp_meta = {name: NumericMetadata(arr, display_name=name) for name, arr
                in data['/composition'].items()}
-  ds.set_data(bands, data['/spectra'], pkey=names,
+  ds.set_data(data['/meta/waves'], data['/spectra'],
+              pkey=PrimaryKeyMetadata(data['/meta/names']),
               Composition=CompositionMetadata(comp_meta))
   return True
 
 
-def load_new_lanl_raw(ds, filepath, bands):
+def load_lanl_caltargets(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
-  if isinstance(bands, string_types):
-    bands = np.loadtxt(bands)
-  names = PrimaryKeyMetadata(data['names'])
-  comp_keys = [k for k in data.files if k not in ('names', 'spectra')]
-  comp_meta = {k: NumericMetadata(data[k], display_name=k) for k in comp_keys}
-  ds.set_data(bands, data['spectra'], pkey=names,
-              Composition=CompositionMetadata(comp_meta))
+
+  ds.set_data(data['/meta/waves'], data['/spectra'],
+              names=LookupMetadata(data['/meta/targets'], 'Target Names'))
   return True
 
 
-def load_cleanroom(ds, filepath, bands):
+def load_mhc_caltargets(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
-  if isinstance(bands, string_types):
-    bands = np.loadtxt(bands)
-  names = PrimaryKeyMetadata(data['/meta/names'])
-  comp_meta = {name: NumericMetadata(arr, display_name=name) for name, arr
-               in data['/composition'].items()}
-  ds.set_data(bands, data['/spectra'], pkey=names,
-              Composition=CompositionMetadata(comp_meta))
+  meta = data['meta']
+  ds.set_data(meta['waves'], data['/spectra'],
+              name=LookupMetadata(meta['names'], 'Mineral Name'),
+              laser=LookupMetadata(meta['powers'], 'Laser Power'),
+              time=LookupMetadata(meta['integration_times'],
+                                  'Integration Time'))
   return True
 
 
-def load_lanl_caltargets(ds, filepath, bands):
+def load_doped(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
-  if isinstance(bands, string_types):
-    bands = np.loadtxt(bands)
 
-  mineral_data = []
-  mineral_names = []
-  for mineral in data.files:
-    d = data[mineral]
-    mineral_data.append(d)
-    mineral_names.extend([mineral] * d.shape[0])
-  mineral_data = np.vstack(mineral_data)
-  ds.set_data(bands, mineral_data,
-              names=LookupMetadata(mineral_names, 'Target Names'))
-  return True
-
-
-def load_mhc_caltargets(ds, filepath, bands):
-  mhc_ct = _try_load(filepath, str(ds))
-  if mhc_ct is None:
-    return False
-  if isinstance(bands, string_types):
-    bands = np.loadtxt(bands)
-  ds.set_data(
-      bands, mhc_ct['/spectra'],
-      name=LookupMetadata(mhc_ct['/meta/names'], 'Mineral Name'),
-      laser=LookupMetadata(mhc_ct['/meta/powers'], 'Laser Power'),
-      time=LookupMetadata(mhc_ct['/meta/integration_times'],
-                          'Integration Time'))
-  return True
-
-
-def load_doped(ds, filepath, bands):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  if isinstance(bands, string_types):
-    bands = np.loadtxt(bands)
   comps = data['/composition']
   meta = data['/meta']
   kwargs = {
@@ -153,6 +109,7 @@ def load_doped(ds, filepath, bands):
       'comp': CompositionMetadata({k: NumericMetadata(comps[k], display_name=k)
                                    for k in comps.keys()}, 'Compositions'),
   }
+  # The doped_full dataset has some extra metadata
   if 'pkey' in meta:
     kwargs['pkey'] = PrimaryKeyMetadata(meta['pkey'])
   if 'target' in meta:
@@ -161,9 +118,8 @@ def load_doped(ds, filepath, bands):
     kwargs['conc'] = LookupMetadata(meta['concentration'], 'Concentration')
   if 'dopant' in meta:
     kwargs['dopant'] = LookupMetadata(meta['dopant'], 'Dopant')
-  if 'waves' in meta:
-    bands = meta['waves']
-  ds.set_data(bands, data['/spectra'], **kwargs)
+
+  ds.set_data(meta['waves'], data['/spectra'], **kwargs)
   return True
 
 
