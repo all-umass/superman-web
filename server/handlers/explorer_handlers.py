@@ -33,6 +33,11 @@ PlotData = namedtuple('PlotData', ('trajs', 'xlabel', 'ylabel', 'xticks',
 
 
 class FilterPlotHandler(BaseHandler):
+  def get_all_ds(self):
+    return filter(None, [self.get_dataset(k, n) for k, n in
+                         zip(self.get_arguments('ds_kind[]'),
+                             self.get_arguments('ds_name[]'))])
+
   def get(self, fignum):
     '''Downloads plot data as text.'''
     fig_data = self.get_fig_data(int(fignum))
@@ -41,34 +46,39 @@ class FilterPlotHandler(BaseHandler):
       return
     if fig_data.explorer_data is None:
       self.write('No plotted data to download.')
+      return
 
     lines = fig_data.explorer_data.trajs
     ax = fig_data.figure.gca()
     xlabel = _sanitize_csv(ax.get_xlabel()) or 'x'
     ylabel = _sanitize_csv(ax.get_ylabel()) or 'y'
 
-    ds = self.get_dataset(self.get_argument('ds_kind'),
-                          self.get_argument('ds_name'))
-    ds_view = ds.view(mask=fig_data.filter_mask)
+    all_ds = self.get_all_ds()
+    if not all_ds:
+      self.write('No datasets selected.')
+      return
+    all_ds_views = [ds.view(mask=fig_data.filter_mask[ds]) for ds in all_ds]
 
-    # make the UID column
+    # make the UID (line names) column
     header = ['UID']
-    if ds.pkey is None:
-      meta_data = [['_line%d' % i for i in xrange(len(lines))]]
-    else:
-      names = ds.pkey.index2key(fig_data.filter_mask)
-      meta_data = [list(map(_sanitize_csv, names))]
+    line_names = []
+    for ds, dv in zip(all_ds, all_ds_views):
+      if ds.pkey is None:
+        n = np.count_nonzero(dv.mask)
+        line_names.extend(['_line%d' % i for i in xrange(n)])
+      else:
+        names = ds.pkey.index2key(dv.mask)
+        line_names.extend(list(map(_sanitize_csv, names)))
+    meta_data = [line_names]
 
     # collect the requested meta info
-    meta_keys = filter(None, self.get_argument('meta_keys').split(','))
-    for meta_key in meta_keys:
-      try:
-        data, label = ds_view.get_metadata(meta_key)
-      except KeyError:
-        logging.warn('Invalid meta_key: %r', meta_key)
-        continue
+    for meta_key in self.get_arguments('meta_keys[]'):
+      data = []
+      for dv in all_ds_views:
+        x, label = ds_view.get_metadata(meta_key)
+        data.append(x)
       header.append(label)
-      meta_data.append(data)
+      meta_data.append(np.concatenate(data))
 
     # set up for writing the response file
     fname = os.path.basename(self.request.path)
@@ -89,25 +99,27 @@ class FilterPlotHandler(BaseHandler):
 
   def post(self):
     fig_data = self.get_fig_data()
-    ds = self.get_dataset(self.get_argument('ds_kind'),
-                          self.get_argument('ds_name'))
-    if fig_data is None or ds is None:
-      return
+    all_ds = self.get_all_ds()
 
-    mask = fig_data.filter_mask
-    num_spectra = np.count_nonzero(mask)
+    if fig_data is None or not all_ds:
+      logging.warning('No data: %s, %s', fig_data, all_ds)
+      return self.write('{}')
+
+    num_spectra = sum(np.count_nonzero(fig_data.filter_mask[ds])
+                      for ds in all_ds)
 
     logging.info('FilterPlot request for %d spectra', num_spectra)
     if not 0 < num_spectra <= 99999:
       logging.warning('Data not plottable, %d spectra chosen', num_spectra)
-      return
+      return self.write('{}')
 
     # set up the dataset view object
     bl_obj, segmented, lb, ub, params = setup_blr_object(self)
     chan_mask = bool(int(self.get_argument('chan_mask', 0)))
-    ds_view = ds.view(mask=mask, pp=self.get_argument('pp', ''),
-                      blr_obj=bl_obj, blr_segmented=segmented,
-                      crop=(lb, ub), chan_mask=chan_mask)
+    trans = dict(pp=self.get_argument('pp', ''), blr_obj=bl_obj,
+                 blr_segmented=segmented, crop=(lb, ub), chan_mask=chan_mask)
+    all_ds_views = [ds.view(mask=fig_data.filter_mask[ds], **trans)
+                    for ds in all_ds]
 
     # check to see if anything changed since the last view we had
     view_keys = ['chan_mask', 'pp', 'blr_method', 'blr_segmented',
@@ -132,7 +144,7 @@ class FilterPlotHandler(BaseHandler):
 
     # get the plot data (trajs or scatter points), possibly cached
     if xaxis != fig_data.explorer_xaxis or yaxis != fig_data.explorer_yaxis:
-      plot_data = _get_plot_data(ds_view, xaxis, yaxis)
+      plot_data = _get_plot_data(all_ds_views, xaxis, yaxis)
       if plot_data is None:
         logging.error('Invalid axis combo: %s vs %s', xaxis, yaxis)
         self.set_status(400)  # bad request
@@ -145,7 +157,7 @@ class FilterPlotHandler(BaseHandler):
 
     # get the color data, possibly cached
     if caxis != fig_data.explorer_caxis:
-      color_data = _get_color_data(ds_view, caxis)
+      color_data = _get_color_data(all_ds_views, caxis)
       fig_data.explorer_caxis = caxis
       fig_data.explorer_color = color_data
     else:
@@ -197,24 +209,27 @@ class FilterPlotHandler(BaseHandler):
     return AxisInfo(type=ctype, argument=argument)
 
 
-def _get_plot_data(ds_view, xaxis, yaxis):
+def _get_plot_data(all_ds_views, xaxis, yaxis):
   logging.info('Getting new plot data: %s, %s', xaxis, yaxis)
   if xaxis.type == 'default' and yaxis.type == 'default':
-    return PlotData(trajs=ds_view.get_trajectories(),
-                    xlabel=ds_view.ds.x_axis_units(),
-                    ylabel='Intensity', xticks=None, yticks=None, scatter=False)
+    trajs, xlabels = [], set()
+    for dv in all_ds_views:
+      trajs.extend(dv.get_trajectories())
+      xlabels.add(dv.ds.x_axis_units())
+    return PlotData(trajs=trajs, xlabel=' & '.join(xlabels), ylabel='Intensity',
+                    xticks=None, yticks=None, scatter=False)
   # scatter
-  xdata, xlabel, xticks = _get_axis_data(ds_view, xaxis)
-  ydata, ylabel, yticks = _get_axis_data(ds_view, yaxis)
+  xdata, xlabel, xticks = _get_axis_data(all_ds_views, xaxis)
+  ydata, ylabel, yticks = _get_axis_data(all_ds_views, yaxis)
   if xdata is None or ydata is None:
     return None
   return PlotData(trajs=[np.column_stack((xdata, ydata))], xlabel=xlabel,
                   ylabel=ylabel, xticks=xticks, yticks=yticks, scatter=True)
 
 
-def _get_color_data(ds_view, caxis):
+def _get_color_data(all_ds_views, caxis):
   logging.info('Getting new color data: %s', caxis)
-  color, label, names = _get_axis_data(ds_view, caxis)
+  color, label, names = _get_axis_data(all_ds_views, caxis)
   return ColorData(color=color, label=label, names=names,
                    needs_cbar=(names is None and label is not None))
 
@@ -267,33 +282,40 @@ def _sanitize_csv(s):
   return s
 
 
-def _get_axis_data(ds_view, axis):
+def _get_axis_data(all_ds_views, axis):
   label, tick_names = None, None
   if axis.type == 'default':
     data = axis.argument
   elif axis.type == 'metadata':
-    data, label = ds_view.get_metadata(axis.argument)
+    data = []
+    for dv in all_ds_views:
+      x, label = dv.get_metadata(axis.argument)
+      data.append(x)
+    data = np.concatenate(data)
     if not np.issubdtype(data.dtype, np.number):
       # Categorical case
       tick_names, data = np.unique(data, return_inverse=True)
     label = label.decode('utf8', 'ignore')
   elif axis.type == 'line_ratio':
-    data, label = _compute_line_ratios(ds_view, axis.argument)
+    data, label = _compute_line_ratios(all_ds_views, axis.argument)
   elif axis.type == 'cardinal':
-    data = np.arange(np.count_nonzero(ds_view.mask))
+    n = sum(np.count_nonzero(dv.mask) for dv in all_ds_views)
+    data = np.arange(n)
     label = ''  # TODO: find a reasonable label for this
   elif axis.type == 'computed':
-    data, label = _compute_expr(ds_view, axis.argument)
+    data, label = _compute_expr(all_ds_views, axis.argument)
   elif axis.type == 'cycled':
     # use the default color cycle from matplotlib
     data = COLOR_CYCLE
-    if ds_view.ds.pkey is not None:
-      tick_names = ds_view.ds.pkey.index2key(ds_view.mask)
+    if all(dv.ds.pkey is not None for dv in all_ds_views):
+      tick_names = np.concatenate([dv.ds.pkey.index2key(dv.mask)
+                                   for dv in all_ds_views])
   return data, label, tick_names
 
 
-def _compute_line_ratios(ds_view, lines):
-  data = ds_view.compute_line(lines)
+def _compute_line_ratios(all_ds_views, lines):
+  # TODO: use existing plot data here, instead of recomputing it
+  data = np.concatenate([dv.compute_line(lines) for dv in all_ds_views])
   if len(lines) == 4:
     label = '(%g to %g) / (%g to %g)' % tuple(lines)
   else:
@@ -301,9 +323,11 @@ def _compute_line_ratios(ds_view, lines):
   return data, label
 
 
-def _compute_expr(ds_view, expr):
+def _compute_expr(all_ds_views, expr):
   # TODO: use existing plot data here, instead of recomputing it
-  trajs = ds_view.get_trajectories()
+  trajs = []
+  for dv in all_ds_views:
+    trajs.extend(dv.get_trajectories())
   logging.info('Compiling user expression: %r', expr)
   expr_code = compile(expr, '<string>', 'eval')
 

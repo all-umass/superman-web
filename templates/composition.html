@@ -107,8 +107,8 @@ $(document).ready(function(){
         {% for name, js in collect_js %}
           {{name}}: JSON.stringify({% raw js %}),
         {% end %}
-        ds_name: {{ds.name}},
-        ds_kind: {{ds.kind}} } );'>
+        ds_name: "{{ds.name}}",
+        ds_kind: "{{ds.kind}}" } );'>
         Filter<span class='ing'></span></button>
     </td>
   </tr>

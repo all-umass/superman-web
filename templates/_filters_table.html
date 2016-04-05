@@ -1,5 +1,5 @@
 <table class="ds_table">
-<caption>Filters</caption>
+<caption>{{str(ds)}} Filters</caption>
 {% for row in html_parts %}
   <tr>
   {% for cls, td in row %}
@@ -13,8 +13,8 @@
         {% for name, js in collect_js %}
           {{name}}: JSON.stringify({% raw js %}),
         {% end %}
-        ds_name: {{ds.name}},
-        ds_kind: {{ds.kind}} } );'>
+        ds_name: "{{ds.name}}",
+        ds_kind: "{{ds.kind}}" } );'>
         Filter<span class='ing'></span>
       </button>
     </td>

@@ -35,7 +35,7 @@ class CompositionPlotHandler(BaseHandler):
       ylabel = title + ': ' + ylabel
 
     ds = DATASETS['LIBS']['Mars (big)']
-    mask = fig_data.filter_mask
+    mask = fig_data.filter_mask[ds]
     sols = ds.metadata['sol'].get_array(mask)
     locs = ds.metadata['loc'].get_array(mask)
     shots = ds.metadata['shot'].get_array(mask)
@@ -77,7 +77,7 @@ class CompositionPlotHandler(BaseHandler):
     x_comps, x_labels = comps_with_labels(ds, x_keys, use_group_name)
     y_comps, y_labels = comps_with_labels(ds, y_keys, use_group_name)
 
-    mask = fig_data.filter_mask
+    mask = fig_data.filter_mask[ds]
 
     if x_comps and y_comps:
       x_data = sum(m.get_array(mask) for m in x_comps)

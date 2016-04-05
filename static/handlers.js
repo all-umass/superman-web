@@ -82,25 +82,6 @@ function get_dataset(info) {
     }).next().css('width', '+=15');
   });
 }
-function load_ds_filters(info, cb) {
-  if (info == '') return;
-  var parts = info.split(',');
-  var post_data = {name: parts[0], kind: parts[1]};
-  var num_responses = 0;
-  function got_response() {
-    num_responses++;
-    if (num_responses == 2) {
-      cb(ds_name, ds_kind);
-    }
-  }
-  $('#ds_filter_container').load('/_dataset_filterer', post_data, function(){
-    ds_name = parts[0];
-    ds_kind = parts[1];
-    got_response();
-  });
-  $('#ds_plot_options_container').load('/_dataset_plot_options', post_data,
-                                       got_response);
-}
 function do_filter(filter_element, post_data) {
   var elt = $(filter_element);
   elt.prop('disabled', true);
@@ -108,14 +89,13 @@ function do_filter(filter_element, post_data) {
   post_data['fignum'] = fig.id;
 
   $.post('_filter', post_data, function(data, status) {
-    elt.children('.ing').text("ing... "+status).delay(2000).fadeOut();
     elt.prop('disabled', false);
     if (status === 'success') {
       var num_spectra = parseInt(data);
       if (num_spectra <= 99999) {
         $('#plot_button').prop('disabled', false);
       }
-      $('#plot_button >.num').text(num_spectra);
+      elt.children('.ing').text(': ' + num_spectra);
     }
   }, 'json');
 }

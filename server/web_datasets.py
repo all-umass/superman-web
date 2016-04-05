@@ -54,6 +54,8 @@ class _ReloadableMixin(object):
     return 'Unknown units'
 
   def filter_ui(self, num_cols=2):
+    # get a unique string for this dataset
+    ds_key = 'ds%d' % hash(str(self))
     # Get HTML+JS for filters
     metas = sorted(self.metadata.items(), key=lambda t: (str(type(t[1])), t[0]))
     if self.pkey is not None:
@@ -61,13 +63,14 @@ class _ReloadableMixin(object):
     # Collect all the fragments
     init_js, collect_js, tds, comp_tds = [], [], [], []
     for key, m in metas:
-      ijs, cjs = _get_filter_js(m, key)
+      full_key = ds_key + '_' + key
+      ijs, cjs = _get_filter_js(m, full_key)
       init_js.append(ijs)
       collect_js.append((key, cjs))
       if isinstance(m, CompositionMetadata):
-        comp_tds.extend(_get_composition_filter_html(m, key))
+        comp_tds.extend(_get_composition_filter_html(m, key, full_key))
       else:
-        tds.append(('', _get_filter_html(m, key)))
+        tds.append(('', _get_filter_html(m, key, full_key)))
     tds += comp_tds
     # reshape tds
     html_parts = [[]]
@@ -172,29 +175,29 @@ def _generate_histogram(m):
   return b64encode(img_data.getvalue())
 
 
-def _get_filter_js(m, key):
+def _get_filter_js(m, full_key):
   if isinstance(m, NumericMetadata):
-    elt = '$("#%s")' % key
+    elt = '$("#%s")' % full_key
     if isinstance(m, BooleanMetadata):
       return '', elt + '.val()'
     lb, ub = m.bounds
     init_js = ('%s.slider({min: %s, max: %s, step: %s, range: true, '
                'values: [%s,%s], slide: function(e,ui){'
                '$("#%s_label").text(ui.values[0]+" to "+ui.values[1]);}});') % (
-                   elt, lb, ub, m.step, lb, ub, key)
+                   elt, lb, ub, m.step, lb, ub, full_key)
     collect_js = elt + '.slider("values")'
     return init_js, collect_js
   if isinstance(m, CompositionMetadata):
     init_parts, collect_parts = [], []
     for k, mm in m.comps.items():
-      ijs, cjs = _get_filter_js(mm, key + '-' + k)
+      ijs, cjs = _get_filter_js(mm, full_key + '-' + k)
       init_parts.append(ijs)
       collect_parts.append('%s: %s' % (k, cjs))
     collect_js = '{' + ','.join(collect_parts) + '}'
-    init_js = '$("#%s_toggle").click();\n%s' % (key, '\n'.join(init_parts))
+    init_js = '$("#%s_toggle").click();\n%s' % (full_key, '\n'.join(init_parts))
     return init_js, collect_js
   # only LookupMetadata and PrimaryKeyMetadata remain
-  jq = '$("#%s_chooser")' % key
+  jq = '$("#%s_chooser")' % full_key
   # initialize the chosen dropdown, adding some width for the scrollbar
   init_js = jq + ".chosen({search_contains: true}).css('width', '+=15');"
   prefix = ''
@@ -205,12 +208,12 @@ def _get_filter_js(m, key):
   return init_js, collect_js
 
 
-def _get_filter_html(m, key):
+def _get_filter_html(m, key, full_key):
   disp = m.display_name(key)
   if isinstance(m, BooleanMetadata):
     return ('%s: <select id="%s"><option value=both>Both</option>'
             '<option value=yes>Yes</option><option value=no>No</option>'
-            '</select>') % (disp, key)
+            '</select>') % (disp, full_key)
   if isinstance(m, NumericMetadata):
     lb, ub = m.bounds
     # lazy load histogram
@@ -219,23 +222,23 @@ def _get_filter_html(m, key):
     return ('%s: <span id="%s_label">%s to %s</span><br />'
             '<div class="slider" id="%s" style="background-image: '
             'url(data:img/png;base64,%s);"></div>') % (
-                disp, key, lb, ub, key, m.hist_image)
+                disp, full_key, lb, ub, full_key, m.hist_image)
   # only LookupMetadata and PrimaryKeyMetadata remain
   uniques = sorted(m.keys) if isinstance(m, PrimaryKeyMetadata) else m.uniques
   html = ('%s:<br /><select id="%s_chooser" data-placeholder="All" '
-          'class="chosen-select" multiple>\n') % (disp, key)
+          'class="chosen-select" multiple>\n') % (disp, full_key)
   html += '\n'.join('<option value="%s">%s</option>' % (x, x) for x in uniques)
   html += '</select>'
   return html
 
 
-def _get_composition_filter_html(m, key):
+def _get_composition_filter_html(m, key, full_key):
   disp = m.display_name(key)
   # CSS class for our filters, and CSS ID for our button
-  css = key + '_toggle'
+  css = full_key + '_toggle'
   td = ('%s: <button onclick="$(\'.%s\').toggle()" '
         'id="%s">Show/Hide</button>') % (disp, css, css)
   html = [('', td)]
   for k, m in m.comps.items():
-    html.append((css, _get_filter_html(m, key + '-' + k)))
+    html.append((css, _get_filter_html(m, key + '-' + k, full_key + '-' + k)))
   return html

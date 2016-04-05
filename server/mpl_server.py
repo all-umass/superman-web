@@ -27,7 +27,7 @@ class FigData(object):
     self.figure = fig
     self.manager = manager
     self.title = ''
-    self.filter_mask = Ellipsis
+    self.filter_mask = dict()
     self.baseline = None
     self.hist_data = []
     self._ds_view = None

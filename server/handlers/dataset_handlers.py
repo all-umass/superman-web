@@ -24,6 +24,10 @@ class DatasetHandler(BaseHandler):
     return self.get_dataset(self.get_argument('kind'),
                             self.get_argument('name'))
 
+  def get_all_ds(self):
+    return [self.get_dataset(k, n) for k, n in
+            zip(self.get_arguments('kind[]'), self.get_arguments('name[]'))]
+
 
 class DatasetSelectorHandler(DatasetHandler):
   def post(self):
@@ -47,10 +51,12 @@ class DatasetFiltererHandler(DatasetHandler):
 
 class DatasetPlotOptionsHandler(DatasetHandler):
   def post(self):
-    ds = self.get_ds()
-    logging.info('Generating plot options HTML for dataset: %s', ds)
-    return self.render('_plot_options_table.html', ds_kind=ds.kind,
-                       metadata_names=sorted(ds.metadata_names()))
+    all_ds = self.get_all_ds()
+    is_libs = any(ds.kind == 'LIBS' for ds in all_ds)
+    meta_names = set.intersection(*[set(ds.metadata_names()) for ds in all_ds])
+    logging.info('Generating plot options HTML for: %s', map(str, all_ds))
+    return self.render('_plot_options_table.html', is_libs=is_libs,
+                       metadata_names=sorted(meta_names))
 
 
 routes = [

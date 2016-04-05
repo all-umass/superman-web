@@ -14,12 +14,27 @@ div.box {
 }
 </style>
 <script type='text/javascript'>
-function ds_loaded(name, kind) {
-  ds_name = name;
-  ds_kind = kind
-  var url = "/explorer?ds="+encodeURIComponent(ds_name+" ["+ds_kind+"]");
-  history.replaceState(null, "", url);
-  $('#dl_metadata').chosen({search_contains: true});
+function collect_ds_info() {
+  var infos = $("#ds_select").val();
+  var all_data = {name: [], kind: []};
+  for (var i = 0; i < infos.length; i++) {
+    var parts = infos[i].split(',');
+    all_data.name.push(parts[0]);
+    all_data.kind.push(parts[1]);
+  }
+  return all_data;
+}
+function load_ds_filters() {
+  var all_data = collect_ds_info();
+  var cont = $('#ds_filters_container').empty();
+  for (var i = 0; i < all_data.name.length; i++) {
+    var post_data = {name: all_data.name[i], kind: all_data.kind[i]};
+    $('<div class="box"></div>').appendTo(cont).load('/_dataset_filterer', post_data);
+  }
+  $('#ds_plot_options_container').load('/_dataset_plot_options', all_data,
+                                       function(){
+    $('#dl_metadata').chosen({search_contains: true});
+  });
 }
 function changed(kind, val) {
   $('td.'+val).hide();
@@ -58,18 +73,19 @@ function collect_plot_options() {
 function do_filtered_plot() {
   $('#plot_button>.dots').text("...").fadeIn();
   var post_data = collect_plot_options();
-  post_data['ds_name'] = ds_name;
-  post_data['ds_kind'] = ds_kind;
+  var ds_info = collect_ds_info();
+  post_data['ds_name'] = ds_info.name;
+  post_data['ds_kind'] = ds_info.kind;
   post_data['fignum'] = fig.id;
 
   var cbs = make_post_callbacks('#plot_button>.dots');
   $.post('/_filterplot', post_data, cbs['success'], 'json').fail(cbs['fail']);
 }
 function download_data() {
-  var meta_keys = $('#dl_metadata option:selected').map(function(){
+  var args = collect_ds_info();
+  args['meta_keys'] = $('#dl_metadata option:selected').map(function(){
     return this.value;
-  }).toArray().join(',');
-  var args = {ds_name: ds_name, ds_kind: ds_kind, meta_keys: meta_keys};
+  }).toArray();
   var url = '/'+fig.id+'/spectra.csv?' + $.param(args);
   window.open(url, '_blank');
 }
@@ -79,7 +95,23 @@ $(document).ready(function(){
   $('#ds_select option').filter(function(i,e){
     return $(e).text() == "{{selected_ds}}";
   }).prop('selected', true).change();
+  load_ds_filters();
 {% end %}
+  $('#ds_select').chosen({search_contains: true}).change(function(evt){
+    var elt = $(evt.target);
+    var selected = elt.val();
+    if (!selected || selected.length == 0) {
+      // (re)-enable all datasets
+      elt.find('option').prop('disabled', false);
+      elt.trigger('chosen:updated');
+    } else if (selected.length == 1) {
+      // disable everything but this kind of dataset
+      var kind = selected[0].split(',')[1];
+      elt.find('option').prop('disabled', true);
+      elt.find('option.' + kind).prop('disabled', false);
+      elt.trigger('chosen:updated');
+    }
+  });
 });
 </script>
 {% end %}
@@ -87,16 +119,20 @@ $(document).ready(function(){
 {% block body_matter %}
 <div id="easter_egg" onclick="$('body,div.box').toggleClass('darby');"></div>
 <div>
-  <select id="ds_select" onchange="load_ds_filters(this.value, ds_loaded)">
-    <option value="">Select a dataset</option>
-  {% for ds in sorted(datasets, key=str) %}
-    <option value="{{ds.name}},{{ds.kind}}">{{ds}}</option>
+  <select id="ds_select" multiple=true>
+  {% for kind, k_dict in sorted(datasets.items()) %}
+    <optgroup label="{{kind}} Datasets">
+      {% for name in sorted(k_dict) %}
+        <option class="{{kind}}" value="{{name}},{{kind}}">{{name}}</option>
+      {% end %}
+    </optgroup>
   {% end %}
   </select>
+  <button onclick="load_ds_filters()">Load Dataset(s)</button>
 </div>
 <br style="clear:both">
 
-<div id='ds_filter_container' class='box'></div>
+<div id='ds_filters_container' style='display: inline;'></div>
 <div id='ds_plot_options_container' class='box'></div>
 
 <!-- BLR / PP -->

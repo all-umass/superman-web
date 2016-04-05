@@ -5,7 +5,17 @@
 <script type="text/javascript">
 function new_get_dataset(info) {
   old_get_dataset(info);
-  load_ds_filters(info, function(){});
+  if (info == '') return;
+  var parts = info.split(',');
+  $('#ds_filter_container').load('/_dataset_filterer',
+                                 {name: parts[0], kind: parts[1]}, function(){
+    ds_name = parts[0];
+    ds_kind = parts[1];
+  });
+  $('#ds_plot_options_container').load('/_dataset_plot_options', {
+    name: [parts[0]],
+    kind: [parts[1]]
+  });
 }
 old_get_dataset = get_dataset;
 get_dataset = new_get_dataset;

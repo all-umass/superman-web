@@ -50,7 +50,8 @@ class PeakHandler(BaseHandler):
         return fit_single_peak(t[:,0], t[:,1], loc, fit_kind=kind,
                                log_fn=logging.info)[-1]
 
-    ds_view = ds.view(mask=fig_data.filter_mask, **fig_data.get_trans())
+    mask = fig_data.filter_mask[ds]
+    ds_view = ds.view(mask=mask, **fig_data.get_trans())
     trajs, names = ds_view.get_trajectories(return_keys=True)
     for traj, name in zip(trajs, names):
       peak = peak_stats(traj)

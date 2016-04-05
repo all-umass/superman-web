@@ -4,6 +4,7 @@ import matplotlib
 import numpy as np
 import os
 import tornado.web
+from collections import defaultdict
 from superman.baseline import BL_CLASSES
 from matplotlib import cm, rcParams
 
@@ -96,9 +97,11 @@ class DataExplorerPage(Subpage):
   figsize = (14, 6)
 
   def get(self):
-    ds = self.get_argument('ds', '')
-    self.render(datasets=self.all_datasets(), selected_ds=ds, cmaps=cmaps,
-                default_cmap=rcParams['image.cmap'],
+    ds_tree = defaultdict(list)
+    for ds in self.all_datasets():
+      ds_tree[ds.kind].append(ds.name)
+    self.render(datasets=ds_tree, selected_ds=self.get_argument('ds', ''),
+                cmaps=cmaps, default_cmap=rcParams['image.cmap'],
                 default_lw=rcParams['lines.linewidth'], **blr_kwargs)
 
 

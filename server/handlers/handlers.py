@@ -57,7 +57,7 @@ class FilterHandler(BaseHandler):
     logging.info('Filtering %s with args: %s', ds, params)
 
     mask = ds.filter_metadata(params)
-    fig_data.filter_mask = mask
+    fig_data.filter_mask[ds] = mask
     num_spectra = np.count_nonzero(mask)
     logging.info('Filtered to %d spectra', num_spectra)
 
