@@ -1,53 +1,92 @@
 ---
 # Datasets are organized by spectrum type, then dataset name.
 
-# Loader functions are looked up in the dataset_loaders.py module.
-# Arguments to the loader function are given `file` or `files`.
+# Default loader functions are provided for the common cases of standard-format
+#   hdf5 files (see dataset_loaders.py).
+# Custom loader functions are looked up by name in dataset_loaders.py.
+# Arguments to the loader function are given by `file` or `files`.
+# Metadata entries are triplets of [key, kind, display_name],
+#   where the key refers to hdf5:/meta/key
 
 # Default field values are:
 #   vector: false
 #   public: true
+#   loader: (default, given metadata)
 Raman:
   RRUFF:
-    loader: load_rruff
     file: /srv/nfs/common/spectra/Raman/rruff-spectra.hdf5
+    metadata:
+      - [mineral, LookupMetadata, Mineral]
+      - [rruff_id, LookupMetadata, RRUFF ID]
+      - [laser, LookupMetadata, Laser Type]
+      - [dana/species, LookupMetadata, Dana Number]
   RRUFF (raw):
-    loader: load_rruff
     file: /srv/nfs/common/spectra/Raman/rruff-spectra-raw.hdf5
+    metadata:
+      - [mineral, LookupMetadata, Mineral]
+      - [rruff_id, LookupMetadata, RRUFF ID]
+      - [laser, LookupMetadata, Laser Type]
+      - [dana/species, LookupMetadata, Dana Number]
   IRUG:
-    loader: load_irug
     file: /srv/nfs/common/spectra/Raman/IRUG.hdf5
+    metadata:
+      - [ids, LookupMetadata, ID]
+      - [names, LookupMetadata, Name]
+      - [materials, LookupMetadata, Material]
   Parma:
-    loader: load_no_meta
     file: /srv/nfs/common/spectra/Raman/parma.hdf5
   Lyon (LST):
-    loader: load_names
     file: /srv/nfs/common/spectra/Raman/LST.hdf5
+    metadata:
+      - [names, LookupMetadata, Name]
   RDRS:
-    loader: load_names
     file: /srv/nfs/common/spectra/Raman/RDRS.hdf5
+    metadata:
+      - [names, LookupMetadata, Name]
   UCL:
-    loader: load_ucl
     file: /srv/nfs/common/spectra/Raman/UCL.hdf5
+    metadata:
+      - [color, LookupMetadata, Color]
+      - [power, LookupMetadata, Laser Power]
+      - [wavelength, LookupMetadata, Laser Frequency]
   Dyar 96:
-    loader: load_dyar96
     file: /srv/nfs/common/spectra/Raman/dyar96.hdf5
+    metadata:
+      - [laser, LookupMetadata, Laser Type]
+      - [id, LookupMetadata, ID]
+      - [mineral, LookupMetadata, Mineral]
   Mineral Mixtures:
-    loader: load_mineral_mixes
     file: /srv/nfs/common/spectra/Raman/mineral_mixtures.hdf5
+    metadata:
+      - [sample, LookupMetadata, Sample ID]
+      - [laser, LookupMetadata, Laser Type]
+      - [mineral_1, LookupMetadata, Mineral A]
+      - [mineral_2, LookupMetadata, Mineral B]
+      - [ratio, LookupMetadata, 'Mix Ratio (A:B)']
+      - [grain_size, LookupMetadata, 'Grain Size (µm)']
   Synthetic Pyroxenes:
-    loader: load_synth_pyrox
     file: /srv/nfs/common/spectra/Raman/synth_pyroxenes.hdf5
+    metadata:
+      - [mineral, LookupMetadata, Mineral]
+      - [formula, LookupMetadata, Formula]
+      - [dana, LookupMetadata, Dana Number]
+      - [source, LookupMetadata, Source]
 FTIR:
   RRUFF:
-    loader: load_rruff
     file: /srv/nfs/common/spectra/FTIR/rruff-spectra.hdf5
+    metadata:
+      - [mineral, LookupMetadata, Mineral]
+      - [rruff_id, LookupMetadata, RRUFF ID]
   IRUG:
-    loader: load_irug
     file: /srv/nfs/common/spectra/FTIR/IRUG.hdf5
+    metadata:
+      - [ids, LookupMetadata, ID]
+      - [names, LookupMetadata, Name]
+      - [materials, LookupMetadata, Material]
   USGS:
-    loader: load_usgs
     file: /srv/nfs/common/spectra/FTIR/USGS.hdf5
+    metadata:
+      - [ids, LookupMetadata, Sample ID]
   USDA:
     loader: load_usda
     vector: true
@@ -59,11 +98,15 @@ NIR:
     file: /srv/nfs/common/spectra/misc/corn.hdf5
 XRD:
   RRUFF:
-    loader: load_rruff
     file: /srv/nfs/common/spectra/misc/rruff-xrd.hdf5
+    metadata:
+      - [mineral, LookupMetadata, Mineral]
+      - [rruff_id, LookupMetadata, RRUFF ID]
   RRUFF (raw):
-    loader: load_rruff
     file: /srv/nfs/common/spectra/misc/rruff-xrd-raw.hdf5
+    metadata:
+      - [mineral, LookupMetadata, Mineral]
+      - [rruff_id, LookupMetadata, RRUFF ID]
 XAS:
   Silicate Glass:
     loader: load_silicate_glass
@@ -105,33 +148,50 @@ LIBS:
       - /srv/nfs/common/spectra/LIBS/mhc_multi_power.hdf5
       - true
   LANL New:
-    loader: load_lanl_generic
     vector: true
     file: /srv/nfs/common/spectra/LIBS/lanl_new.hdf5
+    metadata:
+      - [names, PrimaryKeyMetadata, None]
   LANL New (raw):
-    loader: load_lanl_generic
     vector: true
     file: /srv/nfs/common/spectra/LIBS/lanl_new_raw.hdf5
+    metadata:
+      - [names, PrimaryKeyMetadata, None]
   LANL Cleanroom:
-    loader: load_lanl_generic
     vector: true
     file: /srv/nfs/common/spectra/LIBS/lanl_cleanroom.hdf5
+    metadata:
+      - [names, PrimaryKeyMetadata, None]
   LANL New caltargets:
-    loader: load_lanl_caltargets
     vector: true
     file: /srv/nfs/common/spectra/LIBS/lanl_caltargets.hdf5
+    metadata:
+      - [targets, LookupMetadata, Target]
   MHC caltargets:
-    loader: load_mhc_caltargets
     vector: true
     public: false
     file: /srv/nfs/common/spectra/LIBS/mhc_caltargets.hdf5
+    metadata:
+      - [names, LookupMetadata, Mineral Name]
+      - [powers, LookupMetadata, Laser Power]
+      - [integration_times, LookupMetadata, Integration Time]
   MHC Doping:
-    loader: load_doped
     vector: true
     public: false
     file: /srv/nfs/common/spectra/LIBS/doped_full.hdf5
+    metadata:
+      - [pkey, PrimaryKeyMetadata, None]
+      - [power, LookupMetadata, Laser Power]
+      - [matrix, LookupMetadata, Matrix]
+      - [mix_no, LookupMetadata, 'Mix #']
+      - [concentration, LookupMetadata, Concentration]
+      - [dopant, LookupMetadata, Dopant]
   MHC Doping (no BLR):
-    loader: load_doped
     vector: true
     public: false
     file: /srv/nfs/common/spectra/LIBS/doped_processed.hdf5
+    metadata:
+      - [power, LookupMetadata, Laser Power]
+      - [matrix, LookupMetadata, Matrix]
+      - [mix_no, LookupMetadata, 'Mix #']
+      - [target, LookupMetadata, Target]

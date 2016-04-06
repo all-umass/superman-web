@@ -61,55 +61,6 @@ def _generic_vector_loader(*meta_mapping):
     return True
   return _load
 
-load_no_meta = _generic_traj_loader()
-load_names = _generic_traj_loader(('names', LookupMetadata, 'Name'))
-load_usgs = _generic_traj_loader(('ids', LookupMetadata, 'Sample ID'))
-load_ucl = _generic_traj_loader(
-    ('color', LookupMetadata, 'Color'),
-    ('power', LookupMetadata, 'Laser Power'),
-    ('wavelength', LookupMetadata, 'Laser Frequency'))
-load_irug = _generic_traj_loader(
-    ('ids', LookupMetadata, 'ID'),
-    ('names', LookupMetadata, 'Name'),
-    ('materials', LookupMetadata, 'Material'))
-load_synth_pyrox = _generic_traj_loader(
-    ('mineral', LookupMetadata, 'Mineral'),
-    ('formula', LookupMetadata, 'Formula'),
-    ('dana', LookupMetadata, 'Dana Number'),
-    ('source', LookupMetadata, 'Source'))
-load_dyar96 = _generic_traj_loader(
-    ('laser', LookupMetadata, 'Laser Type'),
-    ('id', LookupMetadata, 'ID'),
-    ('mineral', LookupMetadata, 'Mineral'))
-load_mineral_mixes = _generic_traj_loader(
-    ('sample', LookupMetadata, 'Sample ID'),
-    ('laser', LookupMetadata, 'Laser Type'),
-    ('mineral_1', LookupMetadata, 'Mineral A'),
-    ('mineral_2', LookupMetadata, 'Mineral B'),
-    ('ratio', LookupMetadata, 'Mix Ratio (A:B)'),
-    ('grain_size', LookupMetadata, 'Grain Size (µm)'))
-load_rruff = _generic_traj_loader(
-    ('mineral', LookupMetadata, 'Mineral'),
-    ('rruff_id', LookupMetadata, 'RRUFF ID'),
-    ('laser', LookupMetadata, 'Laser Type'),
-    ('dana/species', LookupMetadata, 'Dana Number'))
-
-load_lanl_generic = _generic_vector_loader(('names', PrimaryKeyMetadata, None))
-load_lanl_caltargets = _generic_vector_loader(
-    ('targets', LookupMetadata, 'Target'))
-load_mhc_caltargets = _generic_vector_loader(
-    ('names', LookupMetadata, 'Mineral Name'),
-    ('powers', LookupMetadata, 'Laser Power'),
-    ('integration_times', LookupMetadata, 'Integration Time'))
-load_doped = _generic_vector_loader(
-    ('power', LookupMetadata, 'Laser Power'),
-    ('matrix', LookupMetadata, 'Matrix'),
-    ('mix_no', LookupMetadata, 'Mix #'),
-    ('pkey', PrimaryKeyMetadata, None),
-    ('target', LookupMetadata, 'Target'),
-    ('concentration', LookupMetadata, 'Concentration'),
-    ('dopant', LookupMetadata, 'Dopant'))
-
 
 def load_mhc_multipower(ds, filepath, with_blr=False):
   data = _try_load(filepath, str(ds))
@@ -130,7 +81,7 @@ def load_mhc_multipower(ds, filepath, with_blr=False):
               pkey=PrimaryKeyMetadata(pkey),
               in_lanl=BooleanMetadata(meta['in_lanl'], 'In LANL', repeats=3),
               name=LookupMetadata(names[idx], 'Name', labels=np.tile(idx, 3)),
-              power=LookupMetadata(powers, 'Power',
+              power=LookupMetadata(powers, 'Laser Power',
                                    labels=np.repeat([0,1,2], len(names))),
               comp=CompositionMetadata(comp_meta, 'Composition'))
   return True

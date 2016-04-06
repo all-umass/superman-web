@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 from server import MatplotlibServer, all_routes, BaseHandler
 from server.web_datasets import (
     DATASETS, WebLIBSDataset, WebVectorDataset, WebTrajDataset)
+import server.web_datasets
 import dataset_loaders
 
 
@@ -72,12 +73,22 @@ def load_datasets(config_fh, public_only=False):
       if public_only and not is_public:
         continue
 
-      # look up the loader function from the module namespace
-      loader_fn = getattr(dataset_loaders, info['loader'])
       if 'files' in info:
         files = info['files']
       else:
         files = [info['file']]
+
+      if 'loader' in info:
+        # look up the loader function from the module namespace
+        loader_fn = getattr(dataset_loaders, info['loader'])
+      else:
+        # construct a loader from the meta_mapping and the default template
+        meta_mapping = [(k, getattr(server.web_datasets, cls), name)
+                        for k, cls, name in info.get('metadata', [])]
+        if info.get('vector', False):
+          loader_fn = dataset_loaders._generic_vector_loader(*meta_mapping)
+        else:
+          loader_fn = dataset_loaders._generic_traj_loader(*meta_mapping)
 
       if kind == 'LIBS':
         ds = WebLIBSDataset(name, loader_fn, *files)
