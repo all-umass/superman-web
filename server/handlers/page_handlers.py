@@ -100,7 +100,8 @@ class DataExplorerPage(Subpage):
     ds_tree = defaultdict(list)
     for ds in self.all_datasets():
       ds_tree[ds.kind].append(ds.name)
-    self.render(datasets=ds_tree, selected_ds=self.get_argument('ds', ''),
+    self.render(datasets=ds_tree, ds_kind=self.get_argument('ds_kind', ''),
+                ds_name=self.get_argument('ds_name', ''),
                 cmaps=cmaps, default_cmap=rcParams['image.cmap'],
                 default_lw=rcParams['lines.linewidth'], **blr_kwargs)
 

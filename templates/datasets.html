@@ -58,7 +58,7 @@
 {% for d in sorted(datasets, key=str) %}
   <tr class='{%if not d.is_public %}private{%end%}'>
     <td class='ds_title'>
-      <a href="/explorer?ds={{url_escape(str(d))}}">{{d.name}}</a>
+      <a href="/explorer?ds_kind={{url_escape(d.kind)}}&ds_name={{url_escape(d.name)}}">{{d.name}}</a>
     </td>
     <td>{{d.kind}}</td>
     <td class='numeric'>{{d.num_spectra()}}</td>

@@ -91,9 +91,9 @@ function download_data() {
 }
 $(document).ready(function(){
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
-{% if selected_ds %}
-  $('#ds_select option').filter(function(i,e){
-    return $(e).text() == "{{selected_ds}}";
+{% if ds_kind and ds_name %}
+  $('#ds_select option.{{ds_kind}}').filter(function(i,e){
+    return $(e).text() == "{{ds_name}}";
   }).prop('selected', true).change();
   load_ds_filters();
 {% end %}
