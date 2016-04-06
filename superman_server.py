@@ -86,9 +86,9 @@ def load_datasets(config_fh, public_only=False):
         meta_mapping = [(k, getattr(server.web_datasets, cls), mname)
                         for k, cls, mname in info.get('metadata', [])]
         if info.get('vector', False):
-          loader_fn = dataset_loaders._generic_vector_loader(*meta_mapping)
+          loader_fn = dataset_loaders._generic_vector_loader(meta_mapping)
         else:
-          loader_fn = dataset_loaders._generic_traj_loader(*meta_mapping)
+          loader_fn = dataset_loaders._generic_traj_loader(meta_mapping)
 
       if kind == 'LIBS':
         ds = WebLIBSDataset(name, loader_fn, *files)

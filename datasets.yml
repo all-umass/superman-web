@@ -102,26 +102,31 @@ XRD:
     metadata:
       - [mineral, LookupMetadata, Mineral]
       - [rruff_id, LookupMetadata, RRUFF ID]
-  RRUFF (raw):
-    file: /srv/nfs/common/spectra/misc/rruff-xrd-raw.hdf5
-    metadata:
-      - [mineral, LookupMetadata, Mineral]
-      - [rruff_id, LookupMetadata, RRUFF ID]
 XAS:
   Silicate Glass:
     loader: load_silicate_glass
-    file: /srv/nfs/common/spectra/misc/glass_full_noSA.npz
+    files:
+      - /srv/nfs/common/spectra/misc/silicate_glass.hdf5
+      - full/noSA
   Silicate Glass (SA-corrected):
     loader: load_silicate_glass
-    file: /srv/nfs/common/spectra/misc/glass_full_withSA.npz
+    files:
+      - /srv/nfs/common/spectra/misc/silicate_glass.hdf5
+      - full/withSA
   Amphibole:
-    loader: load_amphibole
     vector: true
-    file: /srv/nfs/common/spectra/misc/amphiboleFe3.npz
+    file: /srv/nfs/common/spectra/misc/amphiboleFe3.hdf5
+    metadata:
+      - [pkey, PrimaryKeyMetadata, None]
+      - [fe3, NumericMetadata, '% Fe3+']
+      - [orientation, LookupMetadata, Orientation]
+      - [names, LookupMetadata, Sample Name]
   Garnet:
-    loader: load_garnet
     vector: true
-    file: /srv/nfs/common/spectra/misc/garnetFe3.npz
+    file: /srv/nfs/common/spectra/misc/garnetFe3.hdf5
+    metadata:
+      - [pkey, PrimaryKeyMetadata, None]
+      - [fe3, NumericMetadata, '% Fe3+']
 LIBS:
   Mars (big):
     loader: load_mars_big

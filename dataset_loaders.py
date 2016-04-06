@@ -11,7 +11,7 @@ from server.web_datasets import (
 )
 
 
-def _generic_traj_loader(*meta_mapping):
+def _generic_traj_loader(meta_mapping):
   """Creates a loader function for a standard HDF5 file representing a
   trajectory dataset. The HDF5 structure is expected to be:
    - /meta/pkey : an array of keys, used to address individual spectra
@@ -32,7 +32,7 @@ def _generic_traj_loader(*meta_mapping):
   return _load
 
 
-def _generic_vector_loader(*meta_mapping):
+def _generic_vector_loader(meta_mapping):
   """Creates a loader function for a standard HDF5 file representing a
   vector dataset. The HDF5 structure is expected to be:
    - /meta/waves : length-d array of wavelengths
@@ -52,7 +52,7 @@ def _generic_vector_loader(*meta_mapping):
       if cls is PrimaryKeyMetadata:
         kwargs['pkey'] = cls(meta[key])
       else:
-        kwargs[key] = cls(meta[key], display_name)
+        kwargs[key] = cls(meta[key], display_name=display_name)
     if '/composition' in data:
       comp_meta = {name: NumericMetadata(arr, display_name=name) for name, arr
                    in data['/composition'].items()}
@@ -175,38 +175,14 @@ def load_usda(ds, filepath):
   return True
 
 
-def load_silicate_glass(ds, filepath):
+def load_silicate_glass(ds, filepath, treatment):
   data = _try_load(filepath, str(ds))
   if data is None:
     return False
-  ds.set_data(data['keys'], data,
-              fe3=NumericMetadata(data['fe3'], display_name='% Fe3+'),
-              Formula=LookupMetadata(data['formula']))
-  return True
-
-
-def load_amphibole(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  orient = data['orientation']
-  names = data['names']
-  pkey = ['-'.join(filter(None,x)) for x in zip(names, orient)]
-  ds.set_data(data['bands'], data['spectra'],
-              pkey=PrimaryKeyMetadata(pkey),
-              fe3=NumericMetadata(data['fe3'], display_name='% Fe3+'),
-              Orientation=LookupMetadata(orient),
-              name=LookupMetadata(names, 'Sample Name'))
-  return True
-
-
-def load_garnet(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  ds.set_data(data['bands'], data['spectra'],
-              pkey=PrimaryKeyMetadata(data['names']),
-              fe3=NumericMetadata(data['fe3'], display_name='% Fe3+'))
+  meta = data['/meta']
+  ds.set_data(meta['pkey'], data['/spectra/' + treatment],
+              fe3=NumericMetadata(meta['fe3'], display_name='% Fe3+'),
+              Formula=LookupMetadata(meta['formula']))
   return True
 
 
