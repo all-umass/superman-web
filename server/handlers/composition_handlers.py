@@ -2,11 +2,25 @@ from __future__ import absolute_import
 import os
 import logging
 import numpy as np
-from scipy.stats import linregress
+import scipy.stats
+from scipy import odr
 from tornado.escape import json_encode
 
 from ..web_datasets import DATASETS
 from .base import BaseHandler
+
+MOL_DATA = {
+  'Al2O3': (0.01962, 'Al'),
+  'CaO': (0.01783, 'Ca'),
+  'Fe2O3': (0.01392, 'Fe'),  # ????
+  'FeOT': (0.01392, 'Fe'),
+  'K2O': (0.02123, 'K'),
+  'MgO': (0.02481, 'Mg'),
+  'MnO': (0.01410, 'Mn'),
+  'Na2O': (0.03227, 'Na'),
+  'SiO2': (0.01664, 'Si'),
+  'TiO2': (0.01252, 'Ti'),
+}
 
 
 class CompositionPlotHandler(BaseHandler):
@@ -64,6 +78,7 @@ class CompositionPlotHandler(BaseHandler):
       return
     ds = DATASETS['LIBS']['Mars (big)']
     do_fit = bool(int(self.get_argument('do_fit')))
+    use_mols = bool(int(self.get_argument('use_mols')))
     x_input = self.get_argument('x_comps')
     y_input = self.get_argument('y_comps')
     if (not x_input) and (not y_input):
@@ -74,8 +89,8 @@ class CompositionPlotHandler(BaseHandler):
     x_keys = [k.split('$',1) for k in x_input.split('+')] if x_input else []
     y_keys = [k.split('$',1) for k in y_input.split('+')] if y_input else []
     use_group_name = len(set(k[0] for k in (x_keys + y_keys))) > 1
-    x_comps, x_labels = comps_with_labels(ds, x_keys, use_group_name)
-    y_comps, y_labels = comps_with_labels(ds, y_keys, use_group_name)
+    x_comps, x_labels = comps_with_labels(ds, x_keys, use_group_name, use_mols)
+    y_comps, y_labels = comps_with_labels(ds, y_keys, use_group_name, use_mols)
 
     mask = fig_data.filter_mask[ds]
 
@@ -93,13 +108,19 @@ class CompositionPlotHandler(BaseHandler):
       y_data = y_data[notnan_mask]
       mask[mask] = notnan_mask
 
-      logging.info('Running linregress on %d pairs of compositions: %s vs %s',
+      logging.info('Running ODR on %d pairs of compositions: %s vs %s',
                    x_data.shape[0], x_labels, y_labels)
 
       # compute line of best fit
-      slope, yint, rval, _, stderr = linregress(x_data, y_data)
-      xint = -yint / slope
-      results = dict(slope=slope,xint=xint,yint=yint,rval=rval**2,stderr=stderr)
+      # slope, yint, rval, _, stderr = linregress(x_data, y_data)
+      # xint = -yint / slope
+      rval, _ = scipy.stats.pearsonr(x_data, y_data)
+      model = odr.ODR(odr.Data(x_data, y_data), odr.unilinear)
+      result = model.run()
+      slope, yint = result.beta
+      slope_err, yint_err = result.sd_beta
+      results = dict(rval=rval**2, slope=slope, slope_err=slope_err,
+                     yint=yint, yint_err=yint_err)
 
       # make coordinates for the fit line
       x_min, x_max = x_data.min(), x_data.max()
@@ -128,8 +149,9 @@ class CompositionPlotHandler(BaseHandler):
         cbar.set_label(color_meta.display_name(color_key))
       else:
         ax.scatter(x_data, y_data)
-      ax.set_xlabel(' + '.join(x_labels))
-      ax.set_ylabel(' + '.join(y_labels))
+      suffix = ' (moles)' if use_mols else ''
+      ax.set_xlabel(' + '.join(x_labels) + suffix)
+      ax.set_ylabel(' + '.join(y_labels) + suffix)
     elif x_comps:
       # histogram along x
       ax.hist(x_data, bins='auto', orientation='vertical', label=x_labels)
@@ -159,13 +181,15 @@ class CompositionPlotHandler(BaseHandler):
     return self.write(json_encode(results))
 
 
-def comps_with_labels(ds, comp_keys, use_group_name):
+def comps_with_labels(ds, comp_keys, use_group_name, use_mols):
   comps, labels = [], []
   for k1, k2 in comp_keys:
     m1 = ds.metadata[k1]
     m2 = m1.comps[k2]
     comps.append(m2)
     name = m2.display_name(k2)
+    if use_mols and 'O' in name:
+      name = MOL_DATA[name][1]
     if use_group_name:
       labels.append('(%s: %s)' % (m1.display_name(k1), name))
     else:
