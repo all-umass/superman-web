@@ -12,6 +12,12 @@ from server.web_datasets import (
 
 
 def _generic_traj_loader(*meta_mapping):
+  """Creates a loader function for a standard HDF5 file representing a
+  trajectory dataset. The HDF5 structure is expected to be:
+   - /meta/pkey : an array of keys, used to address individual spectra
+   - /spectra/[pkey] : a (n,2) trajectory spectrum
+   - /meta/foobar : (optional) metadata, specified by the meta_mapping
+  """
   def _load(ds, filepath):
     data = _try_load(filepath, str(ds))
     if data is None:
@@ -19,8 +25,39 @@ def _generic_traj_loader(*meta_mapping):
     meta = data['/meta']
     kwargs = {}
     for key, cls, display_name in meta_mapping:
-      kwargs[key] = cls(meta[key], display_name)
+      if key in meta:
+        kwargs[key] = cls(meta[key], display_name)
     ds.set_data(meta['pkey'], data['/spectra'], **kwargs)
+    return True
+  return _load
+
+
+def _generic_vector_loader(*meta_mapping):
+  """Creates a loader function for a standard HDF5 file representing a
+  vector dataset. The HDF5 structure is expected to be:
+   - /meta/waves : length-d array of wavelengths
+   - /spectra : (n,d) array of spectra
+   - /meta/foobar : (optional) metadata, specified by the meta_mapping
+   - /composition/[name] : (optional) composition metadata
+  """
+  def _load(ds, filepath):
+    data = _try_load(filepath, str(ds))
+    if data is None:
+      return False
+    meta = data['/meta']
+    kwargs = {}
+    for key, cls, display_name in meta_mapping:
+      if key not in meta:
+        continue
+      if cls is PrimaryKeyMetadata:
+        kwargs['pkey'] = cls(meta[key])
+      else:
+        kwargs[key] = cls(meta[key], display_name)
+    if '/composition' in data:
+      comp_meta = {name: NumericMetadata(arr, display_name=name) for name, arr
+                   in data['/composition'].items()}
+      kwargs['Composition'] = CompositionMetadata(comp_meta)
+    ds.set_data(meta['waves'], data['/spectra'], **kwargs)
     return True
   return _load
 
@@ -51,91 +88,27 @@ load_mineral_mixes = _generic_traj_loader(
     ('mineral_2', LookupMetadata, 'Mineral B'),
     ('ratio', LookupMetadata, 'Mix Ratio (A:B)'),
     ('grain_size', LookupMetadata, 'Grain Size (µm)'))
+load_rruff = _generic_traj_loader(
+    ('mineral', LookupMetadata, 'Mineral'),
+    ('rruff_id', LookupMetadata, 'RRUFF ID'),
+    ('laser', LookupMetadata, 'Laser Type'),
+    ('dana/species', LookupMetadata, 'Dana Number'))
 
-
-def load_rruff(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  meta = data['/meta']
-  names = meta['sample']
-  if 'species' in meta:
-    species = meta['species']
-  else:
-    species = [n.rsplit('-',1)[0] for n in names]
-  metadata = dict(
-      minerals=LookupMetadata(species, 'Species'),
-      rruff_ids=LookupMetadata(meta['rruff_id'], 'RRUFF ID'))
-  if 'laser' in meta:
-    metadata['lasers'] = LookupMetadata(meta['laser'], 'Laser')
-  if 'dana' in meta:
-    metadata['dana'] = LookupMetadata(meta['dana/species'], 'Dana Number')
-  ds.set_data(names, data['/spectra'], **metadata)
-  return True
-
-
-def load_lanl_generic(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-
-  comp_meta = {name: NumericMetadata(arr, display_name=name) for name, arr
-               in data['/composition'].items()}
-  ds.set_data(data['/meta/waves'], data['/spectra'],
-              pkey=PrimaryKeyMetadata(data['/meta/names']),
-              Composition=CompositionMetadata(comp_meta))
-  return True
-
-
-def load_lanl_caltargets(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-
-  ds.set_data(data['/meta/waves'], data['/spectra'],
-              names=LookupMetadata(data['/meta/targets'], 'Target Names'))
-  return True
-
-
-def load_mhc_caltargets(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  meta = data['meta']
-  ds.set_data(meta['waves'], data['/spectra'],
-              name=LookupMetadata(meta['names'], 'Mineral Name'),
-              laser=LookupMetadata(meta['powers'], 'Laser Power'),
-              time=LookupMetadata(meta['integration_times'],
-                                  'Integration Time'))
-  return True
-
-
-def load_doped(ds, filepath):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-
-  comps = data['/composition']
-  meta = data['/meta']
-  kwargs = {
-      'power': LookupMetadata(meta['power'], 'Power'),
-      'matrix': LookupMetadata(meta['matrix'], 'Matrix'),
-      'mix': LookupMetadata(meta['mix_no'], 'Mix #'),
-      'comp': CompositionMetadata({k: NumericMetadata(comps[k], display_name=k)
-                                   for k in comps.keys()}, 'Compositions'),
-  }
-  # The doped_full dataset has some extra metadata
-  if 'pkey' in meta:
-    kwargs['pkey'] = PrimaryKeyMetadata(meta['pkey'])
-  if 'target' in meta:
-    kwargs['target'] = LookupMetadata(meta['target'], 'Target')
-  if 'concentration' in meta:
-    kwargs['conc'] = LookupMetadata(meta['concentration'], 'Concentration')
-  if 'dopant' in meta:
-    kwargs['dopant'] = LookupMetadata(meta['dopant'], 'Dopant')
-
-  ds.set_data(meta['waves'], data['/spectra'], **kwargs)
-  return True
+load_lanl_generic = _generic_vector_loader(('names', PrimaryKeyMetadata, None))
+load_lanl_caltargets = _generic_vector_loader(
+    ('targets', LookupMetadata, 'Target'))
+load_mhc_caltargets = _generic_vector_loader(
+    ('names', LookupMetadata, 'Mineral Name'),
+    ('powers', LookupMetadata, 'Laser Power'),
+    ('integration_times', LookupMetadata, 'Integration Time'))
+load_doped = _generic_vector_loader(
+    ('power', LookupMetadata, 'Laser Power'),
+    ('matrix', LookupMetadata, 'Matrix'),
+    ('mix_no', LookupMetadata, 'Mix #'),
+    ('pkey', PrimaryKeyMetadata, None),
+    ('target', LookupMetadata, 'Target'),
+    ('concentration', LookupMetadata, 'Concentration'),
+    ('dopant', LookupMetadata, 'Dopant'))
 
 
 def load_mhc_multipower(ds, filepath, with_blr=False):
