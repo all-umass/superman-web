@@ -44,7 +44,7 @@ FTIR:
     file: /srv/nfs/common/spectra/FTIR/rruff-spectra.hdf5
   IRUG:
     loader: load_irug
-    file: /srv/nfs/common/spectra/FTIR/irug.npz
+    file: /srv/nfs/common/spectra/FTIR/IRUG.hdf5
   USGS:
     loader: load_usgs
     file: /srv/nfs/common/spectra/FTIR/USGS.hdf5
