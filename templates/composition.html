@@ -34,7 +34,7 @@ function plot_compositions() {
   };
   $.post('/_plot_compositions', post_data, function(data, status) {
     if (status !== 'success') return;
-    $('#fit_info td:last-child').empty()
+    $('#fit_info td:last-child span').empty()
     update_zoom_ctrl(data['zoom']);
     delete data['zoom'];
     for (key in data) {
@@ -175,7 +175,8 @@ Error bars:
 <div id="figure"></div>
 <div id="fit_info"><table>
   <caption>Fit parameters</caption>
-  <tr><td>R&#0178;</td><td id="fit_rval"></td></tr>
+  <tr><td>R&#0178;</td>
+      <td><span id="fit_rval"></span></td></tr>
   <tr><td>slope</td>
       <td><span id="fit_slope"></span> &plusmn;
           <span id="fit_slope_err"></span></td></tr>
