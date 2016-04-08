@@ -93,7 +93,7 @@ class DatasetsPage(Subpage):
 class DataExplorerPage(Subpage):
   template = 'explorer.html'
   title = 'Dataset Explorer'
-  description = 'Filter and plot large datasets.'
+  description = 'Filter and plot datasets.'
   figsize = (14, 6)
 
   def get(self):
@@ -136,7 +136,7 @@ class SearcherPage(Subpage):
 class CompositionsPage(Subpage):
   template = 'composition.html'
   title = 'Mars Compositions'
-  description = 'Plot actual and predicted compositions of Mars data.'
+  description = 'Plot predicted compositions of Mars LIBS shots.'
   figsize = (10, 6)
 
   @tornado.web.authenticated
