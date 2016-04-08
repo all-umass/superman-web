@@ -20,6 +20,11 @@ def setup_blr_object(request):
     raise ValueError('Invalid blr segmented flag:', segmented)
   do_segmented = segmented == 'true'
 
+  inverted = request.get_argument('blr_inverted', 'false')
+  if inverted not in ('true', 'false'):
+    raise ValueError('Invalid blr inverted flag:', inverted)
+  do_inverted = inverted == 'true'
+
   lb = request.get_argument('blr_lb', '')
   lb = float(lb) if lb else -np.inf
   ub = request.get_argument('blr_ub', '')
@@ -34,7 +39,7 @@ def setup_blr_object(request):
       params[key] = param
       setattr(bl_obj, key, param)
 
-  return bl_obj, do_segmented, lb, ub, params
+  return bl_obj, do_segmented, do_inverted, lb, ub, params
 
 
 class BaselineHandler(BaseHandler):
@@ -59,12 +64,12 @@ class BaselineHandler(BaseHandler):
     if fig_data is None:
       return
 
-    bl_obj, do_segmented, lb, ub, _ = setup_blr_object(self)
+    bl_obj, do_segmented, do_inverted, lb, ub, _ = setup_blr_object(self)
     if bl_obj is None:
       return
 
-    fig_data.add_transform('baseline-corrected', blr_obj=bl_obj,
-                           blr_segmented=do_segmented, crop=(lb, ub))
+    fig_data.add_transform('baseline-corrected', blr_obj=bl_obj, crop=(lb, ub),
+                           blr_segmented=do_segmented, blr_inverted=do_inverted)
 
     if len(fig_data.figure.axes) == 2:
       # comparison view for the baseline page

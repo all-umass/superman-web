@@ -119,7 +119,7 @@ $(document).ready(function(){
 {% block body_matter %}
 <div id="easter_egg" onclick="$('body,div.box').toggleClass('darby');"></div>
 <div>
-  <select id="ds_select" multiple=true>
+  <select id="ds_select" data-placeholder="Select dataset(s)" multiple=true>
   {% for kind, k_dict in sorted(datasets.items()) %}
     <optgroup label="{{kind}} Datasets">
       {% for name in sorted(k_dict) %}
@@ -128,7 +128,7 @@ $(document).ready(function(){
     </optgroup>
   {% end %}
   </select>
-  <button onclick="load_ds_filters()">Load Dataset(s)</button>
+  <button onclick="load_ds_filters()">Load</button>
 </div>
 <br style="clear:both">
 
@@ -150,11 +150,13 @@ $(document).ready(function(){
     </select>
   </td>
   <!-- General options -->
-  <td>
-    <label>Segmented: <input type="checkbox" id="blr_segmented"></label>
-  </td><td>
+  <td class="uline">
     Bounds: <input id="blr_lb" type="number">
       to    <input id="blr_ub" type="number">
+  </td><td class="uline">
+    <label>Segmented: <input type="checkbox" id="blr_segmented"></label>
+  </td><td class="uline">
+    <label>Inverted: <input type="checkbox" id="blr_inverted"></label>
   </td>
   </tr><tr>
   <!-- slider row -->
@@ -187,11 +189,11 @@ $(document).ready(function(){
   {% end %}
   </tr>
   <!-- pp rows follow -->
-  <tr class="uline oline"><td colspan=4></td></tr>
+  <tr class="uline oline"><td colspan=5></td></tr>
   <!-- normalization -->
   <tr class="uline"><td class="rline vcenter">
   <button onclick="add_pp_step('normalize')">Normalize</button>
-  </td><td colspan=2>
+  </td><td colspan=3>
   <label><input type="radio" name="normalize" value="max">max</label>
   <label><input type="radio" name="normalize" value="l1">L1</label>
   <label><input type="radio" name="normalize" value="l2">L2</label>
@@ -204,7 +206,7 @@ $(document).ready(function(){
   <!-- TODO: hinge squash, with argument? -->
   <tr class="uline"><td class="rline vcenter">
   <button onclick="add_pp_step('squash')">Squash</button>
-  </td><td colspan=2>
+  </td><td colspan=3>
   <label><input type="radio" name="squash" value="sqrt">square root</label>
   <label><input type="radio" name="squash" value="cos">cosine</label>
   <label><input type="radio" name="squash" value="log">log</label>
@@ -217,16 +219,15 @@ $(document).ready(function(){
   </td><td>
   <input type="range" min=5 max=41 value=9 step=2 name="sg" checked
          oninput="$('#sg_window').text(this.value);">
-  </td><td>
+  </td><td colspan=2>
   <input type="range" min=1 max=10 value=4 step=1 name="sg" checked
          oninput="$('#sg_order').text(this.value);">
-  </td><td></td></tr>
+  </td></tr>
   <tr class="uline">
   <td>Savitzky-Golay window = <span id="sg_window">9</span></td>
-  <td>Savitzky-Golay order = <span id="sg_order">4</span></td>
-  <td></td></tr>
+  <td colspan=2>Savitzky-Golay order = <span id="sg_order">4</span></td></tr>
   <!-- staging area for pp steps -->
-  <tr class="uline"><td colspan=4>
+  <tr class="uline"><td colspan=5>
   <ol id='pp_staging'></ol>
   </td></tr>
 </table>

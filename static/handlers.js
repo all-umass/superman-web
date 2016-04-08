@@ -162,6 +162,7 @@ function add_baseline_args(post_data, method) {
   if (!method) return post_data;
   post_data['blr_method'] = method;
   post_data['blr_segmented'] = $('#blr_segmented').is(':checked');
+  post_data['blr_inverted'] = $('#blr_inverted').is(':checked');
   post_data['blr_lb'] = $('#blr_lb').val();
   post_data['blr_ub'] = $('#blr_ub').val();
   var idx = method.length + 1;

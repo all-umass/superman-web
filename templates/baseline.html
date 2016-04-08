@@ -19,7 +19,51 @@ $(document).ready(function(){
 
 {% block body_matter %}
 {% include '_dataset_selector.html' %}
-{% include '_baseline_table.html' %}
+
+<div id="baseline_steps">
+<table id="baseline_table" class="pp_table">
+<tr class="uline"><th colspan=4>Baseline Correction Algorithms</th></tr>
+<!-- generic options -->
+<tr class="uline"><td class="rline vcenter">General Options</td>
+<td><label>Segmented: <input type="checkbox" id="blr_segmented"></label></td>
+<td><label>Inverted: <input type="checkbox" id="blr_inverted"></label></td>
+<td>Bounds: <input id="blr_lb" type="number"> to
+<input id="blr_ub" type="number"></td>
+</tr>
+{% for key, bl in bl_classes %}
+  <tr>
+  <td class="rline uline vcenter" rowspan=2>
+    <button class="needs_plot" disabled onclick="do_baseline('{{key}}')">
+      {{bl.__class__.__name__}}
+    </button>
+  </td>
+  {% for param, (lb,ub,scale) in list(bl.param_ranges().items()) %}
+    <td class="param {{key}}" colspan={{3 if len(bl.param_ranges()) == 1 else 1}}>
+      <input type="range"
+             step={{compute_step(lb,ub,scale)}}
+        {% if scale == 'log' %}
+             min={{log10(lb)}} max={{log10(ub)}}
+             value={{log10(getattr(bl,param))}}
+             oninput="update_1eX(this.value, '#{{key}}_{{param}}', {{str(ub>1e5).lower()}});"
+        {% else %}
+             min={{lb}} max={{ub}}
+             value={{getattr(bl,param)}}
+             oninput="$('#{{key}}_{{param}}').text(this.value);"
+        {% end %}>
+    </td>
+  {% end %}
+  </tr>
+  <tr class="uline">
+  {% for param in list(bl.param_ranges()) %}
+    <td class="param {{key}}" colspan={{3 if len(bl.param_ranges()) == 1 else 1}}>
+      {{param.strip('_')}} = <span id="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
+    </td>
+  {% end %}
+  </tr>
+{% end %}
+</table>
+<div id="baseline_messages"></div>
+</div>
 
 <div id="fig_wrapper">
 <div id="figure"></div>
