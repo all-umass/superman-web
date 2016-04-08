@@ -11,7 +11,7 @@ def setup_blr_object(request):
   method = request.get_argument('blr_method', '').lower()
   if not method:
     # XXX: lame hack
-    return None, False, -np.inf, np.inf, {}
+    return None, False, False, -np.inf, np.inf, {}
   if method not in BL_CLASSES:
     raise ValueError('Invalid blr method:', method)
 
