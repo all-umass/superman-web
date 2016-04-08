@@ -97,14 +97,13 @@ $(document).ready(function(){
     if (!selected || selected.length == 0) {
       // (re)-enable all datasets
       elt.find('option').prop('disabled', false);
-      elt.trigger('chosen:updated');
     } else if (selected.length == 1) {
       // disable everything but this kind of dataset
       var kind = selected[0].split(',')[1];
       elt.find('option').prop('disabled', true);
       elt.find('option.' + kind).prop('disabled', false);
-      elt.trigger('chosen:updated');
     }
+    elt.trigger('chosen:updated');
   });
 {% if ds_kind and ds_name %}
   $('#ds_select option.{{ds_kind}}').filter(function(i,e){
