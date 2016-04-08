@@ -73,6 +73,8 @@ def load_datasets(config_fh, public_only=False):
       if public_only and not is_public:
         continue
 
+      description = info.get('description', 'No description provided.')
+
       if 'files' in info:
         files = info['files']
       else:
@@ -91,11 +93,11 @@ def load_datasets(config_fh, public_only=False):
           loader_fn = dataset_loaders._generic_traj_loader(meta_mapping)
 
       if kind == 'LIBS':
-        ds = WebLIBSDataset(name, loader_fn, *files)
+        ds = WebLIBSDataset(name, description, loader_fn, *files)
       elif info.get('vector', False):
-        ds = WebVectorDataset(name, kind, loader_fn, *files)
+        ds = WebVectorDataset(name, kind, description, loader_fn, *files)
       else:
-        ds = WebTrajDataset(name, kind, loader_fn, *files)
+        ds = WebTrajDataset(name, kind, description, loader_fn, *files)
       ds.is_public = is_public
 
 

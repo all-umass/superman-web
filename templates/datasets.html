@@ -1,6 +1,11 @@
 {% extends "_common.html" %}
 {% block head_matter %}
 <script src="http://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
+<script type="text/javascript">
+function toggle_extra(elt) {
+  $(elt).parents('tr.dataset').nextUntil('tr.dataset').toggle();
+}
+</script>
 <style type="text/css">
 #datasets {
   margin: 1em auto;
@@ -36,6 +41,32 @@
   padding: 0.5em;
   cursor: pointer;
 }
+#datasets tr.extra {
+  display: none;
+}
+#datasets tr.extra td {
+  background-color: lightgray;
+  text-align: left;
+  width: 1px;  /* HACK: prevent extra row from resizing table width */
+}
+#datasets tr.extra .aligned {
+  padding-left: 4em;
+  text-indent: -2em;
+}
+#datasets tr.extra .metadata {
+  display: inline;
+  list-style: none;
+}
+#datasets tr.extra .metadata li {
+  display: inline;
+  white-space: nowrap;
+}
+#datasets tr.extra .metadata li:after {
+  content: ", ";
+}
+#datasets tr.extra .metadata li:last-child:after {
+  content: "";
+}
 </style>
 {% end %}
 
@@ -43,7 +74,7 @@
 <div>
 <table class='sortable' id='datasets'>
   <caption>
-    A listing of all available spectroscopy datasets.
+    A listing of all available datasets.
     Click a heading to sort by that column.
   </caption>
   <tr>
@@ -53,12 +84,11 @@
     <th># Channels</th>
     <th>Unique Keys?</th>
     <th>Last Updated</th>
-    <th>Metadata</th>
     </tr>
 {% for d in sorted(datasets, key=str) %}
-  <tr class='{%if not d.is_public %}private{%end%}'>
+  <tr class='dataset {%if not d.is_public %}private{%end%}'>
     <td class='ds_title'>
-      <a href="/explorer?ds_kind={{url_escape(d.kind)}}&ds_name={{url_escape(d.name)}}">{{d.name}}</a>
+      <a href="#" onclick="toggle_extra(this)">{{d.name}}</a>
     </td>
     <td>{{d.kind}}</td>
     <td class='numeric'>{{d.num_spectra()}}</td>
@@ -73,8 +103,21 @@
       <td>&#x2714;</td>
     {% end %}
     <td>{{dt(int(d.load_time)).strftime("%Y-%m-%d %H:%M")}}</td>
-    <td>{{', '.join(sorted(m.display_name(k) for k,m in d.metadata.items()))}}
   </tr>
+  <tr class='extra'><td colspan=6>
+    <div class='aligned'><b>Metadata:</b>
+    <ul class='metadata'>
+    {% for name in sorted(m.display_name(k) for k,m in d.metadata.items()) %}
+      <li>{{name}}</li>
+    {% end %}
+    </ul></div>
+    <div class='aligned'><b>Description:</b>
+      {{d.description}}
+    </div>
+    <div class='aligned'>
+    <a href="/explorer?ds_kind={{url_escape(d.kind)}}&ds_name={{url_escape(d.name)}}">
+    Open in Dataset Explorer</a></div>
+  </td></tr>
 {% end %}
 </table>
 </div>

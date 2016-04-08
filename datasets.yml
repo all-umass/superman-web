@@ -15,6 +15,9 @@
 Raman:
   RRUFF:
     file: /srv/nfs/common/spectra/Raman/rruff-spectra.hdf5
+    description: >-
+      This is a placeholder description.
+      It can span multiple lines in the config file.
     metadata:
       - [mineral, LookupMetadata, Mineral]
       - [rruff_id, LookupMetadata, RRUFF ID]

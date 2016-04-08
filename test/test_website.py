@@ -57,13 +57,13 @@ class TestDatasetLoading(unittest.TestCase):
     self.assertEqual(ds.name, x.name)
 
   def test_traj_dataset_load(self):
-    ds = WebTrajDataset('Test Set', 'Raman', _load_traj_set)
+    ds = WebTrajDataset('Test Set', 'Raman', '', _load_traj_set)
     self._generic_checks(ds)
     self.assertEqual(ds.num_spectra(), 2)
     self.assertIsNone(ds.num_dimensions())
 
   def test_vector_dataset_load(self):
-    ds = WebVectorDataset('Test 2', 'NIR', _load_vector_set)
+    ds = WebVectorDataset('Test 2', 'NIR', '', _load_vector_set)
     self._generic_checks(ds)
     self.assertEqual(ds.num_spectra(), 3)
     self.assertEqual(ds.num_dimensions(), 14)
@@ -101,8 +101,8 @@ class TestNoDataPages(unittest.TestCase):
 
 class RouteTester(unittest.TestCase):
   def setUp(self):
-    WebTrajDataset('Test Set', 'Raman', _load_traj_set)
-    WebVectorDataset('Test 2', 'NIR', _load_vector_set)
+    WebTrajDataset('Test Set', 'Raman', '', _load_traj_set)
+    WebVectorDataset('Test 2', 'NIR', '', _load_vector_set)
 
     self.app = MatplotlibServer(cookie_secret='foobar')
 
