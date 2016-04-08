@@ -1,10 +1,13 @@
 {% extends "_common.html" %}
 {% block head_matter %}
-<script src="http://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.25.7/js/jquery.tablesorter.min.js"></script>
 <script type="text/javascript">
 function toggle_extra(elt) {
   $(elt).parents('tr.dataset').nextUntil('tr.dataset').toggle();
 }
+$(document).ready(function() {
+  $('#datasets').tablesorter();
+})
 </script>
 <style type="text/css">
 #datasets {
@@ -72,21 +75,22 @@ function toggle_extra(elt) {
 
 {% block body_matter %}
 <div>
-<table class='sortable' id='datasets'>
+<table class='tablesorter' id='datasets'>
   <caption>
     A listing of all available datasets.
     Click a heading to sort by that column.
   </caption>
-  <tr>
+  <thead><tr>
     <th>Dataset</th>
     <th>Type</th>
     <th># Spectra</th>
     <th># Channels</th>
     <th>Unique Keys?</th>
     <th>Last Updated</th>
-    </tr>
+  </tr></thead>
+  <tbody>
 {% for d in sorted(datasets, key=str) %}
-  <tr class='dataset {%if not d.is_public %}private{%end%}'>
+  <tr class='dataset {%if not d.is_public %}private{%end%} tablesorter-hasChildRow'>
     <td class='ds_title'>
       <a href="#" onclick="toggle_extra(this)">{{d.name}}</a>
     </td>
@@ -104,7 +108,7 @@ function toggle_extra(elt) {
     {% end %}
     <td>{{dt(int(d.load_time)).strftime("%Y-%m-%d %H:%M")}}</td>
   </tr>
-  <tr class='extra'><td colspan=6>
+  <tr class='extra tablesorter-childRow'><td colspan=6>
     <div class='aligned'><b>Metadata:</b>
     <ul class='metadata'>
     {% for name in sorted(m.display_name(k) for k,m in d.metadata.items()) %}
@@ -119,6 +123,7 @@ function toggle_extra(elt) {
     Open in Dataset Explorer</a></div>
   </td></tr>
 {% end %}
+  </tbody>
 </table>
 </div>
 
