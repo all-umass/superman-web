@@ -82,7 +82,7 @@ class FilterPlotHandler(BaseHandler):
     for meta_key in self.get_arguments('meta_keys[]'):
       data = []
       for dv in all_ds_views:
-        x, label = ds_view.get_metadata(meta_key)
+        x, label = dv.get_metadata(meta_key)
         data.append(x)
       header.append(label)
       meta_data.append(np.concatenate(data))
@@ -324,7 +324,7 @@ def _get_all_metadata(all_ds_views, meta_key):
   # normal metadata lookup
   data = []
   for dv in all_ds_views:
-    x, label = dv.get_metadata(axis.argument)
+    x, label = dv.get_metadata(meta_key)
     data.append(x)
   data = np.concatenate(data)
   if not np.issubdtype(data.dtype, np.number):
