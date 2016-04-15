@@ -82,7 +82,10 @@ function do_filtered_plot() {
   $.post('/_filterplot', post_data, cbs['success'], 'json').fail(cbs['fail']);
 }
 function download_data() {
-  var args = collect_ds_info();
+  var ds_info = collect_ds_info();
+  var args = {};
+  args['ds_name'] = ds_info.name;
+  args['ds_kind'] = ds_info.kind;
   args['meta_keys'] = $('#dl_metadata option:selected').map(function(){
     return this.value;
   }).toArray();
