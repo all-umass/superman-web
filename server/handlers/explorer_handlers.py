@@ -346,7 +346,6 @@ def _get_all_metadata(all_ds_views, meta_key):
     tick_names, data = np.unique(data, return_inverse=True)
   else:
     tick_names = None
-  label = label.decode('utf8', 'ignore')
   return data, label, tick_names
 
 
