@@ -249,10 +249,9 @@ $(document).ready(function(){
 <a href="http://matplotlib.org/examples/color/colormaps_reference.html"
  class="small">[?]</a><br />
   <select id="plt_cmap">
+    <option value="_auto" selected><b>auto</b></option>
   {% for cmap in cmaps %}
-    <option value="{{cmap}}"
-    {% if cmap == default_cmap %}selected{% end %}
-    >{{cmap}}</option>
+    <option value="{{cmap}}">{{cmap}}</option>
   {% end %}
   </select>
 </td><td>

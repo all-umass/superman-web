@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import os
 from collections import namedtuple
+from itertools import cycle, islice
 from matplotlib import rcParams
 from matplotlib.collections import LineCollection
 from matplotlib.patches import Rectangle
@@ -27,7 +28,8 @@ else:
 # helper for storing validated/processed inputs
 AxisInfo = namedtuple('AxisInfo', ('type', 'argument'))
 # helpers for storing computed data
-ColorData = namedtuple('ColorData', ('color', 'label', 'names', 'needs_cbar'))
+ColorData = namedtuple('ColorData', ('color', 'label', 'names', 'needs_cbar',
+                                     'is_categorical'))
 PlotData = namedtuple('PlotData', ('trajs', 'xlabel', 'ylabel', 'xticks',
                                    'yticks', 'scatter'))
 
@@ -180,7 +182,8 @@ class FilterPlotHandler(BaseHandler):
     ax = fig.gca()
     artist = _add_plot(fig, ax, plot_data, color_data, **plot_kwargs)
     _decorate_plot(fig, ax, artist, plot_data, color_data,
-                   bool(int(self.get_argument('legend'))))
+                   bool(int(self.get_argument('legend'))),
+                   plot_kwargs['cmap'])
 
     # draw it, then return the axis limits
     fig_data.manager.canvas.draw()
@@ -239,20 +242,27 @@ def _get_color_data(all_ds_views, caxis):
   logging.info('Getting new color data: %s', caxis)
   color, label, names = _get_axis_data(all_ds_views, caxis)
   return ColorData(color=color, label=label, names=names,
-                   needs_cbar=(names is None and label is not None))
+                   needs_cbar=(names is None and label is not None),
+                   is_categorical=(names is not None and label is not None))
 
 
-def _add_plot(fig, ax, plot_data, color_data, lw=1, cmap='jet', alpha=1):
+def _add_plot(fig, ax, plot_data, color_data, lw=1, cmap='_auto', alpha=1):
+  colors = color_data.color
+  if cmap == '_auto':
+    cmap = None
+    if color_data.is_categorical:
+      colors = np.take(COLOR_CYCLE, colors, mode='wrap')
+
   if plot_data.scatter:
     data, = plot_data.trajs
-    return ax.scatter(*data.T, marker='o', c=color_data.color, edgecolor='none',
+    return ax.scatter(*data.T, marker='o', c=colors, edgecolor='none',
                       s=lw*20, cmap=cmap, alpha=alpha)
   # trajectory plot
   lc = LineCollection(plot_data.trajs, linewidths=lw, cmap=cmap)
-  if color_data.label is None:
-    lc.set_color(color_data.color)
+  if hasattr(colors, 'dtype') and np.issubdtype(colors.dtype, np.number):
+    lc.set_array(colors)
   else:
-    lc.set_array(color_data.color)
+    lc.set_color(colors)
   ax.add_collection(lc, autolim=True)
   lc.set_alpha(alpha)
   ax.autoscale_view()
@@ -261,7 +271,7 @@ def _add_plot(fig, ax, plot_data, color_data, lw=1, cmap='jet', alpha=1):
   return lc
 
 
-def _decorate_plot(fig, ax, artist, plot_data, color_data, legend):
+def _decorate_plot(fig, ax, artist, plot_data, color_data, legend, cmap):
   ax.set_xlabel(plot_data.xlabel)
   ax.set_ylabel(plot_data.ylabel)
 
@@ -279,8 +289,12 @@ def _decorate_plot(fig, ax, artist, plot_data, color_data, legend):
 
   if legend and color_data.names is not None and len(color_data.names) <= 20:
     # using trick from http://stackoverflow.com/a/19881647/10601
-    scale = np.linspace(0, 1, len(color_data.names))
-    proxies = [Rectangle((0,0), 1, 1, fc=c) for c in artist.cmap(scale)]
+    num_colors = len(color_data.names)
+    if cmap == '_auto':
+      colors = islice(cycle(COLOR_CYCLE), num_colors)
+    else:
+      colors = artist.cmap(np.linspace(0, 1, num_colors))
+    proxies = [Rectangle((0,0), 1, 1, fc=c) for c in colors]
     ax.legend(proxies, color_data.names)
 
 
