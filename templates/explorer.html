@@ -111,7 +111,8 @@ $(document).ready(function(){
 {% if ds_kind and ds_name %}
   $('#ds_select option.{{ds_kind}}').filter(function(i,e){
     return $(e).text() == "{{ds_name}}";
-  }).prop('selected', true).change();
+  }).prop('selected', true);
+  $('#ds_select').change();
   load_ds_filters();
 {% end %}
 });
