@@ -29,8 +29,10 @@ AWK=$(gawk -V >/dev/null 2>&1 && echo "gawk" || echo "awk")
 # parse command line options
 # if --dry-run is passed, don't kill or start anything
 # if --tail is passed, finish by calling `tail -f logs/server.log`
+# if --kill is passed, only kill, don't restart
 dry_run=false
 follow_log=false
+only_kill=false
 for arg in "$@"; do
   case $arg in
     --dry-run)
@@ -38,6 +40,9 @@ for arg in "$@"; do
     ;;
     --tail)
     follow_log=true
+    ;;
+    --kill)
+    only_kill=true
     ;;
     -h|--help)
     echo "Usage: $0 [--dry-run] [--tail]"
@@ -54,7 +59,7 @@ done
 server_pid=$(find_server_pid)
 if [[ -z "$server_pid" ]]; then
   echo "No currently running server found."
-  $dry_run || start_server
+  $dry_run || $only_kill || start_server
   exit
 fi
 
@@ -110,5 +115,5 @@ while [[ -n "$server_pid" ]]; do
   server_pid=$(find_server_pid)
 done
 
-start_server
+$only_kill || start_server
 
