@@ -51,7 +51,9 @@ class PeakHandler(BaseHandler):
                                log_fn=logging.info)[-1]
 
     mask = fig_data.filter_mask[ds]
-    ds_view = ds.view(mask=mask, **fig_data.get_trans())
+    trans = fig_data.get_trans()
+    trans['nan_gap'] = False  # make sure we're not inserting NaNs anywhere
+    ds_view = ds.view(mask=mask, **trans)
     trajs, names = ds_view.get_trajectories(return_keys=True)
     for traj, name in zip(trajs, names):
       peak = peak_stats(traj)
@@ -73,6 +75,11 @@ class PeakHandler(BaseHandler):
     ax.cla()
     ax.plot(spectrum[:,0], spectrum[:,1], '-')
     ax.set_title(fig_data.title)
+
+    # re-fill NaN-gapped values (semi-hack)
+    nan_inds, = np.where(np.isnan(spectrum[:,1]))
+    if len(nan_inds) > 0:
+      spectrum[nan_inds,1] = spectrum[nan_inds+1,1]
 
     alg = self.get_argument('alg')
     logging.info('Peak fitting with alg=%r', alg)
