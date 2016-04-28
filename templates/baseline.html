@@ -59,6 +59,11 @@ $(document).ready(function(){
       {{param.strip('_')}} = <span id="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
     </td>
   {% end %}
+  {% if len(bl.param_ranges()) == 0 %}
+    <td colspan=3></td>
+  {% elif len(bl.param_ranges()) == 2 %}
+    <td></td>
+  {% end %}
   </tr>
 {% end %}
 </table>
