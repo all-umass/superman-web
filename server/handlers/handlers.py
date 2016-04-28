@@ -87,7 +87,7 @@ class UploadHandler(BaseHandler):
       logging.error('Failed to parse uploaded file: %s', e.message)
       self.set_status(415)
       return
-    ds = UploadedDataset(fname, query.astype(np.float32, order='C'))
+    ds = UploadedDataset(fname, query)
     fig_data.set_selected(ds.view(), title=fname)
     axlimits = fig_data.plot()
     return self.write(json_encode(axlimits))

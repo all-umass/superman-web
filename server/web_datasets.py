@@ -139,7 +139,10 @@ class WebLIBSDataset(WebVectorDataset):
 class UploadedDataset(TrajDataset):
   def __init__(self, name, traj):
     TrajDataset.__init__(self, name, '<unknown>')
-    data = {name: traj}
+    # do some cleanup on the spectrum
+    if traj[0,0] <= traj[1,0]:
+      traj = traj[::-1]
+    data = {name: traj.astype(np.float32, order='C')}
     self.set_data([name], data)
 
 
