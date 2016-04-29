@@ -99,6 +99,11 @@ NIR:
     loader: load_corn
     vector: true
     file: /srv/nfs/common/spectra/misc/corn.hdf5
+  Ternary Mixtures:
+    vector: true
+    file: /srv/nfs/common/spectra/misc/ternary_mixtures.hdf5
+    metadata:
+      - [dataset, LookupMetadata, Dataset]
 XRD:
   RRUFF:
     file: /srv/nfs/common/spectra/misc/rruff-xrd.hdf5
