@@ -2,11 +2,12 @@ from __future__ import absolute_import
 import ast
 import logging
 import numpy as np
+from io import BytesIO, StringIO
 from superman.file_io import parse_spectrum
 from tornado.escape import json_encode
 
 from .base import BaseHandler
-from ..web_datasets import UploadedDataset, BytesIO
+from ..web_datasets import UploadedDataset
 
 
 class SelectHandler(BaseHandler):
@@ -84,9 +85,13 @@ class UploadHandler(BaseHandler):
     try:
       query = parse_spectrum(fh)
     except Exception as e:
-      logging.error('Failed to parse uploaded file: %s', e.message)
-      self.set_status(415)
-      return
+      try:
+        fh = StringIO(f['body'].decode('utf-8', 'ignore'), newline=None)
+        query = parse_spectrum(fh)
+      except Exception as e:
+        logging.error('Failed to parse uploaded file: %s', e.message)
+        self.set_status(415)
+        return
     ds = UploadedDataset(fname, query)
     fig_data.set_selected(ds.view(), title=fname)
     axlimits = fig_data.plot()
