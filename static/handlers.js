@@ -28,12 +28,12 @@ function make_post_callbacks(msg_selector) {
   };
 }
 var upload_cbs = make_post_callbacks('#upload_messages');
-function do_upload(files) {
-  if (files.length != 1) {
+function do_upload(elt) {
+  if (elt.files.length != 1) {
     $('#upload_messages').text("Choose a file first!").fadeIn();
     return
   }
-  var f = files[0];
+  var f = elt.files[0];
   if (f.size > 5000000) {
     $('#upload_messages').text("File must be <5mb").fadeIn();
     return
@@ -50,7 +50,10 @@ function do_upload(files) {
     dataType: 'json',
     type: 'POST',
     error: upload_cbs['fail'],
-    success: upload_cbs['success']
+    success: function (data, status) {
+      upload_cbs['success'](data, status);
+      elt.value = "";  // reset the input
+    }
   });
 }
 function get_dataset(info) {
