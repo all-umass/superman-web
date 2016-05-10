@@ -164,6 +164,14 @@ class PeakFitPage(Subpage):
   def get(self):
     self.render(datasets=self.all_datasets(), **blr_kwargs)
 
+
+class DebugPage(BaseHandler):
+  @tornado.web.authenticated
+  def get(self):
+    self.render('debug.html', page_title='Debug View', mpl_js=[],
+                figure_data=self.application.figure_data)
+
+
 # Define the routes for each page.
 routes = [
     (r'/', MainPage),
@@ -174,4 +182,5 @@ routes = [
     (r'/compositions', CompositionsPage),
     (r'/peakfit', PeakFitPage),
     (r'/login', LoginPage),
+    (r'/debug', DebugPage),
 ]

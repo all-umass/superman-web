@@ -1,0 +1,16 @@
+{% extends "_common.html" %}
+{% block body_matter %}
+<b style="display: block; padding-top: 1em;">
+	Current figures: {{len(figure_data)}}
+</b>
+<ul style="padding: 1em;">
+{% for key, fd in figure_data.items() %}
+	<li>Figure {{key}}:
+	<ul style="padding-left: 2em;">
+	{% for attr, val in sorted(vars(fd).items()) %}
+		<li><code>{{attr}}</code> = {{repr(val)}}</li>
+	{% end %}
+	</ul></li>
+{% end %}
+</ul>
+{% end %}
