@@ -45,7 +45,7 @@ for arg in "$@"; do
     only_kill=true
     ;;
     -h|--help)
-    echo "Usage: $0 [--dry-run] [--tail]"
+    echo "Usage: $0 [--dry-run] [--tail] [--kill]"
     exit 1
     ;;
     *)
