@@ -36,7 +36,7 @@ class PeakHandler(BaseHandler):
       peak_keys = ('area', 'height', 'xmin', 'xmax')
 
       def peak_stats(t):
-        return _manual_peak_area(t, bounds, base_type)
+        return _manual_peak_area(t, bounds, base_type)[-1]
 
     elif alg == 'fit':
       kind = self.get_argument('fitkind')
@@ -52,7 +52,7 @@ class PeakHandler(BaseHandler):
 
     mask = fig_data.filter_mask[ds]
     trans = fig_data.get_trans()
-    trans['nan_gap'] = False  # make sure we're not inserting NaNs anywhere
+    trans['nan_gap'] = None  # make sure we're not inserting NaNs anywhere
     ds_view = ds.view(mask=mask, **trans)
     trajs, names = ds_view.get_trajectories(return_keys=True)
     for traj, name in zip(trajs, names):
