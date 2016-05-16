@@ -32,7 +32,7 @@ class PeakHandler(BaseHandler):
       lb = float(self.get_argument('lb'))
       ub = float(self.get_argument('ub'))
       bounds = sorted((lb,ub))
-      self.write('Name,Area,Height,X min,X max\n')
+      header = ['Name', 'Area', 'Height', 'X min', 'X max']
       peak_keys = ('area', 'height', 'xmin', 'xmax')
 
       def peak_stats(t):
@@ -41,8 +41,8 @@ class PeakHandler(BaseHandler):
     elif alg == 'fit':
       kind = self.get_argument('fitkind')
       loc = float(self.get_argument('fitloc'))
-      self.write('Name,Area,Height,Center,FWHM,X min,X max,'
-                 'Area stdv,Center stdv,FWHM stdv\n')
+      header = ['Name', 'Area', 'Height', 'Center', 'FWHM', 'X min', 'X max',
+                'Area stdv', 'Center stdv', 'FWHM stdv']
       peak_keys = ('area', 'height', 'center', 'fwhm', 'xmin', 'xmax',
                    'area_std', 'center_std', 'fwhm_std')
 
@@ -55,10 +55,21 @@ class PeakHandler(BaseHandler):
     trans['nan_gap'] = None  # make sure we're not inserting NaNs anywhere
     ds_view = ds.view(mask=mask, **trans)
     trajs, names = ds_view.get_trajectories(return_keys=True)
-    for traj, name in zip(trajs, names):
+
+    meta_data = []
+    if bool(int(self.get_argument('include_metadata'))):
+      for meta_key, _ in ds.metadata_names():
+        x, label = ds_view.get_metadata(meta_key)
+        header.append(label)
+        meta_data.append(x)
+
+    self.write(','.join(header))
+    self.write('\n')
+    for i, traj in enumerate(trajs):
       peak = peak_stats(traj)
-      self.write('%s,' % name)
+      self.write('%s,' % names[i])
       self.write(','.join(str(peak[k]) for k in peak_keys))
+      self.write(''.join(',%s' % m[i] for m in meta_data))
       self.write('\n')
     self.finish()
 

@@ -33,6 +33,7 @@ function collect_peakfit_args(alg) {
 function do_batch_download() {
   var alg = $('input[name=batch_algo]:checked').val();
   var args = collect_peakfit_args(alg);
+  args['include_metadata'] = +$('#batch_meta').is(':checked');
   var url = '/'+fig.id+'/peak_area.csv?'+$.param(args);
   window.open(url, '_blank');
 }
@@ -150,6 +151,8 @@ Download all peak data for the filtered subset using the settings above.
 Algorithm type:
 <label><input type="radio" name="batch_algo" value="manual" checked>Manual</label>
 <label><input type="radio" name="batch_algo" value="fit">Fitted</label>
+<br />
+<label>Include metadata: <input type="checkbox" id="batch_meta"></label>
 <br />
 <button id="plot_button" onclick="do_batch_download();" disabled>
 Download peak data</button>
