@@ -68,11 +68,12 @@ function do_peakfit(alg) {
 $(document).ready(function(){
   $('#baseline_steps,#pp_steps').toggle();
   onready_boilerplate("{{ws_uri}}", {{ fig_id }});
-  // Also set the manual peakfit bounds when manual zooming.
+  // Also set peakfit params when manual zooming.
   $('#zoom_control button').click(function(){
     var bounds = $('input[name=peakrange]');
     bounds[0].value = $('#zoom_control input[name=xmin]').val();
     bounds[1].value = $('#zoom_control input[name=xmax]').val();
+    $('#peakloc').val(bounds[0].value/2.0 + bounds[1].value/2.0);
   });
 });
 </script>
