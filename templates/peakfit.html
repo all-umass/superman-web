@@ -24,9 +24,10 @@ function collect_peakfit_args(alg) {
       function(i,e){return +e.value;}).toArray();
   var basetype = $('input[name=basetype]:checked').val();
   var loc = $('#peakloc').val();
+  var xres = $('#xres').val();
   var peaktype = $('input[name=peaktype]:checked').val();
   return {
-    basetype: basetype, lb: bounds[0], ub: bounds[1], alg: alg,
+    basetype: basetype, lb: bounds[0], ub: bounds[1], xres: xres, alg: alg,
     fitloc: loc, fitkind: peaktype, ds_kind: ds_kind, ds_name: ds_name
   };
 }
@@ -37,26 +38,33 @@ function do_batch_download() {
   var url = '/'+fig.id+'/peak_area.csv?'+$.param(args);
   window.open(url, '_blank');
 }
+function fmt_number(x) {
+  var s = x.toFixed(2);
+  if (s === '0.00') {
+    s = x.toExponential(2);
+  }
+  return s
+}
 function do_peakfit(alg) {
   var post_data = collect_peakfit_args(alg);
   post_data['fignum'] = fig.id;
   $('#fit_result').hide();
   $.post('/_peak', post_data, function(data, status) {
     if (status !== 'success') return;
-    var area = data['area'].toFixed(2);
-    var height = data['height'].toFixed(2);
+    var area = fmt_number(data['area']);
+    var height = fmt_number(data['height']);
     var center = '', fwhm = '';
     if ('area_std' in data) {
-      area += ' ± ' + data['area_std'].toFixed(2);
+      area += ' ± ' + fmt_number(data['area_std']);
     }
     if ('height_std' in data) {
-      height += ' ± ' + data['height_std'].toFixed(2);
+      height += ' ± ' + fmt_number(data['height_std']);
     }
     if ('center' in data) {
-      center = data['center'].toFixed(2) +' ± '+ data['center_std'].toFixed(2);
+      center = fmt_number(data['center'])+' ± '+fmt_number(data['center_std']);
     }
     if ('fwhm' in data) {
-      fwhm = data['fwhm'].toFixed(2) + ' ± ' + data['fwhm_std'].toFixed(2);
+      fwhm = fmt_number(data['fwhm']) + ' ± ' + fmt_number(data['fwhm_std']);
     }
     $('#fit_area').text(area);
     $('#fit_height').text(height);
@@ -118,10 +126,13 @@ $(document).ready(function(){
 <label><input type="radio" name="basetype" value="region">min(region)</label>
 </td></tr>
 <!-- peak fitting -->
-<tr><td class="uline rline vcenter" rowspan=2>
+<tr><td class="uline rline vcenter" rowspan=3>
 <button class="needs_plot" onclick="do_peakfit('fit');" disabled>Fit Peak</button></td>
 <td colspan=2>Peak location (approx.):
 <input type="text" id="peakloc" value="500.0" size=5>
+</td></tr>
+<tr><td colspan=2>x-axis resolution (approx.):
+<input type="text" id="xres" value="1.0" size=5>
 </td></tr>
 <tr class="uline"><td colspan=2>Peak type:
 <label><input type="radio" name="peaktype" value="lorentzian" checked>Lorentzian</label>
