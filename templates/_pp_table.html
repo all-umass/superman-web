@@ -1,36 +1,34 @@
 <div id="pp_steps">
 <table id="pp_table" class="pp_table">
-<!-- TODO: allow re-ordering / adding of steps -->
+<!-- TODO: allow re-ordering steps -->
 <tr class="uline"><th colspan=3>Preprocessing Steps</th></tr>
 <!-- normalization -->
-<tr class="uline"><td class="rline vcenter">
-<button onclick="add_pp_step('normalize')">Normalize</button>
-</td><td colspan=2>
-<label><input type="radio" name="normalize" value="max">max</label>
-<label><input type="radio" name="normalize" value="l1">L1</label>
-<label><input type="radio" name="normalize" value="l2">L2</label>
-<label><input type="radio" name="normalize" value="cum">cumulative</label>
-<label><input type="radio" name="normalize" value="norm3">norm-3 (LIBS only)</label>
+<tr class="uline">
+<td class="rline vcenter">Normalize</button></td><td colspan=2>
+<button onclick="add_pp_step('normalize','max');">max</button>
+<button onclick="add_pp_step('normalize','l1');">L<sub>1</sub></button>
+<button onclick="add_pp_step('normalize','l2');">L<sub>2</sub></button>
+<button onclick="add_pp_step('normalize','cum');">cumulative</button>
+<button onclick="add_pp_step('normalize','norm3');">norm-3 (LIBS only)</button>
 </td></tr>
 <!-- squashing -->
-<tr class="uline"><td class="rline vcenter">
-<button onclick="add_pp_step('squash')">Squash</button>
-</td><td colspan=2>
-<!-- TODO: hinge squash, with argument? -->
-<label><input type="radio" name="squash" value="sqrt">square root</label>
-<label><input type="radio" name="squash" value="cos">cosine</label>
-<label><input type="radio" name="squash" value="log">log</label>
-<label><input type="radio" name="squash" value="tanh">tanh</label>
-</td></tr>
+<tr class="uline">
+<td class="rline vcenter">Squash</td><td colspan=2>
 <!-- TODO: row(s) for generalized squashing (poly,bezier) -->
+<!-- TODO: hinge squash, with argument? -->
+<button onclick="add_pp_step('squash','sqrt');">square root</button>
+<button onclick="add_pp_step('squash','cos');">cosine</button>
+<button onclick="add_pp_step('squash','log');">log</button>
+<button onclick="add_pp_step('squash','tanh');">tanh</button>
+</td></tr>
 <!-- smoothing -->
 <tr><td class="rline uline vcenter" rowspan=2>
-<button onclick="add_pp_step('smooth')">Smooth</button>
+<button onclick="add_pp_step('smooth',null,'smooth')">Smooth</button>
 </td><td>
-<input type="range" min=5 max=41 value=9 step=2 name="smooth" checked
+<input type="range" min=5 max=41 value=9 step=2 name="smooth"
        oninput="$('#smooth_window').text(this.value);">
 </td><td>
-<input type="range" min=1 max=10 value=4 step=1 name="smooth" checked
+<input type="range" min=1 max=10 value=4 step=1 name="smooth"
        oninput="$('#smooth_order').text(this.value);">
 </td></tr>
 <tr class="uline">
@@ -38,12 +36,12 @@
 <td>Savitzky-Golay order = <span id="smooth_order">4</span></td></tr>
 <!-- derivative -->
 <tr><td class="rline uline vcenter" rowspan=2>
-<button onclick="add_pp_step('deriv')">Derivative</button>
+<button onclick="add_pp_step('deriv',null,'deriv')">Derivative</button>
 </td><td>
-<input type="range" min=5 max=41 value=9 step=2 name="deriv" checked
+<input type="range" min=5 max=41 value=9 step=2 name="deriv"
        oninput="$('#deriv_window').text(this.value);">
 </td><td>
-<input type="range" min=1 max=10 value=4 step=1 name="deriv" checked
+<input type="range" min=1 max=10 value=4 step=1 name="deriv"
        oninput="$('#deriv_order').text(this.value);">
 </td></tr>
 <tr class="uline">

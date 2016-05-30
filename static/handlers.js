@@ -139,19 +139,16 @@ function do_zoom() {
   };
   $.post('/_zoom', post_data);
 }
-function add_pp_step(name, input_name) {
-  if (input_name === undefined) {
-    input_name = name;
+function add_pp_step(name, step, input_name) {
+  if (step === null) {
+    step = $('input[name="'+input_name+'"]').map(function(){
+      return this.value;
+    }).toArray().join(':');
   }
-  var step = $('input[name="'+input_name+'"]').filter(function(){
-    return this.checked;
-  }).map(function(){
-    return this.value;
-  }).toArray().join(':');
   if (step === "") return;
-  step = name + ':' + step;
   $('#pp_staging').append(
-    '<li class="'+name+'" onclick="$(this).remove()">'+step+'</li>');
+    '<li class="'+name+'" onclick="$(this).remove()">' +
+    name + ':' + step + '</li>');
 }
 function collect_pp_args() {
   return $('#pp_staging > li').map(function(){
