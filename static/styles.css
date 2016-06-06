@@ -43,7 +43,7 @@ td .ui-slider .ui-slider-handle {
 #figure {
   clear: both;
   float: left;
-  border-size: 2px;
+  border-width: 2px;
   border-style: groove;
   border-radius: 0.5em;
   padding: 0.5em;
