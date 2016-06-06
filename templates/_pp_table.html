@@ -9,7 +9,7 @@
 <button onclick="add_pp_step('normalize','l1');">L<sub>1</sub></button>
 <button onclick="add_pp_step('normalize','l2');">L<sub>2</sub></button>
 <button onclick="add_pp_step('normalize','cum');">cumulative</button>
-<button onclick="add_pp_step('normalize','norm3');">norm-3 (LIBS only)</button>
+<button onclick="add_pp_step('normalize','norm3');">LIBS norm3</button>
 </td></tr>
 <!-- squashing -->
 <tr class="uline">
@@ -23,6 +23,7 @@
 </td></tr>
 <!-- smoothing -->
 <tr><td class="rline uline vcenter" rowspan=2>
+Savitzky-Golay<br />
 <button onclick="add_pp_step('smooth',null,'smooth')">Smooth</button>
 </td><td>
 <input type="range" min=5 max=41 value=9 step=2 name="smooth"
@@ -32,10 +33,11 @@
        oninput="$('#smooth_order').text(this.value);">
 </td></tr>
 <tr class="uline">
-<td>Savitzky-Golay window = <span id="smooth_window">9</span></td>
-<td>Savitzky-Golay order = <span id="smooth_order">4</span></td></tr>
+<td>window = <span id="smooth_window">9</span></td>
+<td>order = <span id="smooth_order">4</span></td></tr>
 <!-- derivative -->
 <tr><td class="rline uline vcenter" rowspan=2>
+Savitzky-Golay<br />
 <button onclick="add_pp_step('deriv',null,'deriv')">Derivative</button>
 </td><td>
 <input type="range" min=5 max=41 value=9 step=2 name="deriv"
@@ -45,8 +47,8 @@
        oninput="$('#deriv_order').text(this.value);">
 </td></tr>
 <tr class="uline">
-<td>Savitzky-Golay window = <span id="deriv_window">9</span></td>
-<td>Savitzky-Golay order = <span id="deriv_order">4</span></td></tr>
+<td>window = <span id="deriv_window">9</span></td>
+<td>order = <span id="deriv_order">4</span></td></tr>
 <!-- staging area for pp steps -->
 <tr class="uline"><td colspan=3>
 <ol id='pp_staging'></ol>
