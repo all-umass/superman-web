@@ -66,7 +66,7 @@ function collect_plot_options() {
     line_width: $("#plt_lw").val(),
     cmap: $("#plt_cmap").val(),
     chan_mask: +$("#chan_mask").is(":checked"),
-    pp: collect_pp_args(),
+    pp: collect_pp_args($('#blr_pp_table')),
   };
   return add_baseline_args(opts);
 }
@@ -140,7 +140,7 @@ $(document).ready(function(){
 
 <!-- BLR / PP -->
 <div class='box'>
-<table class='ds_table'>
+<table class='ds_table' id='blr_pp_table'>
   <caption>Baseline Correction &amp; Preprocessing</caption>
   <!-- BLR method dropdown -->
   <tr><td class="rline vcenter" rowspan=3>
@@ -196,26 +196,26 @@ $(document).ready(function(){
   <!-- normalization -->
   <tr class="uline">
   <td class="rline vcenter">Normalize</button></td><td colspan=3>
-  <button onclick="add_pp_step('normalize','max');">max</button>
-  <button onclick="add_pp_step('normalize','l1');">L<sub>1</sub></button>
-  <button onclick="add_pp_step('normalize','l2');">L<sub>2</sub></button>
-  <button onclick="add_pp_step('normalize','cum');">cumulative</button>
-  <button onclick="add_pp_step('normalize','norm3');">norm-3 (LIBS only)</button>
+  <button onclick="add_pp_step(this,'normalize','max');">max</button>
+  <button onclick="add_pp_step(this,'normalize','l1');">L<sub>1</sub></button>
+  <button onclick="add_pp_step(this,'normalize','l2');">L<sub>2</sub></button>
+  <button onclick="add_pp_step(this,'normalize','cum');">cumulative</button>
+  <button onclick="add_pp_step(this,'normalize','norm3');">LIBS norm3</button>
   </td></tr>
   <!-- squashing -->
   <tr class="uline">
   <td class="rline vcenter">Squash</td><td colspan=3>
   <!-- TODO: row(s) for generalized squashing (poly,bezier) -->
   <!-- TODO: hinge squash, with argument? -->
-  <button onclick="add_pp_step('squash','sqrt');">square root</button>
-  <button onclick="add_pp_step('squash','cos');">cosine</button>
-  <button onclick="add_pp_step('squash','log');">log</button>
-  <button onclick="add_pp_step('squash','tanh');">tanh</button>
+  <button onclick="add_pp_step(this,'squash','sqrt');">square root</button>
+  <button onclick="add_pp_step(this,'squash','cos');">cosine</button>
+  <button onclick="add_pp_step(this,'squash','log');">log</button>
+  <button onclick="add_pp_step(this,'squash','tanh');">tanh</button>
   </td></tr>
   <!-- smoothing / derivative -->
   <tr><td class="rline uline vcenter" rowspan=2>
-  <button onclick="add_pp_step('smooth',null,'sg')">Smooth</button><br />
-  <button onclick="add_pp_step('deriv',null,'sg')">Derivative</button>
+  <button onclick="add_pp_step(this,'smooth',null,'sg')">Smooth</button><br />
+  <button onclick="add_pp_step(this,'deriv',null,'sg')">Derivative</button>
   </td><td>
   <input type="range" min=5 max=41 value=9 step=2 name="sg" checked
          oninput="$('#sg_window').text(this.value);">
@@ -228,7 +228,7 @@ $(document).ready(function(){
   <td colspan=2>Savitzky-Golay order = <span id="sg_order">4</span></td></tr>
   <!-- staging area for pp steps -->
   <tr class="uline"><td colspan=5>
-  <ol id='pp_staging'></ol>
+  <ol class='pp_staging'></ol>
   </td></tr>
 </table>
 </div>

@@ -139,19 +139,20 @@ function do_zoom() {
   };
   $.post('/_zoom', post_data);
 }
-function add_pp_step(name, step, input_name) {
+function add_pp_step(ctx, name, step, input_name) {
+  var table = $(ctx).closest('table');
   if (step === null) {
-    step = $('input[name="'+input_name+'"]').map(function(){
+    step = table.find('input[name="'+input_name+'"]').map(function(){
       return this.value;
     }).toArray().join(':');
   }
   if (step === "") return;
-  $('#pp_staging').append(
+  table.find('.pp_staging').append(
     '<li class="'+name+'" onclick="$(this).remove()">' +
     name + ':' + step + '</li>');
 }
-function collect_pp_args() {
-  return $('#pp_staging > li').map(function(){
+function collect_pp_args(ctx) {
+  return $(ctx).find('.pp_staging > li').map(function(){
     return $(this).text();
   }).toArray().join(',');
 }
