@@ -25,15 +25,15 @@ $(document).ready(function(){
 <tr class="uline"><th colspan=4>Baseline Correction Algorithms</th></tr>
 <!-- generic options -->
 <tr class="uline"><td class="rline vcenter">General Options</td>
-<td><label>Segmented: <input type="checkbox" id="blr_segmented"></label></td>
-<td><label>Inverted: <input type="checkbox" id="blr_inverted"></label></td>
-<td>Bounds: <input id="blr_lb" type="number"> to
-<input id="blr_ub" type="number"></td>
+<td><label>Segmented: <input type="checkbox" class="blr_segmented"></label></td>
+<td><label>Inverted: <input type="checkbox" class="blr_inverted"></label></td>
+<td>Bounds: <input class="blr_lb" type="number"> to
+<input class="blr_ub" type="number"></td>
 </tr>
 {% for key, bl in bl_classes %}
   <tr>
   <td class="rline uline vcenter" rowspan=2>
-    <button class="needs_plot" disabled onclick="do_baseline('{{key}}')">
+    <button class="needs_plot" disabled onclick="do_baseline('#baseline_table', '{{key}}')">
       {{bl.__class__.__name__}}
     </button>
   </td>

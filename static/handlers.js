@@ -108,10 +108,10 @@ function do_pp(pp) {
   var cbs = make_post_callbacks('#messages');
   $.post('/_pp', post_data, cbs['success'], 'json').fail(cbs['fail']);
 }
-function do_baseline(method) {
+function do_baseline(ctx, method) {
   var msg = $('#baseline_messages');
   msg.text("Correcting baseline...").fadeIn();
-  var post_data = add_baseline_args({fignum: fig.id}, method);
+  var post_data = add_baseline_args(ctx, {fignum: fig.id}, method);
   var cbs = make_post_callbacks('#baseline_messages');
   $.post('/_baseline', post_data, cbs['success']).fail(cbs['fail']);
 }
@@ -156,16 +156,17 @@ function collect_pp_args(ctx) {
     return $(this).text();
   }).toArray().join(',');
 }
-function add_baseline_args(post_data, method) {
+function add_baseline_args(ctx, post_data, method) {
+  var table = $(ctx);
   if (method === undefined) {
-    method = $('#blr_method').val();
+    method = table.find('.blr_method').val();
   }
   if (!method) return post_data;
   post_data['blr_method'] = method;
-  post_data['blr_segmented'] = $('#blr_segmented').is(':checked');
-  post_data['blr_inverted'] = $('#blr_inverted').is(':checked');
-  post_data['blr_lb'] = $('#blr_lb').val();
-  post_data['blr_ub'] = $('#blr_ub').val();
+  post_data['blr_segmented'] = table.find('.blr_segmented').is(':checked');
+  post_data['blr_inverted'] = table.find('.blr_inverted').is(':checked');
+  post_data['blr_lb'] = table.find('.blr_lb').val();
+  post_data['blr_ub'] = table.find('.blr_ub').val();
   var idx = method.length + 1;
   $('td.param.'+method+'>span').each(function(i,e){
     var param = e.id.substr(idx);
