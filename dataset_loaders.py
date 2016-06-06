@@ -3,6 +3,7 @@ import h5py
 import logging
 import numpy as np
 import os.path
+import re
 from six.moves import xrange
 
 from server.web_datasets import (
@@ -25,8 +26,10 @@ def _generic_traj_loader(meta_mapping):
     meta = data['/meta']
     kwargs = {}
     for key, cls, display_name in meta_mapping:
-      if key in meta:
-        kwargs[key] = cls(meta[key], display_name)
+      if key not in meta:
+        continue
+      safe_key = re.sub(r'[^a-z0-9_-]', '', key, flags=re.I)
+      kwargs[safe_key] = cls(meta[key], display_name)
     ds.set_data(meta['pkey'], data['/spectra'], **kwargs)
     return True
   return _load
