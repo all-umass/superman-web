@@ -7,7 +7,8 @@ from collections import namedtuple
 from itertools import cycle, islice
 from matplotlib import rcParams
 from matplotlib.collections import LineCollection
-from matplotlib.patches import Rectangle
+from matplotlib.gridspec import GridSpec
+from matplotlib.patches import Patch
 from tornado.escape import json_encode
 from six.moves import xrange
 
@@ -294,8 +295,19 @@ def _decorate_plot(fig, ax, artist, plot_data, color_data, legend, cmap):
       colors = islice(cycle(COLOR_CYCLE), num_colors)
     else:
       colors = artist.cmap(np.linspace(0, 1, num_colors))
-    proxies = [Rectangle((0,0), 1, 1, fc=c) for c in colors]
-    ax.legend(proxies, color_data.names)
+    proxies = [Patch(color=c, label=k) for c,k in zip(colors, color_data.names)]
+
+    # Make a new skinny subplot, then cover it with the legend.
+    # This allows an out-of-axis legend without it getting cut off.
+    # Uses the trick from http://stackoverflow.com/a/22885327/10601
+    gs = GridSpec(1, 2, width_ratios=(3, 1), wspace=0.02)
+    ax.set_position(gs[0].get_position(fig))
+    ax.set_subplotspec(gs[0])
+    lx = fig.add_subplot(gs[1])
+    lx.legend(handles=proxies, title=color_data.label, loc='upper left',
+              mode='expand', borderaxespad=0, fontsize='small')
+    lx.axis('off')
+    gs.tight_layout(fig, w_pad=0)
 
 
 def _sanitize_csv(s):
