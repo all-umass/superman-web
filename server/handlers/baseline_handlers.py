@@ -66,6 +66,10 @@ class BaselineHandler(BaseHandler):
 
     bl_obj, do_segmented, do_inverted, lb, ub, _ = setup_blr_object(self)
     if bl_obj is None:
+      # clear out the baseline-corrected spectrum
+      fig_data.add_transform('upload', **fig_data.get_trans('upload'))
+      # plot the non-BLR'd spectrum again
+      fig_data.plot('upload')
       return
 
     fig_data.add_transform('baseline-corrected', blr_obj=bl_obj, crop=(lb, ub),
