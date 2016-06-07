@@ -3,21 +3,25 @@
 <!-- dataset selector -->
 <div class="data_input">
   Select a spectrum:
-  <select onchange="if(this.value.length>0){get_dataset(this.value)}">
+  <select onchange="if(this.value.length>0){
+    $('#upload').hide(); get_dataset(this.value); $('#selector').show();
+  } else {
+    $('#selector,#upload').toggle();
+  }">
   <option value="">Choose a dataset</option>
   {% for ds in sorted(datasets, key=str) %}
     <option value="{{ds.name}},{{ds.kind}}">{{ds}}</option>
   {% end %}
   </select>
+
+  <div id='upload' class="data_input">
+    or upload your own:
+    <input type="file" name="query" onchange="do_upload(this);"/>
+    <span id="upload_messages"></div>
+  </div>
+
   <img id='spinner' src='/loading_bar.gif' style='display:none'>
-  <div id='selector'></div>
-</div>
+  <div id='selector' style='display:none'></div>
 
-<!-- upload -->
-<div class="data_input">
-  or upload your own:
-  <input type="file" name="query" onchange="do_upload(this);"/>
 </div>
-<div id="upload_messages" style="display: inline"></div>
-
 </div>

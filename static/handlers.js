@@ -9,7 +9,7 @@ function update_zoom_ctrl(data) {
   $('#zoom_control input[name=xmax]').val(data[1]);
   $('#zoom_control input[name=ymin]').val(data[2]);
   $('#zoom_control input[name=ymax]').val(data[3]);
-  $('.needs_plot').prop('disabled', false);
+  $('.needs_plot').attr('disabled', false);
 }
 function make_post_callbacks(msg_selector) {
   return {
@@ -83,6 +83,8 @@ function get_dataset(info) {
         do_select(evt.target.value, undefined);
       }
     }).next().css('width', '+=15');
+    // toggle .libs_only elements
+    $('.libs_only').toggle(ds_kind === 'LIBS');
   });
 }
 function do_filter(filter_element, post_data) {
@@ -108,10 +110,10 @@ function do_pp(pp) {
   var cbs = make_post_callbacks('#messages');
   $.post('/_pp', post_data, cbs['success'], 'json').fail(cbs['fail']);
 }
-function do_baseline(method) {
+function do_baseline(ctx, method) {
   var msg = $('#baseline_messages');
   msg.text("Correcting baseline...").fadeIn();
-  var post_data = add_baseline_args({fignum: fig.id}, method);
+  var post_data = add_baseline_args(ctx, {fignum: fig.id}, method);
   var cbs = make_post_callbacks('#baseline_messages');
   $.post('/_baseline', post_data, cbs['success']).fail(cbs['fail']);
 }
@@ -139,35 +141,37 @@ function do_zoom() {
   };
   $.post('/_zoom', post_data);
 }
-function add_pp_step(name, step, input_name) {
+function add_pp_step(ctx, name, step, input_name) {
+  var table = $(ctx).closest('table');
   if (step === null) {
-    step = $('input[name="'+input_name+'"]').map(function(){
+    step = table.find('input[name="'+input_name+'"]').map(function(){
       return this.value;
     }).toArray().join(':');
   }
   if (step === "") return;
-  $('#pp_staging').append(
+  table.find('.pp_staging').append(
     '<li class="'+name+'" onclick="$(this).remove()">' +
     name + ':' + step + '</li>');
 }
-function collect_pp_args() {
-  return $('#pp_staging > li').map(function(){
+function collect_pp_args(ctx) {
+  return $(ctx).find('.pp_staging > li').map(function(){
     return $(this).text();
   }).toArray().join(',');
 }
-function add_baseline_args(post_data, method) {
+function add_baseline_args(ctx, post_data, method) {
+  var table = $(ctx);
   if (method === undefined) {
-    method = $('#blr_method').val();
+    method = table.find('.blr_method').val();
   }
   if (!method) return post_data;
   post_data['blr_method'] = method;
-  post_data['blr_segmented'] = $('#blr_segmented').is(':checked');
-  post_data['blr_inverted'] = $('#blr_inverted').is(':checked');
-  post_data['blr_lb'] = $('#blr_lb').val();
-  post_data['blr_ub'] = $('#blr_ub').val();
+  post_data['blr_segmented'] = table.find('.blr_segmented').is(':checked');
+  post_data['blr_inverted'] = table.find('.blr_inverted').is(':checked');
+  post_data['blr_lb'] = table.find('.blr_lb').val();
+  post_data['blr_ub'] = table.find('.blr_ub').val();
   var idx = method.length + 1;
-  $('td.param.'+method+'>span').each(function(i,e){
-    var param = e.id.substr(idx);
+  table.find('td.param.'+method+'>span').each(function(i,e){
+    var param = e.className.substr(idx);
     post_data['blr_' + param] = e.innerHTML;
   });
   return post_data;

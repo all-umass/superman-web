@@ -8,6 +8,7 @@ from superman.preprocess import preprocess
 from superman.dataset import LookupMetadata
 
 from .base import BaseHandler
+from .baseline_handlers import setup_blr_object
 
 
 class SearchHandler(BaseHandler):
@@ -38,20 +39,21 @@ class SearchHandler(BaseHandler):
     if query[0,0] > query[1,0]:
       query = np.flipud(query)
 
-    pp = fig_data.get_trans('pp')['pp']
     if abs(1 - query[:,1].max()) > 0.001:
       # WSM needs max-normalization, so we force it.
       logging.warning('Applying max-normalization to query before search')
-      max_norm = 'normalize:max'
-      query[:,1] = preprocess(query[:,1:2].T, max_norm).ravel()
+      query[:,1] = preprocess(query[:,1:2].T, 'normalize:max').ravel()
 
-      # update the pp info
-      pp_steps = filter(None, pp.split(','))
-      if not pp_steps or pp_steps[-1] != max_norm:
-        pp_steps.append(max_norm)
-      pp = ','.join(pp_steps)
+    # prepare the target library
+    pp = self.get_argument('pp', '')
+    if not pp:
+      logging.warning('Applying max-normalization to library before search')
+      pp = 'normalize:max'
+    bl_obj, segmented, inverted, lb, ub, _ = setup_blr_object(self)
+    ds_view = ds.view(pp=pp, blr_obj=bl_obj, blr_segmented=segmented,
+                      blr_inverted=inverted, crop=(lb, ub))
 
-    ds_view = ds.view(pp=pp)
+    # search!
     try:
       top_names, top_sim = ds_view.whole_spectrum_search(
           query, num_endmembers=num_comps, num_results=num_results,
@@ -124,9 +126,16 @@ class CompareHandler(BaseHandler):
     ds = self.get_dataset(self.get_argument('target_kind'),
                           self.get_argument('target_name'))
 
+    # emulate the library preparation process
+    pp = self.get_argument('pp', '')
+    if not pp:
+      pp = 'normalize:max'
+    bl_obj, segmented, inverted, lb, ub, _ = setup_blr_object(self)
+
     names = ast.literal_eval(self.get_argument('compare'))
     ds_view = ds.view(mask=ds.filter_metadata(dict(pkey=names)),
-                      **fig_data.get_trans('pp'))
+                      pp=pp, blr_obj=bl_obj, blr_segmented=segmented,
+                      blr_inverted=inverted, crop=(lb, ub))
 
     fig_data.figure.clf(keep_observers=True)
     fig_data.plot()

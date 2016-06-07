@@ -43,7 +43,7 @@ td .ui-slider .ui-slider-handle {
 #figure {
   clear: both;
   float: left;
-  border-size: 2px;
+  border-width: 2px;
   border-style: groove;
   border-radius: 0.5em;
   padding: 0.5em;
@@ -63,18 +63,18 @@ td .ui-slider .ui-slider-handle {
   padding-right: 2em;
 }
 
-#pp_table {
+.pp_table {
   table-layout: fixed;
   max-width: 40em;
 }
-#pp_staging {
+.pp_staging {
   list-style-type: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
 }
-#pp_staging > li {
+.pp_staging > li {
   display: inline-block;
   border: 1px solid black;
   border-radius: 3px;
@@ -82,10 +82,10 @@ td .ui-slider .ui-slider-handle {
   margin: 0.3em;
   cursor: pointer;
 }
-#pp_staging > li.normalize { background-color: lightyellow; }
-#pp_staging > li.squash { background-color: lightpink; }
-#pp_staging > li.smooth { background-color: lightcyan; }
-#pp_staging > li.deriv { background-color: lightgreen; }
+.pp_staging > li.normalize { background-color: lightyellow; }
+.pp_staging > li.squash { background-color: lightpink; }
+.pp_staging > li.smooth { background-color: lightcyan; }
+.pp_staging > li.deriv { background-color: lightgreen; }
 
 /* Silly things */
 #easter_egg {

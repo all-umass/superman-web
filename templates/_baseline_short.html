@@ -3,22 +3,23 @@
 <tr>
   <td class="rline vcenter" rowspan=3>
     Method:<br />
-    <select id="blr_method" onchange="$('td.param').hide();$('td.param.'+this.value).show();">
+    <select class="blr_method"
+    onchange="$('td.param').hide();$('td.param.'+this.value).show();">
     {% for key, bl in bl_classes %}
       <option value="{{key}}">{{bl.__class__.__name__}}</option>
     {% end %}
     </select><br />
     <button class="needs_plot" disabled
-      onclick="do_baseline($('#blr_method').val());">Apply</button>
+      onclick="do_baseline('#baseline_table');">Apply</button>
   </td>
   <!-- General options -->
   <td class="uline">
-    <label>Segmented: <input type="checkbox" id="blr_segmented"></label>
+    <label>Segmented: <input type="checkbox" class="blr_segmented"></label>
   </td><td class="uline">
-    <label>Inverted: <input type="checkbox" id="blr_inverted"></label>
+    <label>Inverted: <input type="checkbox" class="blr_inverted"></label>
   </td><td class="uline">
-    Bounds: <input id="blr_lb" type="number">
-      to    <input id="blr_ub" type="number">
+    Bounds: <input class="blr_lb" type="number">
+      to    <input class="blr_ub" type="number">
   </td>
 </tr>
 <tr> <!-- slider row -->
