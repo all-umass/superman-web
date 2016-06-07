@@ -9,7 +9,7 @@ function update_zoom_ctrl(data) {
   $('#zoom_control input[name=xmax]').val(data[1]);
   $('#zoom_control input[name=ymin]').val(data[2]);
   $('#zoom_control input[name=ymax]').val(data[3]);
-  $('.needs_plot').prop('disabled', false);
+  $('.needs_plot').attr('disabled', false);
 }
 function make_post_callbacks(msg_selector) {
   return {
@@ -83,6 +83,8 @@ function get_dataset(info) {
         do_select(evt.target.value, undefined);
       }
     }).next().css('width', '+=15');
+    // toggle .libs_only elements
+    $('.libs_only').toggle(ds_kind === 'LIBS');
   });
 }
 function do_filter(filter_element, post_data) {
@@ -168,8 +170,8 @@ function add_baseline_args(ctx, post_data, method) {
   post_data['blr_lb'] = table.find('.blr_lb').val();
   post_data['blr_ub'] = table.find('.blr_ub').val();
   var idx = method.length + 1;
-  $('td.param.'+method+'>span').each(function(i,e){
-    var param = e.id.substr(idx);
+  table.find('td.param.'+method+'>span').each(function(i,e){
+    var param = e.className.substr(idx);
     post_data['blr_' + param] = e.innerHTML;
   });
   return post_data;
