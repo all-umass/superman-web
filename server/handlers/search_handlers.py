@@ -50,7 +50,8 @@ class SearchHandler(BaseHandler):
       logging.warning('Applying max-normalization to library before search')
       pp = 'normalize:max'
     bl_obj, segmented, inverted, lb, ub, _ = setup_blr_object(self)
-    ds_view = ds.view(pp=pp, blr_obj=bl_obj, blr_segmented=segmented,
+    mask = fig_data.filter_mask.get(ds, Ellipsis)
+    ds_view = ds.view(mask=mask, pp=pp, blr_obj=bl_obj, blr_segmented=segmented,
                       blr_inverted=inverted, crop=(lb, ub))
 
     # search!

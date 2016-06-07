@@ -33,12 +33,31 @@ caption.match { font-weight: bold; }
 }
 </style>
 <script type="text/javascript">
+function target_selected(input) {
+  var has_ds = input.value.length > 0;
+  $('#target_prep,#target_ds_filter_container').toggle(has_ds);
+  if (!has_ds) return;
+  var dest = $('#target_ds_filter_container');
+  dest.html('<img src="/loading_bar.gif">');
+  var parts = input.value.split(',');
+  var post_data = {name: parts[0], kind: parts[1]};
+  dest.load('/_dataset_filterer', post_data, function(){
+    dest.find('table').css('width', '100%').find('caption').html(
+      '<button onclick="$(this).parent().next().toggle()">' +
+      'Show/Hide Filters (Optional)</button>'
+    ).children().click();
+  });
+}
 function do_search() {
   var parts = $('#target_ds').val().split(',');
   if (parts.length != 2) {
     $('#search_messages').text("No search library selected.");
     return
   }
+  // make sure we run the final pp before searching
+  var query_table = $('#query_prep>.ds_table');
+  do_pp(collect_pp_args(query_table));
+  // collect search params
   var target_table = $('#target_prep>.ds_table');
   var post_data = {
     target_name: parts[0], target_kind: parts[1],
@@ -51,6 +70,7 @@ function do_search() {
     fignum: fig.id
   };
   add_baseline_args(target_table, post_data);
+  // search
   $('#search_messages').text("Searching...").fadeIn();
   $('#results').fadeOut();
   $('#results').load('/_search', post_data, function() {
@@ -101,12 +121,14 @@ $(document).ready(function(){
 </td>
 <td class="prep">
 Select a search library:
-<select id="target_ds" onchange="$('#target_prep').toggle(this.value.length>0)">
+<select id="target_ds" onchange="target_selected(this);">
 <option value="">Choose a dataset</option>
 {% for ds in sorted(datasets, key=str) %}
   <option value="{{ds.name}},{{ds.kind}}">{{ds}}</option>
 {% end %}
-</select></td>
+</select>
+<div id="target_ds_filter_container"></div>
+</td>
 </tr>
 
 <tr>
