@@ -23,6 +23,7 @@ Raman:
       - [rruff_id, LookupMetadata, RRUFF ID]
       - [laser, LookupMetadata, Laser Type]
       - [dana/species, LookupMetadata, Dana Number]
+      - [subset, LookupMetadata, RRUFF Subset]
   RRUFF (raw):
     file: /srv/nfs/common/spectra/Raman/rruff-spectra-raw.hdf5
     metadata:
