@@ -120,7 +120,7 @@ class ZoomFigureHandler(BaseHandler):
     xmax = float(self.get_argument('xmax'))
     ymin = float(self.get_argument('ymin'))
     ymax = float(self.get_argument('ymax'))
-    ax = fig_data.figure.gca()
+    ax = fig_data.figure.axes[0]
     ax.set_xlim((xmin,xmax))
     ax.set_ylim((ymin,ymax))
     fig_data.manager.canvas.draw()
