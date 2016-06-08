@@ -305,7 +305,7 @@ def _decorate_plot(fig, ax, artist, plot_data, color_data, legend, cmap):
     ax.set_subplotspec(gs[0])
     lx = fig.add_subplot(gs[1])
     lx.legend(handles=proxies, title=color_data.label, loc='upper left',
-              mode='expand', borderaxespad=0, fontsize='small')
+              mode='expand', borderaxespad=0, fontsize='small', frameon=False)
     lx.axis('off')
     gs.tight_layout(fig, w_pad=0)
 
