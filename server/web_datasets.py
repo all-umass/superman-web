@@ -43,9 +43,9 @@ class _ReloadableMixin(object):
         logging.info('Successfully registered %s', self)
 
   def x_axis_units(self):
-    if self.kind in ('LIBS', 'FTIR', 'NIR'):
+    if self.kind in ('LIBS', 'NIR'):
       return 'Wavelength (nm)'
-    if self.kind == 'Raman':
+    if self.kind in ('Raman', 'FTIR'):
       return 'Wavenumber (1/cm)'
     if self.kind == 'XAS':
       return 'Energy (eV)'
