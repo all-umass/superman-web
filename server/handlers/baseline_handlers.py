@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import ast
+import logging
 import numpy as np
 import os
 from superman.baseline import BL_CLASSES
@@ -74,6 +75,8 @@ class BaselineHandler(BaseHandler):
 
     fig_data.add_transform('baseline-corrected', blr_obj=bl_obj, crop=(lb, ub),
                            blr_segmented=do_segmented, blr_inverted=do_inverted)
+    logging.info('Running BLR: %r: crop=%r, segment=%s, invert=%s', bl_obj,
+                 (lb, ub), do_segmented, do_inverted)
 
     if len(fig_data.figure.axes) == 2:
       # comparison view for the baseline page
