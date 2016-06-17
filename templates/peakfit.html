@@ -70,8 +70,19 @@ function do_peakfit(alg) {
   }, 'json');
 }
 $(document).ready(function(){
-  $('#baseline_steps,#pp_steps').toggle();
+  $('#blr_pp_steps').toggle();
   onready_boilerplate("{{ws_uri}}", {{ fig_id }});
+  // make the blr/pp interactive
+  var table = $('#blr_pp_steps>.ds_table');
+  table.find('tr').slice(0,2).find('select,input').change(function(){
+    do_baseline(table);
+    do_pp(collect_pp_args(table));
+  });
+  var pp_watcher = new MutationObserver(function(){
+    do_pp(collect_pp_args(table));
+  });
+  pp_watcher.observe(table.find('.pp_staging')[0],
+                     {childList: true, subtree: true});
   // Also set peakfit params when manual zooming.
   $('#zoom_control button').click(function(){
     var bounds = $('input[name=peakrange]');
@@ -96,15 +107,11 @@ $(document).ready(function(){
 
 <div id='lhs'>
 <p>
-(Optional) apply baseline correction:
-<button onclick="$('#baseline_steps').toggle()">show/hide table</button>
-{% include '_baseline_short.html' %}
-</p>
-
-<p>
-(Optional) apply preprocessing:
-<button onclick="$('#pp_steps').toggle()">show/hide table</button>
-{% include '_pp_table.html' %}
+(Optional) apply baseline correction / preprocessing:
+<button onclick="$('#blr_pp_steps').toggle()">show/hide table</button>
+<div id='blr_pp_steps'>
+{% include '_blr_pp_table.html' %}
+</div>
 </p>
 
 <div id="peak_steps">
