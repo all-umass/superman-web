@@ -44,11 +44,11 @@ $(document).ready(function(){
         {% if scale == 'log' %}
              min={{log10(lb)}} max={{log10(ub)}}
              value={{log10(getattr(bl,param))}}
-             oninput="update_1eX(this.value, '#{{key}}_{{param}}', {{str(ub>1e5).lower()}});"
+             oninput="update_1eX(this.value, '.{{key}}_{{param}}', {{str(ub>1e5).lower()}});"
         {% else %}
              min={{lb}} max={{ub}}
              value={{getattr(bl,param)}}
-             oninput="$('#{{key}}_{{param}}').text(this.value);"
+             oninput="$('.{{key}}_{{param}}').text(this.value);"
         {% end %}>
     </td>
   {% end %}
@@ -56,7 +56,7 @@ $(document).ready(function(){
   <tr class="uline">
   {% for param in list(bl.param_ranges()) %}
     <td class="param {{key}}" colspan={{3 if len(bl.param_ranges()) == 1 else 1}}>
-      {{param.strip('_')}} = <span id="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
+      {{param.strip('_')}} = <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
     </td>
   {% end %}
   {% if len(bl.param_ranges()) == 0 %}
