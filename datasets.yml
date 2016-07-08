@@ -209,3 +209,13 @@ LIBS:
       - [matrix, LookupMetadata, Matrix]
       - [mix_no, LookupMetadata, 'Mix #']
       - [target, LookupMetadata, Target]
+  MHC Angled:
+    vector: true
+    public: false
+    file: /srv/nfs/common/spectra/LIBS/angled_unnorm.hdf5
+    metadata:
+      - [samples, LookupMetadata, Sample Name]
+      - [exps, LookupMetadata, Experiment]
+      - [carousels, LookupMetadata, Carousel]
+      - [ablation_angles, NumericMetadata, Ablation Angle]
+      - [collection_angles, NumericMetadata, Collection Angle]
