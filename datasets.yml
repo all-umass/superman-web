@@ -225,4 +225,4 @@ LIBS:
     file: /srv/nfs/common/spectra/LIBS/mhc_hydrogen.hdf5
     metadata:
       - [names, LookupMetadata, Sample Name]
-      - [powers, NumericMetadata, Laser Power]
+      - [powers, LookupMetadata, Laser Power]
