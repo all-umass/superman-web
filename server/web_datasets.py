@@ -6,6 +6,7 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import NullLocator
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from threading import Thread
+from tornado.escape import xhtml_escape
 from six import BytesIO, string_types
 
 from superman.dataset import (
@@ -232,7 +233,8 @@ def _get_filter_html(m, key, full_key):
   uniques = sorted(m.keys) if isinstance(m, PrimaryKeyMetadata) else m.uniques
   html = ('%s:<br /><select id="%s_chooser" data-placeholder="All" '
           'class="chosen-select" multiple>\n') % (disp, full_key)
-  html += '\n'.join('<option value="%s">%s</option>' % (x, x) for x in uniques)
+  html += '\n'.join('<option value="%s">%s</option>' % (x, xhtml_escape(x))
+                    for x in uniques)
   html += '</select>'
   return html
 
