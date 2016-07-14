@@ -219,3 +219,10 @@ LIBS:
       - [carousels, LookupMetadata, Carousel]
       - [ablation_angles, NumericMetadata, Ablation Angle]
       - [collection_angles, NumericMetadata, Collection Angle]
+  MHC Hydrogen:
+    vector: true
+    public: false
+    file: /srv/nfs/common/spectra/LIBS/mhc_hydrogen.hdf5
+    metadata:
+      - [names, LookupMetadata, Sample Name]
+      - [powers, NumericMetadata, Laser Power]
