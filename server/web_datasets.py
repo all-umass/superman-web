@@ -207,7 +207,8 @@ def _get_filter_js(m, full_key):
   # initialize the chosen dropdown, adding some width for the scrollbar
   init_js = jq + ".chosen({search_contains: true}).css('width', '+=15');"
   prefix = ''
-  if isinstance(m,LookupMetadata) and np.issubdtype(m.uniques.dtype,np.number):
+  dtype = (m.uniques if isinstance(m,LookupMetadata) else m.keys).dtype
+  if np.issubdtype(dtype, np.number):
     prefix = '+'  # convert JS string to number
   collect_js = jq + ('.next().find(".search-choice").map(function(){'
                      'return %s($(this).text())}).toArray()') % prefix
@@ -233,8 +234,9 @@ def _get_filter_html(m, key, full_key):
   uniques = sorted(m.keys) if isinstance(m, PrimaryKeyMetadata) else m.uniques
   html = ('%s:<br /><select id="%s_chooser" data-placeholder="All" '
           'class="chosen-select" multiple>\n') % (disp, full_key)
-  html += '\n'.join('<option value="%s">%s</option>' % (x, xhtml_escape(x))
-                    for x in uniques)
+  html += '\n'.join(
+      '<option value="%s">%s</option>' % (x, xhtml_escape(str(x)))
+      for x in uniques)
   html += '</select>'
   return html
 
