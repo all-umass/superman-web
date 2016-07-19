@@ -206,6 +206,23 @@ def load_corn(ds, filepath):
   return True
 
 
+def load_mhc_hydrogen(ds, filepath):
+  hdf5 = _try_load(filepath, str(ds))
+  if hdf5 is None:
+    return False
+  powers = hdf5['/meta/powers']
+  names = hdf5['/meta/names']
+  pkey = ['%s - %s%%' % (name, power) for name, power in zip(names, powers)]
+  bands = hdf5['/meta/waves']
+  hydros = {'H2O': NumericMetadata(hdf5['/composition/H2O'])}
+  ds.set_data(bands, hdf5['/spectra'],
+              pkey=PrimaryKeyMetadata(pkey),
+              comp=CompositionMetadata(hydros),
+              names=LookupMetadata(names, 'Sample Name'),
+              powers=LookupMetadata(powers, 'Laser Power'))
+  return True
+
+
 def _try_load(filepath, data_name):
   logging.info('Loading %s data...' % data_name)
   if not os.path.exists(filepath):

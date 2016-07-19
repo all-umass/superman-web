@@ -220,9 +220,7 @@ LIBS:
       - [ablation_angles, NumericMetadata, Ablation Angle]
       - [collection_angles, NumericMetadata, Collection Angle]
   MHC Hydrogen:
+    loader: load_mhc_hydrogen
     vector: true
     public: false
     file: /srv/nfs/common/spectra/LIBS/mhc_hydrogen.hdf5
-    metadata:
-      - [names, LookupMetadata, Sample Name]
-      - [powers, LookupMetadata, Laser Power]
