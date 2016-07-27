@@ -111,6 +111,13 @@ XRD:
     metadata:
       - [mineral, LookupMetadata, Mineral]
       - [rruff_id, LookupMetadata, RRUFF ID]
+  AMCSD-derived Patterns:
+    vector: true
+    file: /srv/nfs/common/spectra/misc/crystals.hdf5
+    metadata:
+      - [ids, PrimaryKeyMetadata, None]
+      - [mineral, LookupMetadata, Mineral]
+      - [formula, LookupMetadata, Formula]
 XAS:
   Silicate Glass:
     loader: load_silicate_glass
