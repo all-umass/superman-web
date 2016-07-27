@@ -42,6 +42,7 @@ class PeakHandler(BaseHandler):
       kind = self.get_argument('fitkind')
       loc = float(self.get_argument('fitloc'))
       xres = float(self.get_argument('xres'))
+      loc_fixed = bool(int(self.get_argument('locfixed')))
       header = ['Name', 'Area', 'Height', 'Center', 'FWHM', 'X min', 'X max',
                 'Area stdv', 'Center stdv', 'FWHM stdv']
       peak_keys = ('area', 'height', 'center', 'fwhm', 'xmin', 'xmax',
@@ -49,7 +50,8 @@ class PeakHandler(BaseHandler):
 
       def peak_stats(t):
         return fit_single_peak(t[:,0], t[:,1], loc, fit_kind=kind,
-                               log_fn=logging.info, band_resolution=xres)[-1]
+                               log_fn=logging.info, band_resolution=xres,
+                               loc_fixed=loc_fixed)[-1]
 
     mask = fig_data.filter_mask[ds]
     trans = fig_data.get_trans()
@@ -108,10 +110,11 @@ class PeakHandler(BaseHandler):
       kind = self.get_argument('fitkind')
       loc = float(self.get_argument('fitloc'))
       xres = float(self.get_argument('xres'))
+      loc_fixed = bool(int(self.get_argument('locfixed')))
       bands, ints = spectrum.T
       peak_mask, peak_y, peak_data = fit_single_peak(
           bands, ints, loc, fit_kind=kind, log_fn=logging.info,
-          band_resolution=xres)
+          band_resolution=xres, loc_fixed=loc_fixed)
       peak_x = bands[peak_mask]
 
       # show the fitted peak

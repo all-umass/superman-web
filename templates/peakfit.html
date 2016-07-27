@@ -18,13 +18,13 @@ get_dataset = new_get_dataset;
 function collect_peakfit_args(alg) {
   var bounds = $('input[name=peakrange]').map(
       function(i,e){return +e.value;}).toArray();
-  var basetype = $('input[name=basetype]:checked').val();
-  var loc = $('#peakloc').val();
-  var xres = $('#xres').val();
-  var peaktype = $('input[name=peaktype]:checked').val();
   return {
-    basetype: basetype, lb: bounds[0], ub: bounds[1], xres: xres, alg: alg,
-    fitloc: loc, fitkind: peaktype, ds_kind: ds_kind, ds_name: ds_name
+    lb: bounds[0], ub: bounds[1], alg: alg,
+    basetype: $('input[name=basetype]:checked').val(),
+    xres: $('#xres').val(), fitloc: $('#peakloc').val(),
+    fitkind: $('input[name=peaktype]:checked').val(),
+    locfixed: +($('label[for=locfixed]').attr('aria-pressed') == "true"),
+    ds_kind: ds_kind, ds_name: ds_name
   };
 }
 function do_batch_download() {
@@ -71,6 +71,7 @@ function do_peakfit(alg) {
 }
 $(document).ready(function(){
   $('#blr_pp_steps').toggle();
+  $('#locfixed').button();
   onready_boilerplate("{{ws_uri}}", {{ fig_id }});
   // make the blr/pp interactive
   var table = $('#blr_pp_steps>.ds_table');
@@ -99,6 +100,8 @@ $(document).ready(function(){
 #fit_result { float: right; margin-right: 1em; }
 #fit_result td { padding: 0.2em 1em; }
 #fit_result td:last-child { text-align: right; }
+label[for=locfixed]>span:after { content: "approx." }
+label[for=locfixed].ui-state-active>span:after { content: "fixed" }
 </style>
 {% end %}
 
@@ -131,11 +134,12 @@ $(document).ready(function(){
 <!-- peak fitting -->
 <tr><td class="uline rline vcenter" rowspan=3>
 <button class="needs_plot" onclick="do_peakfit('fit');" disabled>Fit Peak</button></td>
-<td colspan=2>Peak location (approx.):
+<td colspan=2>Peak location:
 <input type="text" id="peakloc" value="500.0" size=5>
+<input type="checkbox" id="locfixed" /><label for="locfixed"></label>
 </td></tr>
-<tr><td colspan=2>x-axis resolution (approx.):
-<input type="text" id="xres" value="1.0" size=5>
+<tr><td colspan=2>x-axis resolution:
+<input type="text" id="xres" value="1.0" size=5> (approx.)
 </td></tr>
 <tr class="uline"><td colspan=2>Peak type:
 <label><input type="radio" name="peaktype" value="lorentzian" checked>Lorentzian</label>
