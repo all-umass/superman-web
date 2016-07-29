@@ -146,6 +146,7 @@ Select a search library:
 <tr><td class="rline vcenter" rowspan=2>MatchScore</td>
 <td>Match type:</td>
 <td><input type="range" min=0 max=1 value=0 step=0.01
+           onchange="$('#wsm_param').text(this.value);"
            oninput="$('#wsm_param').text(this.value);"></td>
 </tr>
 <tr class="uline">
@@ -158,6 +159,7 @@ Select a search library:
 <tr><td class="rline vcenter" rowspan=2>Sliding Minimum</td>
 <td colspan=2>
 <input type="range" min=0 max=100 value=0 step=1
+       onchange="$('#wsm_min_window').text(this.value);"
        oninput="$('#wsm_min_window').text(this.value);"></td>
 </tr>
 <tr class="uline">
@@ -165,8 +167,10 @@ Select a search library:
 <!-- unmixing options -->
 <tr><td class="rline vcenter uline" rowspan=2>Unmixing</td>
 <td><input type="range" min=1 max=5 value=1 step=1
+           onchange="$('#wsm_endmembers').text(this.value);"
            oninput="$('#wsm_endmembers').text(this.value);"></td>
 <td><input type="range" min=1 max=99 value=1 step=1
+           onchange="$('#wsm_score_pct').text(this.value);"
            oninput="$('#wsm_score_pct').text(this.value);"></td>
 </tr><tr class="uline">
 <td># endmembers = <span id="wsm_endmembers">1</span></td>

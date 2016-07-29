@@ -33,10 +33,12 @@
         {% if scale == 'log' %}
                min={{log10(lb)}} max={{log10(ub)}}
                value={{log10(getattr(bl,param))}}
+               onchange="update_1eX(this.value, $(this).closest('table').find('.{{key}}_{{param}}'), {{str(ub>1e5).lower()}});"
                oninput="update_1eX(this.value, $(this).closest('table').find('.{{key}}_{{param}}'), {{str(ub>1e5).lower()}});">
         {% else %}
                min={{lb}} max={{ub}}
                value={{getattr(bl,param)}}
+               onchange="$(this).closest('table').find('.{{key}}_{{param}}').text(this.value);"
                oninput="$(this).closest('table').find('.{{key}}_{{param}}').text(this.value);">
         {% end %}
       </td>
@@ -48,7 +50,8 @@
   {% for key, bl in bl_classes %}
     {% for param in bl.param_ranges() %}
       <td class="param {{key}}" style="display: none;">
-        {{param.strip('_')}} = <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
+        {{param.replace('_', ' ').strip()}} =
+        <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
       </td>
     {% end %}
   {% end %}
@@ -81,9 +84,11 @@
   <button onclick="add_pp_step(this,'deriv',null,'sg')">Deriv.</button>
   </td><td class="pp_param">
   <input type="range" min=5 max=41 value=9 step=2 name="sg" checked
+         onchange="$(this).closest('table').find('.window').text(this.value);"
          oninput="$(this).closest('table').find('.window').text(this.value);">
   </td><td class="pp_param" colspan=2>
   <input type="range" min=1 max=10 value=4 step=1 name="sg" checked
+         onchange="$(this).closest('table').find('.order').text(this.value);"
          oninput="$(this).closest('table').find('.order').text(this.value);">
   </td></tr>
   <tr class="uline">

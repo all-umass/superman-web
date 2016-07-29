@@ -27,9 +27,11 @@ Savitzky-Golay<br />
 <button onclick="add_pp_step(this,'smooth',null,'smooth')">Smooth</button>
 </td><td>
 <input type="range" min=5 max=41 value=9 step=2 name="smooth"
+       onchange="$(this).closest('table').find('.smooth.window').text(this.value);"
        oninput="$(this).closest('table').find('.smooth.window').text(this.value);">
 </td><td>
 <input type="range" min=1 max=10 value=4 step=1 name="smooth"
+       onchange="$(this).closest('table').find('.smooth.order').text(this.value);"
        oninput="$(this).closest('table').find('.smooth.order').text(this.value);">
 </td></tr>
 <tr class="uline">
@@ -41,9 +43,11 @@ Savitzky-Golay<br />
 <button onclick="add_pp_step(this, 'deriv',null,'deriv')">Derivative</button>
 </td><td>
 <input type="range" min=5 max=41 value=9 step=2 name="deriv"
+       onchange="$(this).closest('table').find('.deriv.window').text(this.value);"
        oninput="$(this).closest('table').find('.deriv.window').text(this.value);">
 </td><td>
 <input type="range" min=1 max=10 value=4 step=1 name="deriv"
+       onchange="$(this).closest('table').find('.deriv.order').text(this.value);"
        oninput="$(this).closest('table').find('.deriv.order').text(this.value);">
 </td></tr>
 <tr class="uline">
