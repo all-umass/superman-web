@@ -3,7 +3,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.25.7/js/jquery.tablesorter.min.js"></script>
 <script type="text/javascript">
 function toggle_extra(elt) {
-  $(elt).parents('tr.dataset').nextUntil('tr.dataset').toggle();
+  $(elt).parents('tr.dataset').nextUntil('tr.dataset')
+        .find('.hideme').slideToggle();
+  return false;
 }
 $(document).ready(function() {
   $('#datasets').tablesorter();
@@ -18,7 +20,8 @@ $(document).ready(function() {
 #datasets td {
   vertical-align: middle;
   background-color: #f7d3b2;
-  border: 1px solid black;
+  border-right: 1px solid black;
+  border-top: 1px solid black;
   text-align: center;
   padding: 6px;
   word-wrap: break-word;
@@ -44,30 +47,48 @@ $(document).ready(function() {
   padding: 0.5em;
   cursor: pointer;
 }
-#datasets tr.extra {
-  display: none;
-}
 #datasets tr.extra td {
   background-color: lightgray;
   text-align: left;
   width: 1px;  /* HACK: prevent extra row from resizing table width */
+  padding: 0;
+  border: none;
 }
-#datasets tr.extra .aligned {
-  padding-left: 4em;
-  text-indent: -2em;
+#datasets tr.extra .hideme {
+  display: none;
+  border-top: 1px solid black;
 }
-#datasets tr.extra .metadata {
+#datasets tr.extra .explore_btn {
+  -webkit-appearance: button;
+  -moz-appearance: button;
+  appearance: button;
+  color: initial;
+  text-decoration: none;
+  display: inline-block;
+  vertical-align: middle;
+  text-align: center;
+  margin: 0;
+  padding: 1em 0.5em;
+  width: 10%;
+}
+#datasets tr.extra .ds_info {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 0.25em 0;
+  width: 85%;
+}
+#datasets tr.extra .ds_info .metadata {
   display: inline;
   list-style: none;
 }
-#datasets tr.extra .metadata li {
+#datasets tr.extra .ds_info .metadata li {
   display: inline;
   white-space: nowrap;
 }
-#datasets tr.extra .metadata li:after {
+#datasets tr.extra .ds_info .metadata li:after {
   content: ", ";
 }
-#datasets tr.extra .metadata li:last-child:after {
+#datasets tr.extra .ds_info .metadata li:last-child:after {
   content: "";
 }
 </style>
@@ -92,7 +113,7 @@ $(document).ready(function() {
 {% for d in sorted(datasets, key=str) %}
   <tr class='dataset {%if not d.is_public %}private{%end%} tablesorter-hasChildRow'>
     <td class='ds_title'>
-      <a href="#" onclick="toggle_extra(this)">{{d.name}}</a>
+      <a href="#" onclick="return toggle_extra(this)">{{d.name}}</a>
     </td>
     <td>{{d.kind}}</td>
     <td class='numeric'>{{d.num_spectra()}}</td>
@@ -108,20 +129,20 @@ $(document).ready(function() {
     {% end %}
     <td>{{dt(int(d.load_time)).strftime("%Y-%m-%d %H:%M")}}</td>
   </tr>
-  <tr class='extra tablesorter-childRow'><td colspan=6>
-    <div class='aligned'><b>Metadata:</b>
-    <ul class='metadata'>
-    {% for name in sorted(m.display_name(k) for k,m in d.metadata.items()) %}
-      <li>{{name}}</li>
-    {% end %}
-    </ul></div>
-    <div class='aligned'><b>Description:</b>
-      {{d.description}}
+  <tr class='extra tablesorter-childRow'><td colspan=6><div class='hideme'>
+    <a class='explore_btn'
+ href="/explorer?ds_kind={{url_escape(d.kind)}}&ds_name={{url_escape(d.name)}}">
+    Explore</a>
+    <div class='ds_info'>
+      <b>Metadata:</b>
+      <ul class='metadata'>
+      {% for name in sorted(m.display_name(k) for k,m in d.metadata.items()) %}
+        <li>{{name}}</li>
+      {% end %}
+      </ul><br />
+      <b>Description:</b> {{d.description}}
     </div>
-    <div class='aligned'>
-    <a href="/explorer?ds_kind={{url_escape(d.kind)}}&ds_name={{url_escape(d.name)}}">
-    Open in Dataset Explorer</a></div>
-  </td></tr>
+  </div></td></tr>
 {% end %}
   </tbody>
 </table>
