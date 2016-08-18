@@ -33,12 +33,12 @@ blr_kwargs = dict(
 
 class MainPage(BaseHandler):
   def get(self):
+    logged_in = self.current_user is not None
     # tuples of (title, relative_url, description) for subpages
     subpage_info = [(p.title, link[1:], p.description) for link, p in routes
-                    if issubclass(p, Subpage)]
+                    if issubclass(p, Subpage) and (logged_in or p.public)]
     self.render('index.html', page_title='Project Superman: Web Interface',
-                subpage_info=subpage_info, mpl_js=MPL_JS,
-                logged_in=(self.current_user is not None))
+                subpage_info=subpage_info, mpl_js=MPL_JS, logged_in=logged_in)
 
 
 class LoginPage(BaseHandler):
@@ -70,6 +70,8 @@ class Subpage(BaseHandler):
    * description - sentence describing the page
    * figsize     - figure size in inches, as a tuple of (width, height)
   '''
+  public = True
+
   def render(self, **kwargs):
     if 'fig_id' not in kwargs:
       kwargs['fig_id'] = self.application.register_new_figure(self.figsize)
@@ -139,7 +141,6 @@ class CompositionsPage(Subpage):
   description = 'Plot predicted compositions of Mars LIBS shots.'
   figsize = (10, 6)
 
-  @tornado.web.authenticated
   def get(self):
     ds = self.get_dataset('LIBS', 'Mars (big)')
     if ds is None:
