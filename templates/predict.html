@@ -3,7 +3,6 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
 <style type="text/css">
-.scroll { overflow-y: auto;  max-height: 10em; }
 #model_error { padding-left: 1em; display: inline-block; }
 </style>
 <script type="text/javascript">
@@ -22,14 +21,12 @@ function ds_selected(input) {
   var post_data = {name: ds_name, kind: ds_kind};
   dest.load('/_dataset_filterer', post_data);
   // set up the predictor selection UI
-  var dest = $('#target_meta > tbody').empty();
+  var dest = $('#target_meta').empty();
   $.post('/_predictable', post_data, function(data){
-    var inner = '<tr><td><div class="scroll">';
     for (var i=0; i<data.length; i++) {
-      inner += '<label><input type="checkbox" value="' + data[i][0]
-                  + '"> ' + data[i][1] + '</label><br />';
+      dest.append('<option value="'+data[i][0]+'">'+data[i][1]+'</option>');
     }
-    dest.append(inner + '</div></td></tr>');
+    dest.chosen({search_contains: true}).css('width', '+=15');
   }, 'json');
   // show the next steps
   $('.box').show();
@@ -40,7 +37,7 @@ function run_model(do_train) {
       ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id, do_train: +do_train,
       pp: collect_pp_args(blr_pp_table),
       pls_comps: +$('#pls_comps').val(),
-      pred_meta: $('#target_meta input:checked').map(function(){
+      pred_meta: $('#target_meta option:selected').map(function(){
         return this.value;
       }).toArray(),
   };
@@ -111,10 +108,13 @@ $(document).ready(function(){
 <div id="ds_filter_container" class="box"></div>
 
 <div class="box">
-<table class="ds_table" id="target_meta">
+<table class="ds_table">
 <caption>Values to Predict</caption>
-<tbody></tbody>
-</table>
+<tr><td>
+<select id="target_meta" data-placeholder="Choose variables" multiple>
+  <option value=""></option>
+</select>
+</td></tr></table>
 </div>
 
 <div id="blr_pp_steps" class="box">
