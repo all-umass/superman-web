@@ -9,7 +9,8 @@ from superman.baseline import BL_CLASSES
 from matplotlib import cm, rcParams
 
 from .base import BaseHandler
-from ..web_datasets import CompositionMetadata, NumericMetadata
+from ..web_datasets import (
+    CompositionMetadata, NumericMetadata, WebVectorDataset)
 
 MPL_JS = sorted(os.listdir(os.path.join(matplotlib.__path__[0],
                                         'backends/web_backend/jquery/js')))
@@ -166,6 +167,20 @@ class PeakFitPage(Subpage):
     self.render(datasets=self.all_datasets(), **blr_kwargs)
 
 
+class PredictionPage(Subpage):
+  template = 'predict.html'
+  title = 'PLS Prediction'
+  description = 'Run PLS regression to build predictive models.'
+  figsize = (8, 4)
+  public = False
+
+  @tornado.web.authenticated
+  def get(self):
+    vector_ds = [d for d in self.all_datasets()
+                 if isinstance(d, WebVectorDataset)]
+    self.render(datasets=vector_ds, **blr_kwargs)
+
+
 class DebugPage(BaseHandler):
   @tornado.web.authenticated
   def get(self):
@@ -183,5 +198,6 @@ routes = [
     (r'/compositions', CompositionsPage),
     (r'/peakfit', PeakFitPage),
     (r'/login', LoginPage),
+    (r'/predict', PredictionPage),
     (r'/debug', DebugPage),
 ]

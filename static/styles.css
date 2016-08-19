@@ -24,6 +24,15 @@ tr:last-child button { width: 100% }
 .pp_table td { text-align: center; padding: 0 0.5em; }
 .pp_table input[type="number"] { width: 4em; }
 
+div.box {
+  border: 1px solid black;
+  border-radius: 1em;
+  display: inline-block;
+  vertical-align: top;
+  background-color: lightgray;
+  margin: 0.25em;
+}
+
 td .slider {
   margin: 0.1em 0 0.5em 0;
   height: 36px;

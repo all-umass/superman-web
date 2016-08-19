@@ -1,0 +1,144 @@
+{% extends "_common.html" %}
+{% block head_matter %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
+<style type="text/css">
+.scroll { overflow-y: auto;  max-height: 10em; }
+#model_error { padding-left: 1em; display: inline-block; }
+</style>
+<script type="text/javascript">
+function ds_selected(input) {
+  var has_ds = input.value.length > 0;
+  $('#ds_info').toggle(has_ds);
+  if (!has_ds) return;
+  // hide the figure
+  $('#figure').hide();
+  // load the dataset filters
+  var dest = $('#ds_filter_container');
+  dest.html('<img src="/loading_bar.gif">');
+  var parts = input.value.split(',');
+  ds_name = parts[0];
+  ds_kind = parts[1];
+  var post_data = {name: ds_name, kind: ds_kind};
+  dest.load('/_dataset_filterer', post_data);
+  // set up the predictor selection UI
+  var dest = $('#target_meta > tbody').empty();
+  $.post('/_predictable', post_data, function(data){
+    var inner = '<tr><td><div class="scroll">';
+    for (var i=0; i<data.length; i++) {
+      inner += '<label><input type="checkbox" value="' + data[i][0]
+                  + '"> ' + data[i][1] + '</label><br />';
+    }
+    dest.append(inner + '</div></td></tr>');
+  }, 'json');
+  // show the next steps
+  $('.box').show();
+}
+function run_model(do_train) {
+  var blr_pp_table = $('#blr_pp_steps>.ds_table');
+  var post_data = {
+      ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id, do_train: +do_train,
+      pp: collect_pp_args(blr_pp_table),
+      pls_comps: +$('#pls_comps').val(),
+      pred_meta: $('#target_meta input:checked').map(function(){
+        return this.value;
+      }).toArray(),
+  };
+  add_baseline_args(blr_pp_table, post_data);
+  $.post('/_run_model', post_data, function(data){
+    $('#model_error').html('R<sup>2</sup> = ' + data['r2'].toPrecision(3) +
+                           '<br>MSE = ' + data['mse'].toPrecision(4));
+    $('#figure').show();
+    $('.needs_model').attr('disabled', false);
+  }, 'json');
+}
+function load_model(elt) {
+  if (elt.files.length != 1) {
+    console.warn('Expected 1 model file, got', elt.files.length);
+    return
+  }
+  var f = elt.files[0];
+  if (f.size > 5000000) {
+    console.warn('Model file >5MB: ', f.size, 'bytes');
+    return
+  }
+  var post_data = new FormData();
+  post_data.append('fignum', fig.id);
+  post_data.append('modelfile', f);
+  post_data.append('ds_kind', ds_kind);
+  $.ajax({
+    url: '/_load_model',
+    data: post_data,
+    processData: false,
+    contentType: false,
+    type: 'POST',
+    error: function(jqXHR, textStatus, errorThrown) {
+      console.error(textStatus, errorThrown);
+    },
+    success: function() {
+      elt.value = "";  // reset the input
+      $('#model_error').empty();
+      $('#figure').hide();
+      $('.needs_model').attr('disabled', false);
+    }
+  });
+}
+function download_preds() {
+  window.open('/'+fig.id+'/pls_predictions.csv', '_blank');
+}
+function download_model() {
+  window.open('/'+fig.id+'/pls_model.pkl', '_blank');
+}
+$(document).ready(function(){
+  $('.box,#figure').hide();
+  onready_boilerplate("{{ws_uri}}", {{ fig_id }});
+});
+</script>
+<style type="text/css">
+</style>
+{% end %}
+
+{% block body_matter %}
+
+<p>Select a dataset:
+<select id="source_ds" onchange="ds_selected(this);">
+<option value="">Choose a dataset</option>
+{% for ds in sorted(datasets, key=str) %}
+  <option value="{{ds.name}},{{ds.kind}}">{{ds}}</option>
+{% end %}
+</select></p>
+
+<div id="ds_filter_container" class="box"></div>
+
+<div class="box">
+<table class="ds_table" id="target_meta">
+<caption>Values to Predict</caption>
+<tbody></tbody>
+</table>
+</div>
+
+<div id="blr_pp_steps" class="box">
+{% include '_blr_pp_table.html' %}
+</div>
+
+<div class="box"><table class="ds_table">
+<caption>PLS Regression</caption>
+<tr class="uline">
+<td class="rline"><button onclick="run_model(true);">Train Model</button></td>
+<td># components:
+  <input type="number" id="pls_comps" min=1 max=1000 step=1 value=6 /></td>
+</tr><tr class="uline">
+<td class="rline">
+  <button onclick="load_model($('#modelfile')[0]);">Load Model</button></td>
+<td><input type="file" id="modelfile" /></td>
+</tr><tr><td colspan=2>
+<button disabled class="needs_model" onclick="run_model(false);">Run Predictions</button>
+<button disabled class="needs_model" onclick="download_preds();">Download Predictions</button>
+<button disabled class="needs_model" onclick="download_model();">Download Model</button>
+</td></tr></table></div>
+
+<div>
+<span id="model_error"></span>
+<div id="figure"></div>
+</div>
+{% end %}
