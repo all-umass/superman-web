@@ -145,7 +145,10 @@ class CompositionsPage(Subpage):
   def get(self):
     ds = self.get_dataset('LIBS', 'Mars (big)')
     if ds is None:
-      return self.write('Mars data is not available. <a href="/">Go back</a>')
+      page = '''
+      <body style="text-align:center;padding-top:25vh;font-size:larger">
+      Mars data is not available.<br /><a href="/">Go back</a></body>'''
+      return self.write(page)
 
     # Get composition and numeric metadata (key, display_name) pairs
     comp_pairs = sorted(ds.metadata_names((CompositionMetadata,)))
