@@ -59,6 +59,11 @@ Raman:
       - [laser, LookupMetadata, Laser Type]
       - [id, LookupMetadata, ID]
       - [mineral, LookupMetadata, Mineral]
+    description: >-
+      Interlaboratory and cross-institutional data on a set of 96 pure minerals
+      with sizes between 38 and 45 μm.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2016/pdf/2240.pdf
   Mineral Mixtures:
     file: /srv/nfs/common/spectra/Raman/mineral_mixtures.hdf5
     metadata:
@@ -100,6 +105,12 @@ NIR:
     loader: load_corn
     vector: true
     file: /srv/nfs/common/spectra/misc/corn.hdf5
+    description: >-
+      Corn spectra measured on 3 different NIR spectrometers with metadata
+      on moisture, oil, protein and starch values. Data was originally taken
+      at Cargill by Mike Blackburn and distributed by Eigenvector Research Inc.
+    urls:
+      - http://www.eigenvector.com/data/Corn/
   Ternary Mixtures:
     vector: true
     file: /srv/nfs/common/spectra/misc/ternary_mixtures.hdf5
@@ -118,6 +129,12 @@ XRD:
       - [ids, PrimaryKeyMetadata, None]
       - [mineral, LookupMetadata, Mineral]
       - [formula, LookupMetadata, Formula]
+    description: >-
+      X-ray diffraction patterns calculated with Crystal-Diffract using
+      single crystal x-ray diffraction from the American Mineralogist
+      Crystal Structure Database (AMCSD).
+    urls:
+      - http://rruff.geo.arizona.edu/AMS/amcsd.php
 XAS:
   Silicate Glass:
     loader: load_silicate_glass
@@ -137,6 +154,9 @@ XAS:
       - [fe3, NumericMetadata, '% Fe3+']
       - [orientation, LookupMetadata, Orientation]
       - [names, LookupMetadata, Sample Name]
+    description: >-
+      Fe K absorption edge x-ray absorption data from
+      Dyar et al. (2016) American Mineralogist, 101, 1171-1189.
   Garnet:
     vector: true
     file: /srv/nfs/common/spectra/misc/garnetFe3.hdf5
@@ -183,6 +203,13 @@ LIBS:
     file: /srv/nfs/common/spectra/LIBS/lanl_cleanroom.hdf5
     metadata:
       - [names, PrimaryKeyMetadata, None]
+    description: >-
+      Laboratory data acquired at Los Alamos National Laboratory under
+      Mars conditions on geological standards used for pre-flight calibration
+      of the ChemCam instrument on the Curiosity rover, as described in
+      Wiens et al. (2013) Spectrochimica Acta B., B82, 1-27.
+    urls:
+      - http://www.lpi.usra.edu/meetings/lpsc2009/pdf/1461.pdf
   LANL New caltargets:
     vector: true
     file: /srv/nfs/common/spectra/LIBS/lanl_caltargets.hdf5
