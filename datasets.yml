@@ -248,6 +248,9 @@ XAS:
     metadata:
       - [pkey, PrimaryKeyMetadata, None]
       - [fe3, NumericMetadata, '% Fe3+']
+    description: >-
+      Fe K absorption edge x-ray absorption data from
+      Dyar et al. (2012) American Mineralogist, 97, 1726-1740.
 LIBS:
   MSL ChemCam:
     loader: load_mars_big
