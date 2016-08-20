@@ -15,15 +15,19 @@
 Raman:
   RRUFF:
     file: /srv/nfs/common/spectra/Raman/rruff-spectra.hdf5
-    description: >-
-      This is a placeholder description.
-      It can span multiple lines in the config file.
     metadata:
       - [mineral, LookupMetadata, Mineral]
       - [rruff_id, LookupMetadata, RRUFF ID]
       - [laser, LookupMetadata, Laser Type]
       - [dana/species, LookupMetadata, Dana Number]
       - [subset, LookupMetadata, RRUFF Subset]
+    description: >-
+      Well-characterized mineral data obtained from the RRUFF database
+      at the University of Arizona; Bob Downs, Director.
+      In: Highlights in Mineralogical Crystallography,
+      T Armbruster and R M Danisi, eds. Berlin, Germany, W. De Gruyter, pp 1-30.
+    urls:
+      - http://rruff.info/
   RRUFF (raw):
     file: /srv/nfs/common/spectra/Raman/rruff-spectra-raw.hdf5
     metadata:
@@ -31,28 +35,60 @@ Raman:
       - [rruff_id, LookupMetadata, RRUFF ID]
       - [laser, LookupMetadata, Laser Type]
       - [dana/species, LookupMetadata, Dana Number]
+    description: >-
+      Well-characterized mineral data obtained from the RRUFF database
+      at the University of Arizona; Bob Downs, Director.
+      In: Highlights in Mineralogical Crystallography,
+      T Armbruster and R M Danisi, eds. Berlin, Germany, W. De Gruyter, pp 1-30.
+    urls:
+      - http://rruff.info/
   IRUG:
     file: /srv/nfs/common/spectra/Raman/IRUG.hdf5
     metadata:
       - [ids, LookupMetadata, ID]
       - [names, LookupMetadata, Name]
       - [materials, LookupMetadata, Material]
+    description: >-
+      Infrared & Raman Users Group reference spectra for the study of
+      works of art, architecture, and archaeological materials.
+    urls:
+      - http://www.irug.org/
   Parma:
     file: /srv/nfs/common/spectra/Raman/parma.hdf5
+    description: >-
+      Laboratory of Photoinduced Effects Vibration and X-Ray Spectroscopies
+      data for the study of minerals, rocks and inclusions.
+      Physics Department, University of Parma.
+    urls:
+      - http://www.fis.unipr.it/phevix/ramandb.php
   Lyon (LST):
     file: /srv/nfs/common/spectra/Raman/LST.hdf5
     metadata:
       - [names, LookupMetadata, Name]
+    description: >-
+      Laboratoire de géologie de Lyon ENS-Lyon France.
+    urls:
+      - http://www.ens-lyon.fr/LST/Raman/
   RDRS:
     file: /srv/nfs/common/spectra/Raman/RDRS.hdf5
     metadata:
       - [names, LookupMetadata, Name]
+    description: >-
+      Romanian Database of Raman Spectroscopy data on individual
+      mineral species (natural and synthetic).
+    urls:
+      - http://rdrs.uaic.ro/
   UCL:
     file: /srv/nfs/common/spectra/Raman/UCL.hdf5
     metadata:
       - [color, LookupMetadata, Color]
       - [power, LookupMetadata, Laser Power]
       - [wavelength, LookupMetadata, Laser Frequency]
+    description: >-
+      Common pigments known to have been in use before ~1850 AD as posted
+      by the Chemistry Department, University College London.
+    urls:
+      - http://www.chem.ucl.ac.uk/resources/raman/
   Dyar 96:
     file: /srv/nfs/common/spectra/Raman/dyar96.hdf5
     metadata:
@@ -73,6 +109,11 @@ Raman:
       - [mineral_2, LookupMetadata, Mineral B]
       - [ratio, LookupMetadata, 'Mix Ratio (A:B)']
       - [grain_size, LookupMetadata, 'Grain Size (µm)']
+    description: >-
+      Binary mixtures of 24 minerals created in volume percent mixtures.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2016/pdf/2430.pdf
+      - http://www.hou.usra.edu/meetings/lpsc2016/pdf/2186.pdf
   Synthetic Pyroxenes:
     file: /srv/nfs/common/spectra/Raman/synth_pyroxenes.hdf5
     metadata:
@@ -80,26 +121,53 @@ Raman:
       - [formula, LookupMetadata, Formula]
       - [dana, LookupMetadata, Dana Number]
       - [source, LookupMetadata, Source]
+    description: >-
+      Pyroxene samples synthesized by Donald Lindsley, Stony Brook University,
+      covering the opx-cpx range for Mg, Fe, and Ca.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2016/pdf/2186.pdf
 FTIR:
   RRUFF:
     file: /srv/nfs/common/spectra/FTIR/rruff-spectra.hdf5
     metadata:
       - [mineral, LookupMetadata, Mineral]
       - [rruff_id, LookupMetadata, RRUFF ID]
+    description: >-
+      Well-characterized mineral data obtained from the RRUFF database
+      at the University of Arizona; Bob Downs, Director.
+      In: Highlights in Mineralogical Crystallography,
+      T Armbruster and R M Danisi, eds. Berlin, Germany, W. De Gruyter, pp 1-30.
+    urls:
+      - http://rruff.info/
   IRUG:
     file: /srv/nfs/common/spectra/FTIR/IRUG.hdf5
     metadata:
       - [ids, LookupMetadata, ID]
       - [names, LookupMetadata, Name]
       - [materials, LookupMetadata, Material]
+    description: >-
+      Infrared & Raman Users Group reference spectra for the study of
+      works of art, architecture, and archaeological materials.
+    urls:
+      - http://www.irug.org/
   USGS:
     file: /srv/nfs/common/spectra/FTIR/USGS.hdf5
     metadata:
       - [ids, LookupMetadata, Sample ID]
+    description: >-
+      U.S. Geological Survey database including minerals,
+      organic and volatile compounds, vegetation, and man-made materials.
+    urls:
+      - http://speclab.cr.usgs.gov/spectral-lib.html
   USDA:
     loader: load_usda
     vector: true
     file: /srv/nfs/common/spectra/FTIR/USDA/soil.npz
+    description: >-
+      Terrestrial soil spectra from the U.S. Department of Agriculture's
+      Natural Resources Conservation Service (NRCS).
+    urls:
+      - http://websoilsurvey.sc.egov.usda.gov/App/HomePage.htm
 NIR:
   Corn:
     loader: load_corn
@@ -122,6 +190,13 @@ XRD:
     metadata:
       - [mineral, LookupMetadata, Mineral]
       - [rruff_id, LookupMetadata, RRUFF ID]
+    description: >-
+      Well-characterized mineral data obtained from the RRUFF database
+      at the University of Arizona; Bob Downs, Director.
+      In: Highlights in Mineralogical Crystallography,
+      T Armbruster and R M Danisi, eds. Berlin, Germany, W. De Gruyter, pp 1-30.
+    urls:
+      - http://rruff.info/
   AMCSD-derived Patterns:
     vector: true
     file: /srv/nfs/common/spectra/misc/crystals.hdf5
@@ -141,11 +216,21 @@ XAS:
     files:
       - /srv/nfs/common/spectra/misc/silicate_glass.hdf5
       - full/noSA
+    description: >-
+      Glass Fe K absorption edge x-ray absorption data from
+      Dyar et al. (2016) American Mineralogist, 101, 744-748.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2015/pdf/1388.pdf
   Silicate Glass (SA-corrected):
     loader: load_silicate_glass
     files:
       - /srv/nfs/common/spectra/misc/silicate_glass.hdf5
       - full/withSA
+    description: >-
+      Glass Fe K absorption edge x-ray absorption data from
+      Dyar et al. (2016) American Mineralogist, 101, 744-748.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2015/pdf/1388.pdf
   Amphibole:
     vector: true
     file: /srv/nfs/common/spectra/misc/amphiboleFe3.hdf5
@@ -164,7 +249,7 @@ XAS:
       - [pkey, PrimaryKeyMetadata, None]
       - [fe3, NumericMetadata, '% Fe3+']
 LIBS:
-  Mars (big):
+  MSL ChemCam:
     loader: load_mars_big
     vector: true
     public: false
@@ -174,6 +259,11 @@ LIBS:
       - /srv/nfs/common/msl_data/models_predictions/mixed_model_mars_preds.npz
       - /srv/nfs/common/msl_data/models_predictions/moc_model_mars_preds.npz
       - /srv/nfs/common/msl_data/models_predictions/dust_classifier_mars_preds.npz
+    description: >-
+      Publicly-released data from the ChemCam instrument of the Curiosity
+      rover on Mars.
+    urls:
+      - http://pds-geosciences.wustl.edu/missions/msl/chemcam.htm
   MHC multipower (no BLR):
     loader: load_mhc_multipower
     vector: true
@@ -181,6 +271,12 @@ LIBS:
     files:
       - /srv/nfs/common/spectra/LIBS/mhc_multi_power.hdf5
       - false
+    description: >-
+      Mount Holyoke College data acquired under Mars conditions on
+      pressed-powder samples of geological standards at multiple laser energies
+      that bracket conditions on Mars.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2015/pdf/1510.pdf
   MHC multipower:
     loader: load_mhc_multipower
     vector: true
@@ -188,16 +284,34 @@ LIBS:
     files:
       - /srv/nfs/common/spectra/LIBS/mhc_multi_power.hdf5
       - true
+    description: >-
+      Mount Holyoke College data acquired under Mars conditions on
+      pressed-powder samples of geological standards at multiple laser energies
+      that bracket conditions on Mars.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2015/pdf/1510.pdf
   LANL New:
     vector: true
     file: /srv/nfs/common/spectra/LIBS/lanl_new.hdf5
     metadata:
       - [names, PrimaryKeyMetadata, None]
+    description: >-
+      Laboratory data acquired at Los Alamos National Laboratory under
+      Mars conditions on an expanded set of geological standards used for
+      the updated calibration of the ChemCam instrument on the Curiosity rover.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2014/pdf/2378.pdf
   LANL New (raw):
     vector: true
     file: /srv/nfs/common/spectra/LIBS/lanl_new_raw.hdf5
     metadata:
       - [names, PrimaryKeyMetadata, None]
+    description: >-
+      Laboratory data acquired at Los Alamos National Laboratory under
+      Mars conditions on an expanded set of geological standards used for
+      the updated calibration of the ChemCam instrument on the Curiosity rover.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2014/pdf/2378.pdf
   LANL Cleanroom:
     vector: true
     file: /srv/nfs/common/spectra/LIBS/lanl_cleanroom.hdf5
@@ -215,6 +329,14 @@ LIBS:
     file: /srv/nfs/common/spectra/LIBS/lanl_caltargets.hdf5
     metadata:
       - [targets, LookupMetadata, Target]
+    description: >-
+      Los Alamos National Laboratory data acquired under Mars conditions on
+      Mars calibration targets designed for use by the ChemCam instrument.
+      Compositions described in
+      Vaniman et al. (2012) Space Science Reviews, DOI 10.1007/s11214-012-9886-0
+      and Fabre et al. (2011) Spectrochimica Acta B, 66, 280-289.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2007/pdf/1180.pdf
   MHC caltargets:
     vector: true
     public: false
@@ -223,6 +345,14 @@ LIBS:
       - [names, LookupMetadata, Mineral Name]
       - [powers, LookupMetadata, Laser Power]
       - [integration_times, LookupMetadata, Integration Time]
+    description: >-
+      Mount Holyoke College data acquired under Mars conditions on
+      Mars calibration targets designed for use by the ChemCam instrument.
+      Compositions described in
+      Vaniman et al. (2012) Space Science Reviews, DOI 10.1007/s11214-012-9886-0
+      and Fabre et al. (2011) Spectrochimica Acta B, 66, 280-289.
+    urls:
+      - http://www.lpi.usra.edu/meetings/lpsc2007/pdf/1180.pdf
   MHC Doping:
     vector: true
     public: false
@@ -234,6 +364,13 @@ LIBS:
       - [mix_no, LookupMetadata, 'Mix #']
       - [concentration, LookupMetadata, Concentration]
       - [dopant, LookupMetadata, Dopant]
+    description: >-
+      Mount Holyoke College data acquired under Mars conditions on
+      pressed-powder samples of doped geological standards at
+      multiple laser energies that bracket conditions on Mars.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2015/pdf/2720.pdf
+      - http://www.hou.usra.edu/meetings/lpsc2015/pdf/2338.pdf
   MHC Doping (no BLR):
     vector: true
     public: false
@@ -243,6 +380,13 @@ LIBS:
       - [matrix, LookupMetadata, Matrix]
       - [mix_no, LookupMetadata, 'Mix #']
       - [target, LookupMetadata, Target]
+    description: >-
+      Mount Holyoke College data acquired under Mars conditions on
+      pressed-powder samples of doped geological standards at
+      multiple laser energies that bracket conditions on Mars.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2015/pdf/2720.pdf
+      - http://www.hou.usra.edu/meetings/lpsc2015/pdf/2338.pdf
   MHC Angled:
     vector: true
     public: false

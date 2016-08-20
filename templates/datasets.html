@@ -140,7 +140,10 @@ $(document).ready(function() {
         <li>{{name}}</li>
       {% end %}
       </ul><br />
-      <b>Description:</b> {{d.description}}
+      <b>Description:</b> {{d.description}}<br />
+      {% for url in d.urls %}
+        <a href="{{url}}">{{url}}</a><br />
+      {% end %}
     </div>
   </div></td></tr>
 {% end %}

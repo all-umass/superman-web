@@ -35,7 +35,7 @@ class CompositionPlotHandler(BaseHandler):
       xlabel = title + ': ' + xlabel
       ylabel = title + ': ' + ylabel
 
-    ds = DATASETS['LIBS']['Mars (big)']
+    ds = DATASETS['LIBS']['MSL ChemCam']
     mask = fig_data.filter_mask[ds]
     sols = ds.metadata['sol'].get_array(mask)
     locs = ds.metadata['loc'].get_array(mask)
@@ -63,7 +63,7 @@ class CompositionPlotHandler(BaseHandler):
     fig_data = self.get_fig_data()
     if fig_data is None:
       return
-    ds = DATASETS['LIBS']['Mars (big)']
+    ds = DATASETS['LIBS']['MSL ChemCam']
     do_fit = bool(int(self.get_argument('do_fit')))
     use_mols = bool(int(self.get_argument('use_mols')))
     x_input = self.get_argument('x_comps')
@@ -166,7 +166,7 @@ class CompositionBatchHandler(BaseHandler):
     fig_data = self.get_fig_data()
     if fig_data is None:
       return
-    ds = DATASETS['LIBS']['Mars (big)']
+    ds = DATASETS['LIBS']['MSL ChemCam']
     use_mols = bool(int(self.get_argument('use_mols')))
     x_input = self.get_argument('x_comps')
     y_input = self.get_argument('y_comps')

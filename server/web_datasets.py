@@ -98,17 +98,19 @@ class _ReloadableMixin(object):
 
 
 class WebTrajDataset(TrajDataset, _ReloadableMixin):
-  def __init__(self, name, spec_kind, description, loader_fn, *loader_args):
+  def __init__(self, name, spec_kind, loader_fn, *loader_args):
     TrajDataset.__init__(self, name, spec_kind)
-    self.description = description
+    self.description = 'No description provided.'
+    self.urls = []
     self.is_public = True
     self.init_load(loader_fn, loader_args)
 
 
 class WebVectorDataset(VectorDataset, _ReloadableMixin):
-  def __init__(self, name, spec_kind, description, loader_fn, *loader_args):
+  def __init__(self, name, spec_kind, loader_fn, *loader_args):
     VectorDataset.__init__(self, name, spec_kind)
-    self.description = description
+    self.description = 'No description provided.'
+    self.urls = []
     self.is_public = True
     self.init_load(loader_fn, loader_args)
 

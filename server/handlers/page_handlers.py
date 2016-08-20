@@ -143,7 +143,7 @@ class CompositionsPage(Subpage):
   figsize = (10, 6)
 
   def get(self):
-    ds = self.get_dataset('LIBS', 'Mars (big)')
+    ds = self.get_dataset('LIBS', 'MSL ChemCam')
     if ds is None:
       page = '''
       <body style="text-align:center;padding-top:25vh;font-size:larger">
