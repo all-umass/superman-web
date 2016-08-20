@@ -150,9 +150,8 @@ class RegressionModelHandler(BaseHandler):
     if n > 0:
       r = np.floor(np.sqrt(n))
       r, c = int(r), int(np.ceil(n / r))
-      axes = fig.subplots(nrows=r, ncols=c, squeeze=False)
       for i, key in enumerate(sorted(preds)):
-        ax = axes.flat[i]
+        ax = fig.add_subplot(r, c, i+1)
         y, name = variables[key]
         p = preds[key].ravel()
         ax.scatter(y, p)
@@ -165,12 +164,10 @@ class RegressionModelHandler(BaseHandler):
         ax.set_aspect('equal')
         ax.set_xlim(lims)
         ax.set_ylim(lims)
-      for ax in axes[-1]:
-        ax.set_xlabel('Actual')
-      for ax in axes[:,0]:
-        ax.set_ylabel('Predicted')
-      for ax in axes.flat[n:]:
-        ax.set_axis_off()
+        if i % c == 0:
+          ax.set_ylabel('Predicted')
+        if i >= c * (r - 1):
+          ax.set_xlabel('Actual')
     fig_data.manager.canvas.draw()
 
     return self.write(json_encode(stats))
