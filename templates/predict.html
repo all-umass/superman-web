@@ -3,6 +3,10 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
 <style type="text/css">
+@keyframes flash {
+  50% { background-color: pink; }
+}
+.err_msg { display: none; color: red; }
 #model_error { padding-left: 1em; display: inline-block; }
 </style>
 <script type="text/javascript">
@@ -42,6 +46,16 @@ function run_model(do_train) {
       }).toArray(),
   };
   add_baseline_args(blr_pp_table, post_data);
+  var msg = $('#target_meta').nextAll('.err_msg');
+  if (post_data.pred_meta.length == 0) {
+    msg.show('highlight');
+    var box = $('#target_meta').closest('.box');
+    box.css('animation', 'flash 1s');
+    setTimeout(function() { box.css('animation', ''); }, 1000);
+    return;
+  } else {
+    msg.hide();
+  }
   $.post('/_run_model', post_data, function(data){
     $('#model_error').html('R<sup>2</sup> = ' + data['r2'].toPrecision(3) +
                            '<br>MSE = ' + data['mse'].toPrecision(4));
@@ -114,6 +128,7 @@ $(document).ready(function(){
 <select id="target_meta" data-placeholder="Choose variables" multiple>
   <option value=""></option>
 </select>
+<span class="err_msg">Select at least one.</span>
 </td></tr></table>
 </div>
 
