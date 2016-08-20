@@ -98,7 +98,7 @@ function do_filter(filter_element, post_data) {
     if (status === 'success') {
       var num_spectra = parseInt(data);
       if (num_spectra <= 99999) {
-        $('#plot_button').prop('disabled', false);
+        $('.needs_filter').prop('disabled', false);
       }
       elt.children('.ing').text(': ' + num_spectra);
     }

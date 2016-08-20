@@ -124,12 +124,15 @@ $(document).ready(function(){
 <div class="box"><table class="ds_table">
 <caption>PLS Regression</caption>
 <tr class="uline">
-<td class="rline"><button onclick="run_model(true);">Train Model</button></td>
+<td class="rline">
+  <button disabled class="needs_filter"
+          onclick="run_model(true);">Train Model</button></td>
 <td># components:
   <input type="number" id="pls_comps" min=1 max=1000 step=1 value=6 /></td>
 </tr><tr class="uline">
 <td class="rline">
-  <button onclick="load_model($('#modelfile')[0]);">Load Model</button></td>
+  <button disabled class="needs_filter"
+          onclick="load_model($('#modelfile')[0]);">Load Model</button></td>
 <td><input type="file" id="modelfile" /></td>
 </tr><tr><td colspan=2>
 <button disabled class="needs_model" onclick="run_model(false);">Run Predictions</button>
