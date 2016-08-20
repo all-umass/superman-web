@@ -3,11 +3,13 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
 <style type="text/css">
-@keyframes flash {
-  50% { background-color: pink; }
-}
+@keyframes flash { 50% { background-color: pink; } }
 .err_msg { display: none; color: red; }
-#model_error { padding-left: 1em; display: inline-block; }
+#model_error { display: inline-block; padding: 0.25em 1em; }
+#model_error thead { border-bottom: 1px solid black; font-weight: bold; }
+#model_error th { padding: 0 0.5em; }
+#model_error td { padding: 0 0.5em; text-align: right; }
+#model_error td:first-child { text-align: left; }
 </style>
 <script type="text/javascript">
 function ds_selected(input) {
@@ -15,7 +17,7 @@ function ds_selected(input) {
   $('#ds_info').toggle(has_ds);
   if (!has_ds) return;
   // hide the figure
-  $('#figure').hide();
+  $('#fig_wrapper').hide();
   // load the dataset filters
   var dest = $('#ds_filter_container');
   dest.html('<img src="/loading_bar.gif">');
@@ -41,6 +43,7 @@ function run_model(do_train) {
       ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id, do_train: +do_train,
       pp: collect_pp_args(blr_pp_table),
       pls_comps: +$('#pls_comps').val(),
+      pls_kind: $('#pls_kind option:selected').val(),
       pred_meta: $('#target_meta option:selected').map(function(){
         return this.value;
       }).toArray(),
@@ -57,10 +60,14 @@ function run_model(do_train) {
     msg.hide();
   }
   $.post('/_run_model', post_data, function(data){
-    $('#model_error').html('R<sup>2</sup> = ' + data['r2'].toPrecision(3) +
-                           '<br>MSE = ' + data['mse'].toPrecision(4));
-    $('#figure').show();
+    $('#fig_wrapper').show();
     $('.needs_model').attr('disabled', false);
+    var tbody = $('#model_error>tbody').empty();
+    for (var i=0; i<data.length; i++) {
+      var v = data[i];
+      tbody.append('<tr><td>'+v.name+'</td><td>' + v.r2.toPrecision(3) +
+                   '</td><td>' + v.rmse.toPrecision(4) + '</td></tr>');
+    }
   }, 'json');
 }
 function load_model(elt) {
@@ -88,8 +95,7 @@ function load_model(elt) {
     },
     success: function() {
       elt.value = "";  // reset the input
-      $('#model_error').empty();
-      $('#figure').hide();
+      $('#fig_wrapper').hide();
       $('.needs_model').attr('disabled', false);
     }
   });
@@ -101,7 +107,7 @@ function download_model() {
   window.open('/'+fig.id+'/pls_model.pkl', '_blank');
 }
 $(document).ready(function(){
-  $('.box,#figure').hide();
+  $('.box,#fig_wrapper').hide();
   onready_boilerplate("{{ws_uri}}", {{ fig_id }});
 });
 </script>
@@ -143,7 +149,12 @@ $(document).ready(function(){
   <button disabled class="needs_filter"
           onclick="run_model(true);">Train Model</button></td>
 <td># components:
-  <input type="number" id="pls_comps" min=1 max=1000 step=1 value=6 /></td>
+  <input type="number" id="pls_comps" min=1 max=1000 step=1 value=6 />
+  <select id="pls_kind">
+    <option value="pls1" selected>Univariate (PLS-1)</option>
+    <option value="pls2">Multivariate (PLS-2)</option>
+  </select>
+</td>
 </tr><tr class="uline">
 <td class="rline">
   <button disabled class="needs_filter"
@@ -155,8 +166,11 @@ $(document).ready(function(){
 <button disabled class="needs_model" onclick="download_model();">Download Model</button>
 </td></tr></table></div>
 
-<div>
-<span id="model_error"></span>
+<div id="fig_wrapper">
+<table id="model_error">
+  <thead><tr><th>Variable</th><th>R<sup>2</sup></th><th>RMSE</th></tr></thead>
+  <tbody></tbody>
+</table>
 <div id="figure"></div>
 </div>
 {% end %}

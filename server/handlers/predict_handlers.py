@@ -25,7 +25,7 @@ class ModelIOHandler(BaseHandler):
       return
 
     _, tmp_path = mkstemp()
-    dump_pickle(fig_data.pred_model, tmp_path, compress=3)
+    fig_data.pred_model.save(tmp_path)
 
     fname = os.path.basename(self.request.path)
     self.set_header('Content-Type', 'application/octet-stream')
@@ -51,7 +51,7 @@ class ModelIOHandler(BaseHandler):
     logging.info('Loading model file: %s', fname)
     fh = BytesIO(f['body'])
     try:
-      model = ZipNumpyUnpickler('', fh).load()
+      model = _PLS.load(fh)
     except Exception as e:
       logging.error('Failed to parse uploaded model file: %s', e.message)
       self.set_status(415)
@@ -59,13 +59,11 @@ class ModelIOHandler(BaseHandler):
 
     # do some validation
     ds_kind = self.get_argument('ds_kind')
-    if model['kind'] != ds_kind:
-      logging.error('Mismatching model kind. Expected %r, got %r', ds_kind,
-                    model['kind'])
-      self.set_status(415)
-      return
+    if model.ds_kind != ds_kind:
+      logging.warning('Mismatching model kind. Expected %r, got %r', ds_kind,
+                      model.ds_kind)
 
-    # save the loaded model
+    # stash the loaded model
     fig_data.pred_model = model
 
 
@@ -86,8 +84,6 @@ class RegressionModelHandler(BaseHandler):
       actual, pred = scat.get_offsets().T
       actuals.append(actual)
       preds.append(pred)
-    actuals = np.column_stack(actuals)
-    preds = np.column_stack(preds)
 
     fname = os.path.basename(self.request.path)
     self.set_header('Content-Type', 'text/plain')
@@ -98,10 +94,14 @@ class RegressionModelHandler(BaseHandler):
     # secondary header: Actual,Pred,Actual,Pred,Actual,Pred
     self.write(','.join(['Actual,Pred']*len(names)) + '\n')
     row = np.empty((len(names) * 2,), dtype=float)
-    for arow, prow in zip(actuals, preds):
-      row[::2] = arow
-      row[1::2] = prow
-      self.write(','.join('%g' % x for x in row) + '\n')
+
+    if actuals and preds:
+      actuals = np.column_stack(actuals)
+      preds = np.column_stack(preds)
+      for arow, prow in zip(actuals, preds):
+        row[::2] = arow
+        row[1::2] = prow
+        self.write(','.join('%g' % x for x in row) + '\n')
     self.finish()
 
   def post(self):
@@ -125,51 +125,55 @@ class RegressionModelHandler(BaseHandler):
                  crop=(lb, ub), chan_mask=chan_mask, nan_gap=None)
     ds_view = ds.view(mask=mask, **trans)
 
-    Y, pred_names = [], []
-    for i, key in enumerate(self.get_arguments('pred_meta[]')):
-      y, name = ds_view.get_metadata(key)
-      Y.append(y)
-      pred_names.append(name)
-    Y = np.column_stack(Y)
+    variables = {key: ds_view.get_metadata(key)
+                 for key in self.get_arguments('pred_meta[]')}
     X = ds_view.get_data()
 
     if bool(int(self.get_argument('do_train'))):
       pls_comps = int(self.get_argument('pls_comps'))
-      clf = PLSRegression(scale=False, n_components=pls_comps)
-      logging.info('Training model %r on %d inputs, predicting %d vars', clf,
-                   X.shape[0], Y.shape[1])
-      clf.fit(X, Y)
-      # stash the model away, in case we want to download / run it later
-      fig_data.pred_model = dict(model=clf, trans=trans, kind=ds_kind)
-    else:
-      clf = fig_data.pred_model['model']
-      #TODO: check the ds_kind vs the model's kind, etc?
+      pls_kind = self.get_argument('pls_kind')
+      logging.info('Training %s(%d) on %d inputs, predicting %d vars',
+                   pls_kind, pls_comps, X.shape[0], len(variables))
+      if pls_kind == 'pls1':
+        _train_fn = PLS1.train
+      else:
+        _train_fn = PLS2.train
+      fig_data.pred_model = _train_fn(X, variables, pls_comps, ds_kind)
 
-    # run predictions
-    pred_y = clf.predict(X)
-    r2 = r2_score(Y, pred_y)
-    mse = mean_squared_error(Y, pred_y)
+    # get predictions for each variable
+    preds, stats = fig_data.pred_model.predict(X, variables, ds_kind)
 
     # plot actual vs predicted
     fig = fig_data.figure
     fig.clf(keep_observers=True)
-    n = len(pred_names)
-    r = np.floor(np.sqrt(n))
-    r, c = int(r), int(np.ceil(n / r))
-    axes = fig.subplots(nrows=r, ncols=c, squeeze=False)
-    for i, name in enumerate(pred_names):
-      ax = axes.flat[i]
-      ax.scatter(Y[:,i], pred_y[:,i])
-      ax.set_title(name)
-    for ax in axes[-1]:
-      ax.set_xlabel('Actual')
-    for ax in axes[:,0]:
-      ax.set_ylabel('Predicted')
-    for ax in axes.flat[n:]:
-      ax.set_axis_off()
+    n = len(preds)
+    if n > 0:
+      r = np.floor(np.sqrt(n))
+      r, c = int(r), int(np.ceil(n / r))
+      axes = fig.subplots(nrows=r, ncols=c, squeeze=False)
+      for i, key in enumerate(sorted(preds)):
+        ax = axes.flat[i]
+        y, name = variables[key]
+        p = preds[key].ravel()
+        ax.scatter(y, p)
+        ax.set_title(name)
+        # plot best fit line
+        lims = [np.min([ax.get_xlim(), ax.get_ylim()]),
+                np.max([ax.get_xlim(), ax.get_ylim()])]
+        best_fit = np.poly1d(np.polyfit(y, p, 1))(lims)
+        ax.plot(lims, best_fit, 'k--', alpha=0.75, zorder=0)
+        ax.set_aspect('equal')
+        ax.set_xlim(lims)
+        ax.set_ylim(lims)
+      for ax in axes[-1]:
+        ax.set_xlabel('Actual')
+      for ax in axes[:,0]:
+        ax.set_ylabel('Predicted')
+      for ax in axes.flat[n:]:
+        ax.set_axis_off()
     fig_data.manager.canvas.draw()
 
-    return self.write(json_encode(dict(r2=r2, mse=mse)))
+    return self.write(json_encode(stats))
 
 
 class GetPredictableMetadataHandler(DatasetHandler):
@@ -178,6 +182,71 @@ class GetPredictableMetadataHandler(DatasetHandler):
     names = ds.metadata_names(allowed_baseclasses=(NumericMetadata,
                                                    CompositionMetadata))
     return self.write(json_encode(list(names)))
+
+
+class _PLS(object):
+  @staticmethod
+  def load(fh):
+    return ZipNumpyUnpickler('', fh).load()
+
+  def save(self, fname):
+    dump_pickle(self, fname, compress=3)
+
+  def predict(self, X, variables, ds_kind):
+    if ds_kind != self.ds_kind:
+      logging.warning('Mismatching ds_kind in PLS prediction: %r != %r',
+                      ds_kind, self.ds_kind)
+    preds = {}
+    stats = []
+    for key, p in self._predict(X, variables):
+      y, name = variables[key]
+      preds[key] = p
+      stats.append(dict(r2=r2_score(y, p),
+                        rmse=np.sqrt(mean_squared_error(y, p)),
+                        name=name))
+    stats.sort(key=lambda s: s['name'])
+    return preds, stats
+
+
+class PLS1(_PLS):
+  @staticmethod
+  def train(X, variables, k, ds_kind):
+    res = PLS1()
+    res.ds_kind = ds_kind
+    res.models = {}
+    for key in variables:
+      clf = PLSRegression(scale=False, n_components=k)
+      y, _ = variables[key]
+      res.models[key] = clf.fit(X, y)
+    return res
+
+  def _predict(self, X, variables):
+    for key in variables:
+      if key not in self.models:
+        logging.warning('No trained model for variable: %r', key)
+        continue
+      clf = self.models[key]
+      yield key, clf.predict(X)
+
+
+class PLS2(_PLS):
+  @staticmethod
+  def train(X, variables, k, ds_kind):
+    res = PLS2()
+    res.ds_kind = ds_kind
+    res.clf = PLSRegression(scale=False, n_components=k)
+    res.var_keys = variables.keys()
+    Y = np.column_stack([variables[key][0] for key in res.var_keys])
+    res.clf.fit(X, Y)
+    return res
+
+  def _predict(self, X, variables):
+    P = self.clf.predict(X)
+    for i, key in enumerate(self.var_keys):
+      if key not in variables:
+        logging.warning('No input variable for predicted: %r', key)
+        continue
+      yield key, P[:,i]
 
 
 routes = [
