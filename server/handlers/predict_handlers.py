@@ -206,6 +206,10 @@ class _PLS(object):
     stats.sort(key=lambda s: s['name'])
     return preds, stats
 
+  def info(self):
+    return '%s(%s): %s' % (self.__class__.__name__, self.ds_kind,
+                           ','.join(sorted(self.var_names)))
+
 
 class PLS1(_PLS):
   @staticmethod
@@ -213,6 +217,7 @@ class PLS1(_PLS):
     res = PLS1()
     res.ds_kind = ds_kind
     res.models = {}
+    res.var_names = variables.items()
     for key in variables:
       clf = PLSRegression(scale=False, n_components=k)
       y, _ = variables[key]
@@ -227,9 +232,6 @@ class PLS1(_PLS):
       clf = self.models[key]
       yield key, clf.predict(X)
 
-  def info(self):
-    return 'PLS1 - %s: %s' % (self.ds_kind, ','.join(self.models))
-
 
 class PLS2(_PLS):
   @staticmethod
@@ -238,6 +240,7 @@ class PLS2(_PLS):
     res.ds_kind = ds_kind
     res.clf = PLSRegression(scale=False, n_components=k)
     res.var_keys = variables.keys()
+    res.var_names = [variables[key][1] for key in res.var_keys]
     Y = np.column_stack([variables[key][0] for key in res.var_keys])
     res.clf.fit(X, Y)
     return res
@@ -249,9 +252,6 @@ class PLS2(_PLS):
         logging.warning('No input variable for predicted: %r', key)
         continue
       yield key, P[:,i]
-
-  def info(self):
-    return 'PLS2 - %s: %s' % (self.ds_kind, ','.join(self.var_keys))
 
 
 routes = [
