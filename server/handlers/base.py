@@ -36,3 +36,6 @@ class BaseHandler(tornado.web.RequestHandler):
     if ds is None or ds.is_public or self._include_private_datasets():
       return ds
     return None
+
+  def dataset_kinds(self):
+    return DATASETS.keys()

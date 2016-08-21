@@ -71,14 +71,18 @@ class Subpage(BaseHandler):
    * description - sentence describing the page
    * figsize     - figure size in inches, as a tuple of (width, height)
   '''
+  figsize = None
   public = True
 
   def render(self, **kwargs):
-    if 'fig_id' not in kwargs:
-      kwargs['fig_id'] = self.application.register_new_figure(self.figsize)
-    kwargs['ws_uri'] = "ws://{req.host}/".format(req=self.request)
     kwargs['page_title'] = self.title
-    kwargs['mpl_js'] = MPL_JS
+    if self.figsize is None:
+      kwargs['mpl_js'] = []
+    else:
+      if 'fig_id' not in kwargs:
+        kwargs['fig_id'] = self.application.register_new_figure(self.figsize)
+      kwargs['ws_uri'] = "ws://{req.host}/".format(req=self.request)
+      kwargs['mpl_js'] = MPL_JS
     return BaseHandler.render(self, self.template, **kwargs)
 
 
@@ -88,8 +92,7 @@ class DatasetsPage(Subpage):
   description = 'Browse all spectroscopy datasets.'
 
   def get(self):
-    self.render(fig_id=0,  # No figure on this page
-                dt=datetime.datetime.fromtimestamp,
+    self.render(dt=datetime.datetime.fromtimestamp,
                 datasets=self.all_datasets())
 
 
@@ -184,6 +187,17 @@ class PredictionPage(Subpage):
     self.render(datasets=vector_ds, **blr_kwargs)
 
 
+class DatasetImportPage(Subpage):
+  template = 'import.html'
+  title = 'Dataset Import'
+  description = 'Upload new datasets to Superman.'
+  public = False
+
+  @tornado.web.authenticated
+  def get(self):
+    self.render(ds_kinds=self.dataset_kinds())
+
+
 class DebugPage(BaseHandler):
   @tornado.web.authenticated
   def get(self):
@@ -202,5 +216,6 @@ routes = [
     (r'/peakfit', PeakFitPage),
     (r'/login', LoginPage),
     (r'/predict', PredictionPage),
+    (r'/import', DatasetImportPage),
     (r'/debug', DebugPage),
 ]

@@ -1,0 +1,70 @@
+{% extends "_common.html" %}
+{% block head_matter %}
+<style type="text/css">
+form {
+  padding: 1em 0;
+}
+table {
+  display: inline-block;
+  border-radius: 5px;
+  padding: 0.5em;
+  vertical-align: top;
+  background-color: beige;
+}
+caption {
+  font-style: italic;
+}
+th {
+  font-weight: bold;
+  border-bottom: 1px solid black;
+}
+th {
+  padding: 0 0.25em;
+}
+td {
+  padding: 0 0.25em;
+  text-align: right;
+}
+input[type=submit] {
+  width: 10em;
+}
+</style>
+{% end %}
+{% block body_matter %}
+<p>
+<br />
+Upload a new dataset by providing comma-separated value (CSV) files for
+spectrum data and associated metadata.
+</p>
+
+<form>
+<label>Dataset name: <input type="text" name="ds_name"></label><br />
+<label>Spectrum kind: <select>
+{% for kind in ds_kinds %}
+  <option value="{{kind}}">{{kind}}</option>
+{% end %}
+</select></label><br />
+<label>Spectrum data: <input type="file" name="spectra"></label><br />
+<label>Metadata: <input type="file" name="metadata"></label><br />
+<input type="submit">
+</form>
+
+<table>
+<caption>CSV format for spectrum data</caption>
+<tr><th>wave</th><th>sample1</th><th>sample2</th><th>sample3</th></tr>
+<tr><td>0</td><td>3</td><td>1</td><td>2</td></tr>
+<tr><td>1</td><td>1</td><td>5.3</td><td>2</td></tr>
+<tr><td>2</td><td>3</td><td>2.2</td><td>0.3</td></tr>
+<tr><td>3</td><td>5.3</td><td>9</td><td>1</td></tr>
+<tr><td>4</td><td>5.1</td><td>0</td><td>1</td></tr>
+<tr><td>5</td><td>4</td><td>5</td><td>4</td></tr>
+</table>
+
+<table>
+<caption>CSV format for metadata</caption>
+<tr><th>pkey</th><th>meta1</th><th>meta2</th><th>meta3</th></tr>
+<tr><td>sample1</td><td>345</td><td>A</td><td>0.812</td></tr>
+<tr><td>sample2</td><td>32</td><td>B</td><td>-0.453</td></tr>
+<tr><td>sample3</td><td>52</td><td>A</td><td>0.12</td></tr>
+</table>
+{% end %}
