@@ -12,6 +12,8 @@
 #model_error td { padding: 0 0.5em; text-align: right; }
 #model_error td:first-child { text-align: left; }
 #load_model_failed { display: none; text-align: center; color: red; }
+#pls_comps { width: 2em; }
+#pls_folds { width: 2em; }
 </style>
 <script type="text/javascript">
 function ds_selected(input) {
@@ -29,12 +31,14 @@ function ds_selected(input) {
   var post_data = {name: ds_name, kind: ds_kind};
   dest.load('/_dataset_filterer', post_data);
   // set up the predictor selection UI
-  var dest = $('#target_meta').empty();
+  var dest = $('#target_meta').empty().show();
   $.post('/_predictable', post_data, function(data){
     for (var i=0; i<data.length; i++) {
       dest.append('<option value="'+data[i][0]+'">'+data[i][1]+'</option>');
     }
-    dest.chosen({search_contains: true}).trigger('chosen:updated');
+    dest.parent().css('width', dest.width());
+    dest.chosen({search_contains: true, width: '100%'}).trigger('chosen:updated');
+    dest.hide();
   }, 'json');
   // show the next steps
   $('.box').show();
@@ -45,6 +49,7 @@ function run_model(btn, do_train) {
       ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id, do_train: +do_train,
       pp: collect_pp_args(blr_pp_table),
       pls_comps: +$('#pls_comps').val(),
+      pls_folds: +$('#pls_folds').val(),
       pls_kind: $('#pls_kind option:selected').val(),
       pred_meta: $('#target_meta option:selected').map(function(){
         return this.value;
@@ -163,8 +168,9 @@ $(document).ready(function(){
 <td class="rline">
   <button disabled class="needs_filter" onclick="run_model(this, true);">
   Train<span class="wait">ing</span> Model<span class="wait">...</span></button>
-</td><td># components:
-  <input type="number" id="pls_comps" min=1 max=1000 step=1 value=6 />
+</td><td>
+  <label><input type="number" id="pls_comps" min=1 max=1000 step=1 value=6 />
+  components</label>
   <select id="pls_kind">
     <option value="pls1" selected>Univariate (PLS-1)</option>
     <option value="pls2">Multivariate (PLS-2)</option>
@@ -177,9 +183,15 @@ $(document).ready(function(){
 </td><td>
   <input type="file" id="modelfile" />
   <div id="load_model_failed"></div>
-</td></tr><tr><td colspan=2>
-<button disabled class="needs_model" onclick="run_model(this, false);">
+</td></tr>
+<tr class="uline"><td class="rline">
+  <button disabled class="needs_model" onclick="run_model(this, false);">
   Run<span class="wait">ning</span> Predictions<span class="wait">...</span></button>
+</td><td>
+  <label><input type="number" id="pls_folds" min=1 max=1 step=1 value=1 />
+  cross-validation folds</label>
+</td></tr>
+<tr><td colspan=2>
 <button disabled class="needs_model" onclick="download_preds();">Download Predictions</button>
 </td></tr></table></div>
 

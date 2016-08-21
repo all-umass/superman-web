@@ -136,18 +136,16 @@ class RegressionModelHandler(BaseHandler):
     X = ds_view.get_data()
 
     if bool(int(self.get_argument('do_train'))):
-      pls_comps = int(self.get_argument('pls_comps'))
+      comps = int(self.get_argument('pls_comps'))
       pls_kind = self.get_argument('pls_kind')
       logging.info('Training %s(%d) on %d inputs, predicting %d vars',
-                   pls_kind, pls_comps, X.shape[0], len(variables))
-      if pls_kind == 'pls1':
-        _train_fn = PLS1.train
-      else:
-        _train_fn = PLS2.train
-      fig_data.pred_model = _train_fn(X, variables, pls_comps, ds_kind)
+                   pls_kind, comps, X.shape[0], len(variables))
+      cls = PLS1 if pls_kind == 'pls1' else PLS2
+      fig_data.pred_model = cls.train(X, variables, comps, ds_kind)
 
     # get predictions for each variable
-    preds, stats = fig_data.pred_model.predict(X, variables, ds_kind)
+    folds = int(self.get_argument('pls_folds'))
+    preds, stats = fig_data.pred_model.predict(X, variables, folds, ds_kind)
 
     # plot actual vs predicted
     fig = fig_data.figure
@@ -199,12 +197,13 @@ class _PLS(object):
   def save(self, fname):
     dump_pickle(self, fname, compress=3)
 
-  def predict(self, X, variables, ds_kind):
+  def predict(self, X, variables, folds, ds_kind):
     if ds_kind != self.ds_kind:
       logging.warning('Mismatching ds_kind in PLS prediction: %r != %r',
                       ds_kind, self.ds_kind)
     preds = {}
     stats = []
+    # TODO: use cross-validation to compute r2/rmse values
     for key, p in self._predict(X, variables):
       y, name = variables[key]
       preds[key] = p
