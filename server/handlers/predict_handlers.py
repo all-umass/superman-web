@@ -86,7 +86,7 @@ class RegressionModelHandler(BaseHandler):
       if not ax.collections:
         break
       names.append(ax.get_title())
-      scat, = ax.collections
+      scat = ax.collections[0]
       actual, pred = scat.get_offsets().T
       actuals.append(actual)
       preds.append(pred)
