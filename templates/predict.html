@@ -5,11 +5,13 @@
 <style type="text/css">
 @keyframes flash { 50% { background-color: pink; } }
 .err_msg { display: none; color: red; }
+.wait { display: none; }
 #model_error { display: inline-block; padding: 0.25em 1em; }
 #model_error thead { border-bottom: 1px solid black; font-weight: bold; }
 #model_error th { padding: 0 0.5em; }
 #model_error td { padding: 0 0.5em; text-align: right; }
 #model_error td:first-child { text-align: left; }
+#load_model_failed { display: none; text-align: center; color: red; }
 </style>
 <script type="text/javascript">
 function ds_selected(input) {
@@ -32,12 +34,12 @@ function ds_selected(input) {
     for (var i=0; i<data.length; i++) {
       dest.append('<option value="'+data[i][0]+'">'+data[i][1]+'</option>');
     }
-    dest.chosen({search_contains: true}).css('width', '+=15');
+    dest.chosen({search_contains: true}).trigger('chosen:updated');
   }, 'json');
   // show the next steps
   $('.box').show();
 }
-function run_model(do_train) {
+function run_model(btn, do_train) {
   var blr_pp_table = $('#blr_pp_steps>.ds_table');
   var post_data = {
       ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id, do_train: +do_train,
@@ -59,7 +61,9 @@ function run_model(do_train) {
   } else {
     msg.hide();
   }
+  var wait = $('.wait', btn).show();
   $.post('/_run_model', post_data, function(data){
+    wait.hide();
     $('#fig_wrapper').show();
     $('.needs_model').attr('disabled', false);
     var stats = data.stats;
@@ -69,23 +73,28 @@ function run_model(do_train) {
       tbody.append('<tr><td>'+v.name+'</td><td>' + v.r2.toPrecision(3) +
                    '</td><td>' + v.rmse.toPrecision(4) + '</td></tr>');
     }
-    $('#model_info').text(data.info);
+    $('#model_info').html(data.info);
   }, 'json');
 }
-function load_model(elt) {
+function load_model(btn) {
+  var elt = $('#modelfile')[0];
   if (elt.files.length != 1) {
-    console.warn('Expected 1 model file, got', elt.files.length);
+    $('#load_model_failed').text('Choose a file to upload.').show();
+    // flash the file input
+    var td = $(elt).parent().css('animation', 'flash 1s');
+    setTimeout(function() { td.css('animation', ''); }, 1000);
     return
   }
   var f = elt.files[0];
   if (f.size > 5000000) {
-    console.warn('Model file >5MB: ', f.size, 'bytes');
+    $('#load_model_failed').text('File too big (max 5 MB)').show();
     return
   }
   var post_data = new FormData();
   post_data.append('fignum', fig.id);
   post_data.append('modelfile', f);
   post_data.append('ds_kind', ds_kind);
+  var wait = $('.wait', btn).show();
   $.ajax({
     url: '/_load_model',
     data: post_data,
@@ -93,13 +102,16 @@ function load_model(elt) {
     contentType: false,
     type: 'POST',
     error: function(jqXHR, textStatus, errorThrown) {
-      console.error(textStatus, errorThrown);
+      wait.hide();
+      elt.value = '';  // reset the input
+      $('#load_model_failed').text(jqXHR.responseText).show();
     },
     success: function(data) {
-      elt.value = "";  // reset the input
-      $('#fig_wrapper').hide();
+      wait.hide();
+      $('#load_model_failed,#fig_wrapper').hide();
+      elt.value = '';  // reset the input
       $('.needs_model').attr('disabled', false);
-      $('#model_info').text(data.info);
+      $('#model_info').html(JSON.parse(data).info);
     }
   });
 }
@@ -149,9 +161,9 @@ $(document).ready(function(){
 <caption>PLS Regression</caption>
 <tr class="uline">
 <td class="rline">
-  <button disabled class="needs_filter"
-          onclick="run_model(true);">Train Model</button></td>
-<td># components:
+  <button disabled class="needs_filter" onclick="run_model(this, true);">
+  Train<span class="wait">ing</span> Model<span class="wait">...</span></button>
+</td><td># components:
   <input type="number" id="pls_comps" min=1 max=1000 step=1 value=6 />
   <select id="pls_kind">
     <option value="pls1" selected>Univariate (PLS-1)</option>
@@ -160,19 +172,23 @@ $(document).ready(function(){
 </td>
 </tr><tr class="uline">
 <td class="rline">
-  <button disabled class="needs_filter"
-          onclick="load_model($('#modelfile')[0]);">Load Model</button></td>
-<td><input type="file" id="modelfile" /></td>
-</tr><tr><td colspan=2>
-<button disabled class="needs_model" onclick="run_model(false);">Run Predictions</button>
+  <button disabled class="needs_filter" onclick="load_model(this);">
+  Load<span class="wait">ing</span> Model<span class="wait">...</span></button>
+</td><td>
+  <input type="file" id="modelfile" />
+  <div id="load_model_failed"></div>
+</td></tr><tr><td colspan=2>
+<button disabled class="needs_model" onclick="run_model(this, false);">
+  Run<span class="wait">ning</span> Predictions<span class="wait">...</span></button>
 <button disabled class="needs_model" onclick="download_preds();">Download Predictions</button>
-<button disabled class="needs_model" onclick="download_model();">Download Model</button>
 </td></tr></table></div>
 
 <div class="box"><table class="ds_table">
 <caption>Current Model</caption>
 <tr><td id="model_info">None</td></tr>
-</table></div>
+<tr><td><button disabled class="needs_model"
+                onclick="download_model();">Download</button>
+</td></tr></table></div>
 
 <div id="fig_wrapper">
 <table id="model_error">

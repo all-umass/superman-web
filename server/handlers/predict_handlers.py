@@ -40,11 +40,11 @@ class ModelIOHandler(BaseHandler):
     fig_data = self.get_fig_data()
     if fig_data is None:
       self.set_status(403)
-      return
+      return self.finish('Invalid internal state.')
     if not self.request.files:
       logging.error('LoadModelHandler: no file uploaded')
       self.set_status(403)
-      return
+      return self.finish('No file uploaded.')
 
     f = self.request.files['modelfile'][0]
     fname = f['filename']
@@ -55,9 +55,14 @@ class ModelIOHandler(BaseHandler):
     except Exception as e:
       logging.error('Failed to parse uploaded model file: %s', e.message)
       self.set_status(415)
-      return
+      return self.finish('Invalid model file.')
 
     # do some validation
+    if not isinstance(model, _PLS):
+      logging.error('Uploaded model file out of date: %r', model)
+      self.set_status(415)
+      return self.finish('Invalid model file.')
+
     ds_kind = self.get_argument('ds_kind')
     if model.ds_kind != ds_kind:
       logging.warning('Mismatching model kind. Expected %r, got %r', ds_kind,
@@ -156,15 +161,18 @@ class RegressionModelHandler(BaseHandler):
         y, name = variables[key]
         p = preds[key].ravel()
         ax.scatter(y, p)
+        xlims = ax.get_xlim()
+        ylims = ax.get_ylim()
+        ax.errorbar(y, p, yerr=stats[i]['rmse'], fmt='none', ecolor='k',
+                    elinewidth=1, capsize=0, alpha=0.5, zorder=0)
         ax.set_title(name)
         # plot best fit line
-        lims = [np.min([ax.get_xlim(), ax.get_ylim()]),
-                np.max([ax.get_xlim(), ax.get_ylim()])]
-        best_fit = np.poly1d(np.polyfit(y, p, 1))(lims)
-        ax.plot(lims, best_fit, 'k--', alpha=0.75, zorder=0)
+        xylims = [np.min([xlims, ylims]), np.max([xlims, ylims])]
+        best_fit = np.poly1d(np.polyfit(y, p, 1))(xylims)
+        ax.plot(xylims, best_fit, 'k--', alpha=0.75, zorder=-1)
         ax.set_aspect('equal')
-        ax.set_xlim(lims)
-        ax.set_ylim(lims)
+        ax.set_xlim(xylims)
+        ax.set_ylim(xylims)
         if i % c == 0:
           ax.set_ylabel('Predicted')
         if i >= c * (r - 1):
@@ -207,8 +215,9 @@ class _PLS(object):
     return preds, stats
 
   def info(self):
-    return '%s(%s): %s' % (self.__class__.__name__, self.ds_kind,
-                           ','.join(sorted(self.var_names)))
+    var_list = '\n'.join('<li>%s</li>' % n for n in sorted(self.var_names))
+    return '%s &mdash; %s<br><ul>%s</ul>' % (
+        self.__class__.__name__, self.ds_kind, var_list)
 
 
 class PLS1(_PLS):
@@ -217,7 +226,7 @@ class PLS1(_PLS):
     res = PLS1()
     res.ds_kind = ds_kind
     res.models = {}
-    res.var_names = variables.items()
+    res.var_names = [name for _, name in variables.values()]
     for key in variables:
       clf = PLSRegression(scale=False, n_components=k)
       y, _ = variables[key]

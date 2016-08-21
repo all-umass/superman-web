@@ -174,7 +174,7 @@ class PredictionPage(Subpage):
   template = 'predict.html'
   title = 'PLS Prediction'
   description = 'Run PLS regression to build predictive models.'
-  figsize = (8, 4)
+  figsize = (8, 6)
   public = False
 
   @tornado.web.authenticated
