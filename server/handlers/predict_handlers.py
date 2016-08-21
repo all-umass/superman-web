@@ -65,6 +65,7 @@ class ModelIOHandler(BaseHandler):
 
     # stash the loaded model
     fig_data.pred_model = model
+    return self.write(json_encode(dict(info=model.info())))
 
 
 class RegressionModelHandler(BaseHandler):
@@ -170,7 +171,8 @@ class RegressionModelHandler(BaseHandler):
           ax.set_xlabel('Actual')
     fig_data.manager.canvas.draw()
 
-    return self.write(json_encode(stats))
+    res = dict(stats=stats, info=fig_data.pred_model.info())
+    return self.write(json_encode(res))
 
 
 class GetPredictableMetadataHandler(DatasetHandler):
@@ -225,6 +227,9 @@ class PLS1(_PLS):
       clf = self.models[key]
       yield key, clf.predict(X)
 
+  def info(self):
+    return 'PLS1 - %s: %s' % (self.ds_kind, ','.join(self.models))
+
 
 class PLS2(_PLS):
   @staticmethod
@@ -244,6 +249,9 @@ class PLS2(_PLS):
         logging.warning('No input variable for predicted: %r', key)
         continue
       yield key, P[:,i]
+
+  def info(self):
+    return 'PLS2 - %s: %s' % (self.ds_kind, ','.join(self.var_keys))
 
 
 routes = [

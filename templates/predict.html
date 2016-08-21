@@ -62,12 +62,14 @@ function run_model(do_train) {
   $.post('/_run_model', post_data, function(data){
     $('#fig_wrapper').show();
     $('.needs_model').attr('disabled', false);
+    var stats = data.stats;
     var tbody = $('#model_error>tbody').empty();
-    for (var i=0; i<data.length; i++) {
-      var v = data[i];
+    for (var i=0; i<stats.length; i++) {
+      var v = stats[i];
       tbody.append('<tr><td>'+v.name+'</td><td>' + v.r2.toPrecision(3) +
                    '</td><td>' + v.rmse.toPrecision(4) + '</td></tr>');
     }
+    $('#model_info').text(data.info);
   }, 'json');
 }
 function load_model(elt) {
@@ -93,10 +95,11 @@ function load_model(elt) {
     error: function(jqXHR, textStatus, errorThrown) {
       console.error(textStatus, errorThrown);
     },
-    success: function() {
+    success: function(data) {
       elt.value = "";  // reset the input
       $('#fig_wrapper').hide();
       $('.needs_model').attr('disabled', false);
+      $('#model_info').text(data.info);
     }
   });
 }
@@ -165,6 +168,11 @@ $(document).ready(function(){
 <button disabled class="needs_model" onclick="download_preds();">Download Predictions</button>
 <button disabled class="needs_model" onclick="download_model();">Download Model</button>
 </td></tr></table></div>
+
+<div class="box"><table class="ds_table">
+<caption>Current Model</caption>
+<tr><td id="model_info">None</td></tr>
+</table></div>
 
 <div id="fig_wrapper">
 <table id="model_error">
