@@ -76,13 +76,11 @@ class Subpage(BaseHandler):
 
   def render(self, **kwargs):
     kwargs['page_title'] = self.title
-    if self.figsize is None:
-      kwargs['mpl_js'] = []
-    else:
+    kwargs['mpl_js'] = MPL_JS
+    if self.figsize is not None:
+      kwargs['ws_uri'] = "ws://{req.host}/".format(req=self.request)
       if 'fig_id' not in kwargs:
         kwargs['fig_id'] = self.application.register_new_figure(self.figsize)
-      kwargs['ws_uri'] = "ws://{req.host}/".format(req=self.request)
-      kwargs['mpl_js'] = MPL_JS
     return BaseHandler.render(self, self.template, **kwargs)
 
 
