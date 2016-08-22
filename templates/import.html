@@ -2,6 +2,7 @@
 {% block head_matter %}
 <script type="text/javascript">
 function upload_dataset() {
+  var msg = $('#import_result').empty();
   var form = $('form')[0];
   if (!form.checkValidity()) {
     return;
@@ -17,13 +18,12 @@ function upload_dataset() {
     type: 'POST',
     error: function(jqXHR, textStatus, errorThrown) {
       wait.hide();
-      $('#import_result').html(jqXHR.responseText);
+      msg.html(jqXHR.responseText);
     },
     success: function(url) {
       wait.hide();
       $('input', form).val(''); // reset the form inputs
-      $('#import_result').html('Dataset imported. <a href="' +
-                               url + '">Explore</a>.');
+      msg.html('Dataset imported. <a href="' + url + '">Explore</a>.');
     }
   });
 }
@@ -86,9 +86,9 @@ spectrum data and associated metadata.
 
 <table class="csv">
 <caption>CSV format for metadata</caption>
-<tr><th>pkey</th><th>meta1</th><th>meta2</th><th>meta3</th></tr>
-<tr><td>sample1</td><td>345</td><td>A</td><td>0.812</td></tr>
-<tr><td>sample2</td><td>32</td><td>B</td><td>-0.453</td></tr>
-<tr><td>sample3</td><td>52</td><td>A</td><td>0.12</td></tr>
+<tr><th>pkey</th><th>meta1</th><th>meta2</th></tr>
+<tr><td>sample1</td><td>345</td><td>A</td></tr>
+<tr><td>sample2</td><td>32</td><td>B</td></tr>
+<tr><td>sample3</td><td>52</td><td>A</td></tr>
 </table>
 {% end %}

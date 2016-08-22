@@ -6,8 +6,8 @@ from tornado.escape import url_escape
 
 from .base import BaseHandler
 from ..web_datasets import (
-    WebVectorDataset, DATASETS, PrimaryKeyMetadata, NumericMetadata,
-    BooleanMetadata, LookupMetadata)
+    WebVectorDataset, WebLIBSDataset, DATASETS, PrimaryKeyMetadata,
+    NumericMetadata, BooleanMetadata, LookupMetadata)
 
 
 class DatasetImportHandler(BaseHandler):
@@ -52,12 +52,12 @@ class DatasetImportHandler(BaseHandler):
         meta = np.genfromtxt(fh, dtype=None, delimiter=',', names=True)
         meta_pkeys = np.array(meta[meta.dtype.names[0]])
       except Exception as e:
-        logging.error('DatasetImportHandler: bad metadata file: %s', e)
+        logging.error('bad metadata file: %s', e)
         self.set_status(415)
         return self.finish('Unable to parse metadata CSV.')
 
       if (meta_pkeys != pkey).any():
-        logging.error('DatasetImportHandler: mismatching meta_pkeys')
+        logging.error('mismatching meta_pkeys')
         self.set_status(415)
         return self.finish('Spectrum and metadata names mismatch.')
 
@@ -71,12 +71,19 @@ class DatasetImportHandler(BaseHandler):
           m = LookupMetadata(x)
         meta_kwargs[meta_name] = m
 
+    # async loading machinery automatically registers us with DATASETS
     def _load(ds):
       ds.set_data(wave, spectra, pkey=PrimaryKeyMetadata(pkey), **meta_kwargs)
       return True
 
-    # async loading machinery automatically registers us with DATASETS
-    WebVectorDataset(ds_name, ds_kind, _load)
+    if ds_kind == 'LIBS':
+      if wave.shape != (6144,):
+        logging.error('wrong #chans for LIBS data: %s', wave.shape[0])
+        self.set_status(415)
+        return self.finish('Wrong number of channels for LIBS data.')
+      WebLIBSDataset(ds_name, _load)
+    else:
+      WebVectorDataset(ds_name, ds_kind, _load)
 
     return self.write('/explorer?ds_kind=%s&ds_name=%s' % (
         ds_kind, url_escape(ds_name, plus=False)))
