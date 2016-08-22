@@ -1,55 +1,75 @@
 {% extends "_common.html" %}
 {% block head_matter %}
-<style type="text/css">
-form {
-  padding: 1em 0;
+<script type="text/javascript">
+function upload_dataset() {
+  var form = $('form')[0];
+  var post_data = new FormData(form);
+  post_data.append('ds_kind', $('#ds_kind',form).find('option:selected').val());
+  var file_input = $('input[type=file]', form);
+  // TODO: validate existence of spectra file, size of both files
+  var wait = $('.wait', form).show();
+  $.ajax({
+    url: '/_import',
+    data: post_data,
+    processData: false,
+    contentType: false,
+    type: 'POST',
+    error: function(jqXHR, textStatus, errorThrown) {
+      wait.hide();
+      $('#import_result').html(jqXHR.responseText);
+    },
+    success: function(url) {
+      wait.hide();
+      $('input', form).val(''); // reset the form inputs
+      $('#import_result').html('Dataset imported. <a href="' +
+                               url + '">Explore</a>.');
+    }
+  });
 }
-table {
+</script>
+<style type="text/css">
+p { padding: 1em 0; }
+table.csv {
   display: inline-block;
   border-radius: 5px;
   padding: 0.5em;
   vertical-align: top;
   background-color: beige;
 }
-caption {
-  font-style: italic;
-}
-th {
-  font-weight: bold;
-  border-bottom: 1px solid black;
-}
-th {
-  padding: 0 0.25em;
-}
-td {
-  padding: 0 0.25em;
-  text-align: right;
-}
-input[type=submit] {
-  width: 10em;
-}
+.csv caption { font-style: italic; }
+.csv th { font-weight: bold; border-bottom: 1px solid black; }
+.csv th { padding: 0 0.25em; }
+.csv td { padding: 0 0.25em; text-align: right; }
+.wait { display: none; }
 </style>
 {% end %}
 {% block body_matter %}
 <p>
-<br />
 Upload a new dataset by providing comma-separated value (CSV) files for
 spectrum data and associated metadata.
 </p>
 
-<form>
-<label>Dataset name: <input type="text" name="ds_name"></label><br />
-<label>Spectrum kind: <select>
+<form enctype="multipart/form-data" onsubmit="return false;">
+<table class="ds_table">
+<tr><td>Dataset name</td>
+    <td><input type="text" name="ds_name" required /></td></tr>
+<tr><td>Spectrum kind</td><td><select id="ds_kind">
 {% for kind in ds_kinds %}
   <option value="{{kind}}">{{kind}}</option>
 {% end %}
-</select></label><br />
-<label>Spectrum data: <input type="file" name="spectra"></label><br />
-<label>Metadata: <input type="file" name="metadata"></label><br />
-<input type="submit">
-</form>
+</select></td></tr>
+<tr><td>Spectrum data</td>
+    <td><input type="file" name="spectra" required /></td></tr>
+<tr><td>Metadata</td>
+    <td><input type="file" name="metadata" /></td></tr>
+<tr><td colspan=2>
+<button onclick="upload_dataset();">
+  Upload<span class="wait">ing...</span>
+</button>
+<div id="import_result"></div>
+</td></tr></table></form>
 
-<table>
+<table class="csv">
 <caption>CSV format for spectrum data</caption>
 <tr><th>wave</th><th>sample1</th><th>sample2</th><th>sample3</th></tr>
 <tr><td>0</td><td>3</td><td>1</td><td>2</td></tr>
@@ -60,7 +80,7 @@ spectrum data and associated metadata.
 <tr><td>5</td><td>4</td><td>5</td><td>4</td></tr>
 </table>
 
-<table>
+<table class="csv">
 <caption>CSV format for metadata</caption>
 <tr><th>pkey</th><th>meta1</th><th>meta2</th><th>meta3</th></tr>
 <tr><td>sample1</td><td>345</td><td>A</td><td>0.812</td></tr>
