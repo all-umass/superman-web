@@ -17,13 +17,18 @@ class DatasetImportHandler(BaseHandler):
 
     if ds_kind not in DATASETS:
       logging.error('Invalid ds_kind: %r', ds_kind)
-      self.set_status(415)
+      self.set_status(400)
       return self.finish('Invalid dataset kind.')
 
-    if not self.request.files:
-      logging.error('DatasetImportHandler: no files uploaded')
+    if ds_name in DATASETS[ds_kind]:
+      logging.error('import would clobber existing: %s [%s]', ds_name, ds_kind)
       self.set_status(403)
-      return self.finish('No file uploaded.')
+      return self.finish('Dataset already exists.')
+
+    if not self.request.files or 'spectra' not in self.request.files:
+      logging.error('no spectrum data uploaded')
+      self.set_status(400)
+      return self.finish('No spectrum data uploaded.')
 
     f, = self.request.files['spectra']
     fh = BytesIO(f['body'])
@@ -32,7 +37,7 @@ class DatasetImportHandler(BaseHandler):
       wave = data[data.dtype.names[0]]
       spectra = data.view((np.float32, len(data.dtype.names))).T[1:]
     except Exception as e:
-      logging.error('DatasetImportHandler: bad spectra file: %s', e)
+      logging.error('bad spectra file: %s', e)
       self.set_status(415)
       return self.finish('Unable to parse spectrum data CSV.')
 

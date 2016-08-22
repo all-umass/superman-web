@@ -3,10 +3,11 @@
 <script type="text/javascript">
 function upload_dataset() {
   var form = $('form')[0];
+  if (!form.checkValidity()) {
+    return;
+  }
   var post_data = new FormData(form);
   post_data.append('ds_kind', $('#ds_kind',form).find('option:selected').val());
-  var file_input = $('input[type=file]', form);
-  // TODO: validate existence of spectra file, size of both files
   var wait = $('.wait', form).show();
   $.ajax({
     url: '/_import',
@@ -37,9 +38,12 @@ table.csv {
   background-color: beige;
 }
 .csv caption { font-style: italic; }
-.csv th { font-weight: bold; border-bottom: 1px solid black; }
-.csv th { padding: 0 0.25em; }
+.csv th { font-weight: bold; border-bottom: 1px solid; padding: 0 0.25em; }
+.csv th::after { content: ","; }
+.csv th:last-child::after { content: ""; }
 .csv td { padding: 0 0.25em; text-align: right; }
+.csv td::after { content: ","; }
+.csv td:last-child::after { content: ""; }
 .wait { display: none; }
 </style>
 {% end %}
