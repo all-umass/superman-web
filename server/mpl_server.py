@@ -195,7 +195,7 @@ class MatplotlibServer(tornado.web.Application):
 
   def register_new_figure(self, size):
     fig = Figure(figsize=size, facecolor='none', edgecolor='none',
-                 frameon=False, tight_layout=True)
+                 frameon=False, tight_layout=True, dpi=80)
     fignum = id(fig)
     manager = new_figure_manager_given_figure(fignum, fig)
     self.figure_data[fignum] = FigData(fig, manager)
