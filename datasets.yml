@@ -184,6 +184,7 @@ NIR:
     file: /srv/nfs/common/spectra/misc/ternary_mixtures.hdf5
     metadata:
       - [dataset, LookupMetadata, Dataset]
+    description: 1:1:1 mixtures of diopside, forsterite, and bytownite.
 XRD:
   RRUFF:
     file: /srv/nfs/common/spectra/misc/rruff-xrd.hdf5
@@ -400,8 +401,16 @@ LIBS:
       - [carousels, LookupMetadata, Carousel]
       - [ablation_angles, NumericMetadata, Ablation Angle]
       - [collection_angles, NumericMetadata, Collection Angle]
+    description: >-
+      Data from 8 pressed rock pellets acquired at varying ablation
+      and collection angles under Mars conditions.
+    urls:
+      - http://www.hou.usra.edu/meetings/lpsc2016/pdf/1206.pdf
   MHC Hydrogen:
     loader: load_mhc_hydrogen
     vector: true
     public: false
     file: /srv/nfs/common/spectra/LIBS/mhc_hydrogen.hdf5
+    description: >-
+      Data from pressed powder pellets under Mars conditions of samples
+      with robust hydrogen analyses.
