@@ -258,11 +258,11 @@ LIBS:
     vector: true
     public: false
     files:
-      - /srv/nfs/common/msl_data/ccs_data
-      - /srv/nfs/common/msl_data/models_predictions/msl_model_mars_preds.npz
-      - /srv/nfs/common/msl_data/models_predictions/mixed_model_mars_preds.npz
-      - /srv/nfs/common/msl_data/models_predictions/moc_model_mars_preds.npz
-      - /srv/nfs/common/msl_data/models_predictions/dust_classifier_mars_preds.npz
+      - /srv/nfs/common/spectra/MSL_PDS/ccs_data
+      - /srv/nfs/common/spectra/MSL_PDS/models_predictions/msl_model_mars_preds.npz
+      - /srv/nfs/common/spectra/MSL_PDS/models_predictions/mixed_model_mars_preds.npz
+      - /srv/nfs/common/spectra/MSL_PDS/models_predictions/moc_model_mars_preds.npz
+      - /srv/nfs/common/spectra/MSL_PDS/models_predictions/dust_classifier_mars_preds.npz
     description: >-
       Publicly-released data from the ChemCam instrument of the Curiosity
       rover on Mars.
