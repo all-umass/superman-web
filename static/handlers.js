@@ -143,15 +143,20 @@ function do_zoom() {
 }
 function add_pp_step(ctx, name, step, input_name) {
   var table = $(ctx).closest('table');
-  if (step === null) {
-    step = table.find('input[name="'+input_name+'"]').map(function(){
-      return this.value;
-    }).toArray().join(':');
+  var parts = [name];
+  if (step !== null) {
+    parts.push(step);
   }
-  if (step === "") return;
+  if (input_name !== null) {
+    var arg_inputs = table.find('input[name="'+input_name+'"]');
+    parts = parts.concat(arg_inputs.map(function(){
+      return this.value;
+    }).toArray());
+  }
+  if (parts.length < 2) return;
   table.find('.pp_staging').append(
     '<li class="'+name+'" onclick="$(this).remove()">' +
-    name + ':' + step + '</li>');
+    parts.join(':') + '</li>');
 }
 function collect_pp_args(ctx) {
   return $(ctx).find('.pp_staging > li').map(function(){

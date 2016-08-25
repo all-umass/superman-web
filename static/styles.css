@@ -48,6 +48,18 @@ td .ui-slider .ui-slider-handle {
   border: 1px solid;
 }
 
+.fake_button {
+  -moz-appearance: button;
+  -webkit-appearance: button;
+  appearance: button;
+  padding: 1px 1px 1px 6px;
+  cursor: pointer;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* Styles for the mpl figure */
 #figure {
   clear: both;
