@@ -223,6 +223,49 @@ def load_mhc_hydrogen(ds, filepath):
   return True
 
 
+def load_mhc_libs(ds, data_dir):
+  logging.info('Loading MHC LIBS data...')
+  data_file = os.path.join(data_dir, 'prepro_no_blr.%03d.hdf5')
+  meta_file = os.path.join(data_dir, 'prepro_no_blr_meta.npz')
+  chan_file = os.path.join(data_dir, 'prepro_channels.npy')
+  try:
+    hdf5 = h5py.File(data_file, driver='family', mode='r')
+    meta = np.load(meta_file)
+    bands = np.load(chan_file)
+  except IOError as e:
+    logging.warning('Failed to load data in %s!' % data_dir)
+    logging.warning(str(e))
+    return None
+  carousel = meta['Carousel']
+  laserAttenuation = meta['LaserAttenuation']
+  location = meta['Location']
+  shot_no = meta['Number']
+  sample = meta['Sample']
+  target = meta['Target']
+  #atmosphere = meta['Atmosphere'] # only 1 unique val
+  #distToTarget = meta['DistToTarget'] # "
+  logging.info('Making MHC LIBS metadata...')
+  compositions = {}
+  for key in meta.keys():
+    if key.startswith('e_'):
+      if np.isnan(np.nanmax(meta[key])):
+        continue
+      e = key.lstrip('e_')
+      compositions[e] = NumericMetadata(meta[key])
+  ds.set_data(bands, hdf5['/spectra'],
+              comps=CompositionMetadata(compositions, 'Compositions'),
+              samples=LookupMetadata(sample, 'Sample Name'),
+              carousels=LookupMetadata(carousel, 'Carousel No.'),
+              locations=LookupMetadata(location, 'Location No.'),
+              shots=LookupMetadata(shot_no, 'Shot No.'),
+              targets=LookupMetadata(target, 'Target Name'),
+              #atmospheres=LookupMetadata(atmosphere, 'Atmosphere'),
+              #distToTargets=LookupMetadata(distToTarget, 'Distance to Target'),
+            )
+  logging.info('Finished MHC LIBS setup.')
+  return True
+
+
 def _try_load(filepath, data_name):
   logging.info('Loading %s data...' % data_name)
   if not os.path.exists(filepath):
