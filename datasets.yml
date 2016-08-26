@@ -420,6 +420,7 @@ LIBS:
     public: false
     files:
       - /srv/nfs/common/spectra/LIBS/MHC/
+      - /srv/nfs/common/spectra/LIBS/MHC/prepro_no_blr_meta.npz
     description: >-
       All LIBS spectra recorded at Mount Holyoke College since 2014,
       in preprocessed but not baseline removed format (PREPROCESSED_NO_BLR).

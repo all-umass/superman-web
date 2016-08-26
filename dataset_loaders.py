@@ -223,21 +223,20 @@ def load_mhc_hydrogen(ds, filepath):
   return True
 
 
-def load_mhc_libs(ds, data_dir):
+def load_mhc_libs(ds, data_dir, master_file):
   logging.info('Loading MHC LIBS data...')
   data_file = os.path.join(data_dir, 'prepro_no_blr.%03d.hdf5')
-  meta_file = os.path.join(data_dir, 'prepro_no_blr_meta.npz')
   chan_file = os.path.join(data_dir, 'prepro_channels.npy')
   try:
     hdf5 = h5py.File(data_file, driver='family', mode='r')
-    meta = np.load(meta_file)
+    meta = np.load(master_file)
     bands = np.load(chan_file)
   except IOError as e:
     logging.warning('Failed to load data in %s!' % data_dir)
     logging.warning(str(e))
     return None
   carousel = meta['Carousel']
-  # laser_attenuation = meta['LaserAttenuation']
+  power = meta['LaserAttenuation']
   location = meta['Location']
   shot_no = meta['Number']
   sample = meta['Sample']
@@ -259,6 +258,7 @@ def load_mhc_libs(ds, data_dir):
               locations=LookupMetadata(location, 'Location #'),
               shots=NumericMetadata(shot_no, 1, 'Shot #'),
               targets=LookupMetadata(target, 'Target Name'),
+              powers=LookupMetadata(power, 'Laser Power'),
               # atmospheres=LookupMetadata(atmosphere, 'Atmosphere'),
               # dists=LookupMetadata(dist, 'Distance to Target'),
               )
