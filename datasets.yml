@@ -126,6 +126,13 @@ Raman:
       covering the opx-cpx range for Mg, Fe, and Ca.
     urls:
       - http://www.hou.usra.edu/meetings/lpsc2016/pdf/2186.pdf
+  MHC:
+    loader: load_mhc_raman
+    public: false
+    files:
+      - /srv/nfs/common/spectra/Raman/MHC/
+      - /srv/nfs/common/spectra/Raman/MHC/raman_meta.npz
+    description: Raman spectra collected at Mount Holyoke College.
 FTIR:
   RRUFF:
     file: /srv/nfs/common/spectra/FTIR/rruff-spectra.hdf5

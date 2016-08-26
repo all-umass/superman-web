@@ -266,6 +266,24 @@ def load_mhc_libs(ds, data_dir, master_file):
   return True
 
 
+def load_mhc_raman(ds, data_dir, meta_file):
+  logging.info('Loading MHC Raman data...')
+  data_file = os.path.join(data_dir, 'raman.%03d.hdf5')
+  try:
+    hdf5 = h5py.File(data_file, driver='family', mode='r')
+    meta = np.load(meta_file)
+  except IOError as e:
+    logging.warning('Failed to load data in %s!' % data_dir)
+    logging.warning(str(e))
+    return None
+  pkey = meta['spectrum_number']
+  ds.set_data(pkey, hdf5['/spectra'],
+              vial=LookupMetadata(meta['vial_name'], 'Vial Name'),
+              Instrument=LookupMetadata(meta['instrument']),
+              )
+  return True
+
+
 def _try_load(filepath, data_name):
   logging.info('Loading %s data...' % data_name)
   if not os.path.exists(filepath):
