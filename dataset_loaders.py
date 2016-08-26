@@ -214,10 +214,10 @@ def load_mhc_hydrogen(ds, filepath):
   names = hdf5['/meta/names']
   pkey = ['%s - %s%%' % (name, power) for name, power in zip(names, powers)]
   bands = hdf5['/meta/waves']
-  hydros = {'H2O': NumericMetadata(hdf5['/composition/H2O'])}
+  comp = {'H2O': NumericMetadata(hdf5['/composition/H2O'], display_name='H2O')}
   ds.set_data(bands, hdf5['/spectra'],
               pkey=PrimaryKeyMetadata(pkey),
-              comp=CompositionMetadata(hydros),
+              Composition=CompositionMetadata(comp),
               names=LookupMetadata(names, 'Sample Name'),
               powers=LookupMetadata(powers, 'Laser Power'))
   return True
@@ -237,31 +237,31 @@ def load_mhc_libs(ds, data_dir):
     logging.warning(str(e))
     return None
   carousel = meta['Carousel']
-  laserAttenuation = meta['LaserAttenuation']
+  # laser_attenuation = meta['LaserAttenuation']
   location = meta['Location']
   shot_no = meta['Number']
   sample = meta['Sample']
   target = meta['Target']
-  #atmosphere = meta['Atmosphere'] # only 1 unique val
-  #distToTarget = meta['DistToTarget'] # "
+  # atmosphere = meta['Atmosphere'] # only 1 unique val
+  # dist = meta['DistToTarget'] # same
   logging.info('Making MHC LIBS metadata...')
   compositions = {}
-  for key in meta.keys():
+  for key in meta.files:
     if key.startswith('e_'):
-      if np.isnan(np.nanmax(meta[key])):
-        continue
-      e = key.lstrip('e_')
-      compositions[e] = NumericMetadata(meta[key])
+      vals = np.array(meta[key], dtype=float, copy=False)
+      if np.nanmin(vals) < np.nanmax(vals):
+        elem = key.lstrip('e_').replace('*', '')
+        compositions[elem] = NumericMetadata(vals, display_name=elem)
   ds.set_data(bands, hdf5['/spectra'],
-              comps=CompositionMetadata(compositions, 'Compositions'),
+              Composition=CompositionMetadata(compositions),
               samples=LookupMetadata(sample, 'Sample Name'),
-              carousels=LookupMetadata(carousel, 'Carousel No.'),
-              locations=LookupMetadata(location, 'Location No.'),
-              shots=LookupMetadata(shot_no, 'Shot No.'),
+              carousels=LookupMetadata(carousel, 'Carousel #'),
+              locations=LookupMetadata(location, 'Location #'),
+              shots=NumericMetadata(shot_no, 1, 'Shot #'),
               targets=LookupMetadata(target, 'Target Name'),
-              #atmospheres=LookupMetadata(atmosphere, 'Atmosphere'),
-              #distToTargets=LookupMetadata(distToTarget, 'Distance to Target'),
-            )
+              # atmospheres=LookupMetadata(atmosphere, 'Atmosphere'),
+              # dists=LookupMetadata(dist, 'Distance to Target'),
+              )
   logging.info('Finished MHC LIBS setup.')
   return True
 

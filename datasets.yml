@@ -414,12 +414,12 @@ LIBS:
     description: >-
       Data from pressed powder pellets under Mars conditions of samples
       with robust hydrogen analyses.
-  MHC LIBS:
+  MHC (big):
     loader: load_mhc_libs
     vector: true
     public: false
     files:
-      - data/MHC
+      - /srv/nfs/common/spectra/LIBS/MHC/
     description: >-
-      All LIBS spectra recorded at MHC since 2014 in preprocessed but
-      non-BLR format (PREPROCESSED_NO_BLR).
+      All LIBS spectra recorded at Mount Holyoke College since 2014,
+      in preprocessed but not baseline removed format (PREPROCESSED_NO_BLR).
