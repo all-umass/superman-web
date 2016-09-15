@@ -207,7 +207,7 @@ def _get_filter_js(m, full_key):
   # only LookupMetadata and PrimaryKeyMetadata remain
   jq = '$("#%s_chooser")' % full_key
   # initialize the chosen dropdown, adding some width for the scrollbar
-  init_js = jq + ".chosen({search_contains: true}).css('width', '+=15');"
+  init_js = jq + ".css('width', '+=20').chosen({search_contains: true});"
   prefix = ''
   dtype = (m.uniques if isinstance(m,LookupMetadata) else m.keys).dtype
   if np.issubdtype(dtype, np.number):
