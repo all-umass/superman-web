@@ -6,7 +6,7 @@ import shutil
 from io import BytesIO
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.externals.joblib.numpy_pickle import (
-    ZipNumpyUnpickler, dump as dump_pickle)
+    load as load_pickle, dump as dump_pickle)
 from sklearn.metrics import r2_score, mean_squared_error
 from tempfile import mkstemp
 from tornado.escape import json_encode
@@ -192,7 +192,7 @@ class GetPredictableMetadataHandler(DatasetHandler):
 class _PLS(object):
   @staticmethod
   def load(fh):
-    return ZipNumpyUnpickler('', fh).load()
+    return load_pickle(fh)
 
   def save(self, fname):
     dump_pickle(self, fname, compress=3)
