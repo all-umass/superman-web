@@ -311,7 +311,7 @@ def _decorate_plot(fig, ax, artist, plot_data, color_data, legend, cmap):
 
 
 def _sanitize_csv(s):
-  if ',' in s:
+  if ',' in str(s):
     return '"%s"' % s
   return s
 
