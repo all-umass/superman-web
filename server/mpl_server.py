@@ -1,6 +1,7 @@
 import matplotlib
 matplotlib.use('WebAgg')
 matplotlib.rc('axes', facecolor='none')
+matplotlib.rc('legend', facecolor='w')
 import io
 import json
 import socket
