@@ -265,7 +265,7 @@ def _add_plot(fig, ax, plot_data, color_data, lw=1, cmap='_auto', alpha=1):
     if mask.all():
       trajs = plot_data.trajs
     else:
-      trajs = [t for i,t in plot_data.trajs if mask[i]]
+      trajs = [t for i,t in enumerate(plot_data.trajs) if mask[i]]
       colors = colors[mask]
     lc = LineCollection(trajs, linewidths=lw, cmap=cmap)
     lc.set_array(colors)
