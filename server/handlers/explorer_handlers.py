@@ -259,10 +259,18 @@ def _add_plot(fig, ax, plot_data, color_data, lw=1, cmap='_auto', alpha=1):
     return ax.scatter(*data.T, marker='o', c=colors, edgecolor='none',
                       s=lw*20, cmap=cmap, alpha=alpha)
   # trajectory plot
-  lc = LineCollection(plot_data.trajs, linewidths=lw, cmap=cmap)
   if hasattr(colors, 'dtype') and np.issubdtype(colors.dtype, np.number):
+    # delete lines with NaN colors
+    mask = np.isfinite(colors)
+    if mask.all():
+      trajs = plot_data.trajs
+    else:
+      trajs = [t for i,t in plot_data.trajs if mask[i]]
+      colors = colors[mask]
+    lc = LineCollection(trajs, linewidths=lw, cmap=cmap)
     lc.set_array(colors)
   else:
+    lc = LineCollection(plot_data.trajs, linewidths=lw, cmap=cmap)
     lc.set_color(colors)
   ax.add_collection(lc, autolim=True)
   lc.set_alpha(alpha)
