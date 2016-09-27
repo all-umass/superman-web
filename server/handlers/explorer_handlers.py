@@ -200,6 +200,8 @@ class FilterPlotHandler(BaseHandler):
       argument = ast.literal_eval(self.get_argument(ax_char + '_line_ratio'))
     elif atype in ('default', 'cardinal'):
       argument = None
+    elif atype == 'computed':
+      argument = self.get_argument(ax_char + '_computed')
     else:
       raise ValueError('Invalid axis type: %s' % atype)
     return AxisInfo(type=atype, argument=argument)
@@ -380,10 +382,14 @@ def _compute_line_ratios(all_ds_views, lines):
 
 
 def _compute_expr(all_ds_views, expr):
-  # TODO: use existing plot data here, instead of recomputing it
+  # get all the trajectories without NaN gapping
   trajs = []
   for dv in all_ds_views:
+    nan_gap = dv.transformations.get('nan_gap', None)
+    dv.transformations['nan_gap'] = None
     trajs.extend(dv.get_trajectories())
+    dv.transformations['nan_gap'] = nan_gap
+
   logging.info('Compiling user expression: %r', expr)
   expr_code = compile(expr, '<string>', 'eval')
 

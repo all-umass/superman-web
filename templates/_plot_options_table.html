@@ -3,11 +3,13 @@
 
 <tr><td class='bold'>X axis</td>
 <td><select id="xaxis" onchange='changed(this.value, "x")'>
-  <option value='default'>channels</option>
+  <option value='cardinal'>cardinal</option>
+  <option value='default' selected>channels</option>
   <option value='metadata'>metadata</option>
   <option value='line_ratio'>line ratio</option>
-  <option value='cardinal'>cardinal</option>
+  <option value='computed'>computed</option>
 </select></td>
+<td class='x cardinal' style='display:none'></td>
 <td class='x default'>
 {% if is_libs %}
   Masking:<input id="chan_mask" type="checkbox" checked>
@@ -24,15 +26,20 @@
 (<input type='text' size=5 value='633'>:<input type='text' size=5 value='635.5'>) /
 (<input type='text' size=5 value='288'>:<input type='text' size=5 value='288.5'>)
 </td>
-<td class='x cardinal' style='display:none'></td>
+<td class='x computed' style='display:none'>
+f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
+</td>
 </tr>
 
 <tr><td class='bold'>Y axis</td>
 <td><select id="yaxis" onchange='changed(this.value, "y")'>
-  <option value='default'>intensities</option>
+  <option value='cardinal'>cardinal</option>
+  <option value='default' selected>intensities</option>
   <option value='metadata'>metadata</option>
   <option value='line_ratio'>line ratio</option>
+  <option value='computed'>computed</option>
 </select></td>
+<td class='y cardinal' style='display:none'></td>
 <td class='y default'></td>
 <td class='y metadata' style='display:none'>
 <select>
@@ -44,6 +51,9 @@
 <td class='y line_ratio' style='display:none'>
 (<input type='text' size=5 value='633'>:<input type='text' size=5 value='635.5'>) /
 (<input type='text' size=5 value='288'>:<input type='text' size=5 value='288.5'>)
+</td>
+<td class='y computed' style='display:none'>
+f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
 </td>
 </tr>
 
