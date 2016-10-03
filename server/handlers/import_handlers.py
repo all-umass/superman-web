@@ -12,6 +12,7 @@ from ..web_datasets import (
     PrimaryKeyMetadata, NumericMetadata, BooleanMetadata, LookupMetadata)
 
 
+# TODO: provide a download for loadings/weights of model
 class DatasetImportHandler(BaseHandler):
   def post(self):
     ds_name = self.get_argument('ds_name')
@@ -104,7 +105,18 @@ class DatasetImportHandler(BaseHandler):
       return self._raise_error(415, 'Wrong number of channels for LIBS data.')
 
     if len(meta_pkeys) > 0 and not np.array_equal(meta_pkeys, pkey):
-      return self._raise_error(415, 'Spectrum and metadata names mismatch.')
+      if len(meta_pkeys) != len(pkey):
+        return self._raise_error(415, 'Spectrum and metadata names mismatch.',
+                                 'wrong number of meta_pkeys for vector data')
+      meta_order = np.argsort(meta_pkeys)
+      data_order = np.argsort(pkey)
+      if not np.array_equal(meta_pkeys[meta_order], pkey[data_order]):
+        return self._raise_error(415, 'Spectrum and metadata names mismatch.')
+      # convert data to meta order
+      order = np.zeros_like(data_order)
+      order[data_order[meta_order]] = np.arange(len(order))
+      data = data[order]
+      assert np.array_equal(meta_pkeys, pkey[order])
 
     # async loading machinery automatically registers us with DATASETS
     def _load(ds):
