@@ -37,9 +37,11 @@ class DatasetImportHandler(BaseHandler):
     fh = BytesIO(f['body'])
     if is_zipfile(fh):
       # interpret this as a ZIP of csv files
+      fh.seek(0)
       success = self._traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys)
     else:
       # this is one single csv file with all spectra in it
+      fh.seek(0)
       success = self._vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys)
 
     if success:
@@ -90,9 +92,10 @@ class DatasetImportHandler(BaseHandler):
 
   def _vector_ds(self, fh, ds_name, ds_kind, meta_kwargs, meta_pkeys):
     try:
-      data = np.genfromtxt(fh, dtype=np.float32, delimiter=',', names=True)
-      wave = data[data.dtype.names[0]]
-      spectra = data.view((np.float32, len(data.dtype.names))).T[1:]
+      pkey = np.array(next(fh).strip().split(',')[1:])
+      data = np.genfromtxt(fh, dtype=np.float32, delimiter=',', unpack=True)
+      wave = data[0]
+      spectra = data[1:]
     except Exception as e:
       return self._raise_error(415, 'Unable to parse spectrum data CSV.',
                                'bad spectra file: %s' % e)
@@ -100,7 +103,6 @@ class DatasetImportHandler(BaseHandler):
     if ds_kind == 'LIBS' and wave.shape != (6144,):
       return self._raise_error(415, 'Wrong number of channels for LIBS data.')
 
-    pkey = np.array(data.dtype.names[1:])
     if len(meta_pkeys) > 0 and not np.array_equal(meta_pkeys, pkey):
       return self._raise_error(415, 'Spectrum and metadata names mismatch.')
 
