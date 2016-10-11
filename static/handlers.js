@@ -168,16 +168,17 @@ function add_baseline_args(ctx, post_data, method) {
   if (method === undefined) {
     method = table.find('.blr_method').val();
   }
-  if (!method) return post_data;
   post_data['blr_method'] = method;
   post_data['blr_segmented'] = table.find('.blr_segmented').is(':checked');
   post_data['blr_inverted'] = table.find('.blr_inverted').is(':checked');
   post_data['blr_lb'] = table.find('.blr_lb').val();
   post_data['blr_ub'] = table.find('.blr_ub').val();
-  var idx = method.length + 1;
-  table.find('td.param.'+method+'>span').each(function(i,e){
-    var param = e.className.substr(idx);
-    post_data['blr_' + param] = e.innerHTML;
-  });
+  if (method) {
+    var idx = method.length + 1;
+    table.find('td.param.'+method+'>span').each(function(i,e){
+      var param = e.className.substr(idx);
+      post_data['blr_' + param] = e.innerHTML;
+    });
+  }
   return post_data;
 }

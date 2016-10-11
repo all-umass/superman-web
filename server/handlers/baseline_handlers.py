@@ -4,35 +4,30 @@ import logging
 import numpy as np
 import os
 from superman.baseline import BL_CLASSES
+from superman.baseline.common import Baseline
 
 from .base import BaseHandler
 
 
 def setup_blr_object(request):
   method = request.get_argument('blr_method', '').lower()
-  if not method:
-    # XXX: lame hack
-    return None, False, False, -np.inf, np.inf, {}
-  if method not in BL_CLASSES:
-    raise ValueError('Invalid blr method:', method)
-
   segmented = request.get_argument('blr_segmented', 'false')
-  if segmented not in ('true', 'false'):
-    raise ValueError('Invalid blr segmented flag:', segmented)
-  do_segmented = segmented == 'true'
-
   inverted = request.get_argument('blr_inverted', 'false')
-  if inverted not in ('true', 'false'):
-    raise ValueError('Invalid blr inverted flag:', inverted)
-  do_inverted = inverted == 'true'
 
-  lb = request.get_argument('blr_lb', '')
-  lb = float(lb) if lb else -np.inf
-  ub = request.get_argument('blr_ub', '')
-  ub = float(ub) if ub else np.inf
+  if method and method not in BL_CLASSES:
+    raise ValueError('Invalid blr method: %r' % method)
+  if segmented not in ('true', 'false'):
+    raise ValueError('Invalid blr segmented flag: %r' % segmented)
+  if inverted not in ('true', 'false'):
+    raise ValueError('Invalid blr inverted flag: %r' % inverted)
+
+  do_segmented = segmented == 'true'
+  do_inverted = inverted == 'true'
+  lb = float(request.get_argument('blr_lb', '') or '-inf')
+  ub = float(request.get_argument('blr_ub', '') or 'inf')
 
   # initialize the baseline correction object
-  bl_obj = BL_CLASSES[method]()
+  bl_obj = BL_CLASSES[method]() if method else NullBaseline()
   params = {}
   for key in bl_obj.param_ranges():
     param = ast.literal_eval(request.get_argument('blr_' + key, 'None'))
@@ -98,3 +93,15 @@ routes = [
     (r'/_baseline', BaselineHandler),
     (r'/([0-9]+)/baseline\.txt', BaselineHandler),
 ]
+
+
+# A do-nothing baseline, for consistency
+class NullBaseline(Baseline):
+  def _fit_many(self, bands, intensities):
+    return 0
+
+  def fit_transform(self, bands, intensities, segment=False, invert=False):
+    return intensities
+
+  def param_ranges(self):
+    return {}
