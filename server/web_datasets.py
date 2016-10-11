@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import os
+import time
 from base64 import b64encode
 from matplotlib.figure import Figure
 from matplotlib.ticker import NullLocator
@@ -36,12 +37,14 @@ class _ReloadableMixin(object):
       mtime = max(map(_try_get_mtime, self.loader_args))
     else:
       mtime = 0
-    if mtime > self.load_time:
-      if self.loader_fn(self, *self.loader_args):
-        self.load_time = mtime
-        # register with the global dataset manager
-        DATASETS[self.kind][self.name] = self
-        logging.info('Successfully registered %s', self)
+    if mtime < self.load_time:
+      return
+    if not self.loader_fn(self, *self.loader_args):
+      return
+    self.load_time = mtime if mtime > 0 else time.time()
+    # register with the global dataset manager
+    DATASETS[self.kind][self.name] = self
+    logging.info('Successfully registered %s', self)
 
   def x_axis_units(self):
     if self.kind in ('LIBS', 'NIR'):
@@ -103,6 +106,7 @@ class WebTrajDataset(TrajDataset, _ReloadableMixin):
     self.description = 'No description provided.'
     self.urls = []
     self.is_public = True
+    self.user_added = False
     self.init_load(loader_fn, loader_args)
 
 
@@ -112,6 +116,7 @@ class WebVectorDataset(VectorDataset, _ReloadableMixin):
     self.description = 'No description provided.'
     self.urls = []
     self.is_public = True
+    self.user_added = False
     self.init_load(loader_fn, loader_args)
 
 

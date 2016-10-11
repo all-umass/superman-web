@@ -33,6 +33,18 @@ $(document).ready(function() {
   font-weight: bold;
   text-align: left;
 }
+#datasets td.ds_title form {
+  float: right;
+}
+#datasets td.ds_title form .remove_ds {
+  font-size: large;
+  vertical-align: top;
+  height: 1em;
+  width: 1em;
+  line-height: 0;
+  padding: 0;
+  margin: 0;
+}
 #datasets td.ds_title a {
   color: black;
 }
@@ -114,6 +126,13 @@ $(document).ready(function() {
   <tr class='dataset {%if not d.is_public %}private{%end%} tablesorter-hasChildRow'>
     <td class='ds_title'>
       <a href="#" onclick="return toggle_extra(this)">{{d.name}}</a>
+      {%if d.user_added %}
+      <form action='/_dataset_remover' method='POST'>
+        <input type="hidden" name="name" value="{{d.name}}">
+        <input type="hidden" name="kind" value="{{d.kind}}">
+        <button type="submit" class='remove_ds'>&times;</button>
+      </form>
+      {% end %}
     </td>
     <td>{{d.kind}}</td>
     <td class='numeric'>{{d.num_spectra()}}</td>

@@ -3,6 +3,7 @@ import logging
 import tornado.web
 
 from .base import BaseHandler
+from ..web_datasets import DATASETS
 
 
 class RefreshHandler(BaseHandler):
@@ -63,9 +64,20 @@ class DatasetPlotOptionsHandler(DatasetHandler):
                        metadata_names=meta_names)
 
 
+class DatasetRemovalHandler(DatasetHandler):
+  def post(self):
+    ds = self.get_ds()
+    if not ds.user_added:
+      return self.write('Cannot remove this dataset.')
+    logging.info('Removing user-added dataset: %s', ds)
+    del DATASETS[ds.kind][ds.name]
+    self.redirect('/datasets')
+
+
 routes = [
     (r'/_dataset_selector', DatasetSelectorHandler),
     (r'/_dataset_filterer', DatasetFiltererHandler),
     (r'/_dataset_plot_options', DatasetPlotOptionsHandler),
+    (r'/_dataset_remover', DatasetRemovalHandler),
     (r'/refresh', RefreshHandler),
 ]

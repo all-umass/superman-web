@@ -86,6 +86,9 @@ class DatasetImportHandler(BaseHandler):
 
     def _load(ds):
       ds.set_data(meta_pkeys, traj_data, **meta_kwargs)
+      ds.is_public = False
+      ds.user_added = True
+      ds.description = 'Added using the Dataset Import tool.'
       return True
 
     WebTrajDataset(ds_name, ds_kind, _load)
@@ -121,6 +124,9 @@ class DatasetImportHandler(BaseHandler):
     # async loading machinery automatically registers us with DATASETS
     def _load(ds):
       ds.set_data(wave, spectra, pkey=PrimaryKeyMetadata(pkey), **meta_kwargs)
+      ds.is_public = False
+      ds.user_added = True
+      ds.description = 'Added using the Dataset Import tool.'
       return True
 
     if ds_kind == 'LIBS':
