@@ -122,9 +122,14 @@ class DatasetImportHandler(BaseHandler):
       data = data[order]
       assert np.array_equal(meta_pkeys, pkey[order])
 
+    try:
+      pkey = PrimaryKeyMetadata(pkey)
+    except AssertionError:  # XXX: convert this to a real error
+      return self._raise_error(415, 'Primary keys not unique.')
+
     # async loading machinery automatically registers us with DATASETS
     def _load(ds):
-      ds.set_data(wave, spectra, pkey=PrimaryKeyMetadata(pkey), **meta_kwargs)
+      ds.set_data(wave, spectra, pkey=pkey, **meta_kwargs)
       ds.is_public = False
       ds.user_added = True
       ds.description = 'Added using the Dataset Import tool.'
