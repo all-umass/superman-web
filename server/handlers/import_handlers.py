@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import logging
 import numpy as np
+import os
 from io import BytesIO
 from superman.file_io import parse_spectrum
 from tornado.escape import url_escape
@@ -64,7 +65,7 @@ class DatasetImportHandler(BaseHandler):
     for subfile in zf.infolist():
       if subfile.file_size <= 0:
         continue
-      fname = subfile.filename
+      fname = os.path.basename(subfile.filename)
       # read and wrap, because the ZipExtFile object isn't seekable
       sub_fh = BytesIO(zf.open(subfile).read())
       try:
