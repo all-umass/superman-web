@@ -13,7 +13,6 @@ from ..web_datasets import (
     PrimaryKeyMetadata, NumericMetadata, BooleanMetadata, LookupMetadata)
 
 
-# TODO: provide a download for loadings/weights of model
 class DatasetImportHandler(BaseHandler):
   def post(self):
     ds_name = self.get_argument('ds_name')
@@ -168,12 +167,12 @@ class DatasetImportHandler(BaseHandler):
     for key, name in zip(meta_keys, meta_names):
       x = meta[key]
       if np.issubdtype(x.dtype, np.bool_):
-        m = BooleanMetadata(x)
+        m = BooleanMetadata(x, display_name=name)
       elif np.issubdtype(x.dtype, np.number):
-        m = NumericMetadata(x)
+        m = NumericMetadata(x, display_name=name)
       else:
-        m = LookupMetadata(x)
-      meta_kwargs[name] = m
+        m = LookupMetadata(x, display_name=name)
+      meta_kwargs[key] = m
     return meta_kwargs, meta_pkeys
 
 routes = [

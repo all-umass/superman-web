@@ -17,6 +17,7 @@ from .dataset_handlers import DatasetHandler
 from ..web_datasets import NumericMetadata, CompositionMetadata
 
 
+# TODO: provide a download for loadings/weights of model
 class ModelIOHandler(BaseHandler):
   def get(self, fignum):
     fig_data = self.get_fig_data(int(fignum))
