@@ -75,15 +75,18 @@ class DatasetImportHandler(BaseHandler):
             415, 'Unable to parse spectrum file: %s' % fname,
             'bad spectrum subfile (%s): %s' % (fname, e))
 
-    if len(meta_pkeys) > 0 and len(meta_pkeys) != len(traj_data):
-      return self._raise_error(415, 'Spectrum and metadata names mismatch.',
-                               'wrong number of meta_pkeys for traj')
-    for pkey in meta_pkeys:
-      if pkey not in traj_data:
-        return self._raise_error(415, 'Spectrum and metadata names mismatch.',
-                                 'extra meta_pkey not in traj_data: %r' % pkey)
-    if len(meta_pkeys) == 0:
+    num_meta = len(meta_pkeys)
+    num_traj = len(traj_data)
+
+    if num_meta == 0:
       meta_pkeys = traj_data.keys()
+    elif num_meta != num_traj:
+      msg = 'Failed: %d metadata entries for %d spectra' % (num_meta, num_traj)
+      return self._raise_error(415, msg)
+    else:
+      for pkey in meta_pkeys:
+        if pkey not in traj_data:
+          return self._raise_error(415, 'Failed: %r not in spectra.' % pkey)
 
     def _load(ds):
       ds.set_data(meta_pkeys, traj_data, **meta_kwargs)
