@@ -56,11 +56,10 @@
     {% end %}
   {% end %}
   </tr>
-  <!-- pp rows follow -->
-  <tr class="uline oline"><td colspan=5></td></tr>
+  <!-- pp steps follow -->
   <!-- normalization -->
   <tr class="uline">
-  <td class="rline vcenter">Normalize</button></td><td colspan=3>
+  <td class="rline vcenter">Normalize</td><td colspan=3>
   <button onclick="add_pp_step(this,'normalize','max');">max</button>
   <button onclick="add_pp_step(this,'normalize','l1');">L<sub>1</sub></button>
   <button onclick="add_pp_step(this,'normalize','l2');">L<sub>2</sub></button>
@@ -97,7 +96,5 @@
   <td class="pp_param">window = <span class="window">9</span></td>
   <td class="pp_param" colspan=2>order = <span class="order">4</span></td></tr>
   <!-- staging area for pp steps -->
-  <tr class="uline"><td colspan=5>
-  <ol class='pp_staging'></ol>
-  </td></tr>
+  <tr><td colspan=5><ol class='pp_staging'></ol></td></tr>
 </table>
