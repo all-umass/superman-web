@@ -9,8 +9,7 @@ from superman.baseline import BL_CLASSES
 from matplotlib import cm, rcParams
 
 from .base import BaseHandler
-from ..web_datasets import (
-    CompositionMetadata, NumericMetadata, WebVectorDataset)
+from ..web_datasets import CompositionMetadata, NumericMetadata
 
 MPL_JS = sorted(os.listdir(os.path.join(matplotlib.__path__[0],
                                         'backends/web_backend/jquery/js')))
@@ -180,9 +179,9 @@ class PredictionPage(Subpage):
 
   @tornado.web.authenticated
   def get(self):
-    vector_ds = [d for d in self.all_datasets()
-                 if isinstance(d, WebVectorDataset)]
-    self.render(datasets=vector_ds, **blr_kwargs)
+    all_ds = [ds for ds in self.all_datasets()
+              if any(ds.metadata_names((CompositionMetadata,NumericMetadata)))]
+    self.render(datasets=all_ds, **blr_kwargs)
 
 
 class DatasetImportPage(Subpage):

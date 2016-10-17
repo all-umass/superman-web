@@ -130,8 +130,13 @@ class RegressionModelHandler(BaseHandler):
     variables = {key: ds_view.get_metadata(key)
                  for key in self.get_arguments('pred_meta[]')}
 
-    # TODO: catch ValueError when traj + no resampling
-    _, X = ds_view.get_vector_data()
+    try:
+      # TODO: remember the bands (first result) used in the model
+      _, X = ds_view.get_vector_data()
+    except ValueError as e:
+      logging.error("Failed to get vector data: %s" % e.message)
+      self.set_status(400)
+      return
 
     if bool(int(self.get_argument('do_train'))):
       comps = int(self.get_argument('pls_comps'))
