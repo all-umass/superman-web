@@ -159,16 +159,21 @@ class DatasetImportHandler(BaseHandler):
                         'bad metadata file: %s' % e)
       return None, None
 
+    # get the actual meta names (dtype names are mangled)
+    fh.seek(0)
+    meta_names = next(fh).strip().split(',')[1:]
+    meta_keys = meta.dtype.names[1:]
+
     meta_kwargs = {}
-    for meta_name in meta.dtype.names[1:]:
-      x = meta[meta_name]
+    for key, name in zip(meta_keys, meta_names):
+      x = meta[key]
       if np.issubdtype(x.dtype, np.bool_):
         m = BooleanMetadata(x)
       elif np.issubdtype(x.dtype, np.number):
         m = NumericMetadata(x)
       else:
         m = LookupMetadata(x)
-      meta_kwargs[meta_name] = m
+      meta_kwargs[name] = m
     return meta_kwargs, meta_pkeys
 
 routes = [
