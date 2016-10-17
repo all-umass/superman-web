@@ -102,6 +102,7 @@ td .ui-slider .ui-slider-handle {
   margin: 0.3em;
   cursor: pointer;
 }
+.pp_staging > li:hover { text-decoration: line-through; }
 .pp_staging > li.normalize { background-color: lightyellow; }
 .pp_staging > li.squash { background-color: lightpink; }
 .pp_staging > li.smooth { background-color: lightcyan; }
