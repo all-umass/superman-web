@@ -9,22 +9,23 @@ from superman.baseline.common import Baseline
 from .base import BaseHandler
 
 
-def setup_blr_object(request):
+def ds_view_kwargs(request, return_blr_params=False, **extra_kwargs):
   method = request.get_argument('blr_method', '').lower()
-  segmented = request.get_argument('blr_segmented', 'false')
-  inverted = request.get_argument('blr_inverted', 'false')
+  segmented_str = request.get_argument('blr_segmented', 'false')
+  inverted_str = request.get_argument('blr_inverted', 'false')
 
   if method and method not in BL_CLASSES:
     raise ValueError('Invalid blr method: %r' % method)
-  if segmented not in ('true', 'false'):
-    raise ValueError('Invalid blr segmented flag: %r' % segmented)
-  if inverted not in ('true', 'false'):
-    raise ValueError('Invalid blr inverted flag: %r' % inverted)
+  if segmented_str not in ('true', 'false'):
+    raise ValueError('Invalid blr segmented flag: %r' % segmented_str)
+  if inverted_str not in ('true', 'false'):
+    raise ValueError('Invalid blr inverted flag: %r' % inverted_str)
 
-  do_segmented = segmented == 'true'
-  do_inverted = inverted == 'true'
+  segmented = segmented_str == 'true'
+  inverted = inverted_str == 'true'
   lb = float(request.get_argument('blr_lb', '') or '-inf')
   ub = float(request.get_argument('blr_ub', '') or 'inf')
+  step = float(request.get_argument('blr_step', '') or 0)
 
   # initialize the baseline correction object
   bl_obj = BL_CLASSES[method]() if method else NullBaseline()
@@ -35,7 +36,14 @@ def setup_blr_object(request):
       params[key] = param
       setattr(bl_obj, key, param)
 
-  return bl_obj, do_segmented, do_inverted, lb, ub, params
+  trans = dict(
+      chan_mask=bool(int(request.get_argument('chan_mask', 0))),
+      pp=request.get_argument('pp', ''), blr_obj=bl_obj, blr_inverted=inverted,
+      blr_segmented=segmented, crop=(lb, ub, step), **extra_kwargs)
+
+  if return_blr_params:
+    return trans, params
+  return trans
 
 
 class BaselineHandler(BaseHandler):
@@ -60,25 +68,19 @@ class BaselineHandler(BaseHandler):
     if fig_data is None:
       return
 
-    bl_obj, do_segmented, do_inverted, lb, ub, _ = setup_blr_object(self)
-    if bl_obj is None:
-      # clear out the baseline-corrected spectrum
-      fig_data.add_transform('upload', **fig_data.get_trans('upload'))
-      # plot the non-BLR'd spectrum again
-      fig_data.plot('upload')
-      return
+    trans = ds_view_kwargs(self)
+    del trans['pp']
+    del trans['chan_mask']
 
-    fig_data.add_transform('baseline-corrected', blr_obj=bl_obj, crop=(lb, ub),
-                           blr_segmented=do_segmented, blr_inverted=do_inverted)
-    logging.info('Running BLR: %r: crop=%r, segment=%s, invert=%s', bl_obj,
-                 (lb, ub), do_segmented, do_inverted)
+    fig_data.add_transform('baseline-corrected', **trans)
+    logging.info('Running BLR: %r', trans)
 
     if len(fig_data.figure.axes) == 2:
       # comparison view for the baseline page
       ax1, ax2 = fig_data.figure.axes
       fig_data.plot('upload', ax=ax1)
       bands, corrected = fig_data.get_trajectory('baseline-corrected').T
-      baseline = bl_obj.baseline.ravel()
+      baseline = trans['blr_obj'].baseline.ravel()
       fig_data.baseline = baseline
       ax1.plot(bands, baseline, 'r-')
       ax2.plot(bands, corrected, 'k-')

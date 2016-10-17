@@ -8,7 +8,7 @@ from superman.preprocess import preprocess
 from superman.dataset import LookupMetadata
 
 from .base import BaseHandler
-from .baseline_handlers import setup_blr_object
+from .baseline_handlers import ds_view_kwargs
 
 
 class SearchHandler(BaseHandler):
@@ -45,14 +45,12 @@ class SearchHandler(BaseHandler):
       query[:,1] = preprocess(query[:,1:2].T, 'normalize:max').ravel()
 
     # prepare the target library
-    pp = self.get_argument('pp', '')
-    if not pp:
+    trans = ds_view_kwargs(self, nan_gap=None)
+    if not trans['pp']:
       logging.warning('Applying max-normalization to library before search')
-      pp = 'normalize:max'
-    bl_obj, segmented, inverted, lb, ub, _ = setup_blr_object(self)
+      trans['pp'] = 'normalize:max'
     mask = fig_data.filter_mask.get(ds, Ellipsis)
-    ds_view = ds.view(mask=mask, pp=pp, blr_obj=bl_obj, blr_segmented=segmented,
-                      blr_inverted=inverted, crop=(lb, ub))
+    ds_view = ds.view(mask=mask, **trans)
 
     # search!
     try:
@@ -128,15 +126,14 @@ class CompareHandler(BaseHandler):
                           self.get_argument('target_name'))
 
     # emulate the library preparation process
-    pp = self.get_argument('pp', '')
-    if not pp:
-      pp = 'normalize:max'
-    bl_obj, segmented, inverted, lb, ub, _ = setup_blr_object(self)
+    trans = ds_view_kwargs(self, nan_gap=None)
+    if not trans['pp']:
+      trans['pp'] = 'normalize:max'
 
+    # select only the comparison samples
     names = ast.literal_eval(self.get_argument('compare'))
-    ds_view = ds.view(mask=ds.filter_metadata(dict(pkey=names)),
-                      pp=pp, blr_obj=bl_obj, blr_segmented=segmented,
-                      blr_inverted=inverted, crop=(lb, ub))
+    mask = ds.filter_metadata(dict(pkey=names))
+    ds_view = ds.view(mask=mask, **trans)
 
     fig_data.figure.clf(keep_observers=True)
     fig_data.plot()

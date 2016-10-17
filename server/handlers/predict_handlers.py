@@ -12,7 +12,7 @@ from tempfile import mkstemp
 from tornado.escape import json_encode
 
 from .base import BaseHandler
-from .baseline_handlers import setup_blr_object
+from .baseline_handlers import ds_view_kwargs
 from .dataset_handlers import DatasetHandler
 from ..web_datasets import NumericMetadata, CompositionMetadata
 
@@ -125,16 +125,13 @@ class RegressionModelHandler(BaseHandler):
       return
 
     mask = fig_data.filter_mask[ds]
-    bl_obj, segmented, inverted, lb, ub, params = setup_blr_object(self)
-    chan_mask = bool(int(self.get_argument('chan_mask', 0)))
-    trans = dict(pp=self.get_argument('pp', ''), blr_obj=bl_obj,
-                 blr_segmented=segmented, blr_inverted=inverted,
-                 crop=(lb, ub), chan_mask=chan_mask, nan_gap=None)
-    ds_view = ds.view(mask=mask, **trans)
+    ds_view = ds.view(**ds_view_kwargs(self, mask=mask, nan_gap=None))
 
     variables = {key: ds_view.get_metadata(key)
                  for key in self.get_arguments('pred_meta[]')}
-    X = ds_view.get_data()
+
+    # TODO: catch ValueError when traj + no resampling
+    _, X = ds_view.get_vector_data()
 
     if bool(int(self.get_argument('do_train'))):
       comps = int(self.get_argument('pls_comps'))

@@ -13,7 +13,7 @@ from tornado.escape import json_encode
 from six.moves import xrange
 
 from .base import BaseHandler
-from .baseline_handlers import setup_blr_object
+from .baseline_handlers import ds_view_kwargs
 
 # old matplotlib used a different key
 if 'axes.prop_cycle' not in rcParams:
@@ -124,18 +124,14 @@ class FilterPlotHandler(BaseHandler):
       return self.write('{}')
 
     # set up the dataset view object
-    bl_obj, segmented, inverted, lb, ub, params = setup_blr_object(self)
-    chan_mask = bool(int(self.get_argument('chan_mask', 0)))
-    trans = dict(pp=self.get_argument('pp', ''), blr_obj=bl_obj,
-                 blr_segmented=segmented, blr_inverted=inverted,
-                 crop=(lb, ub), chan_mask=chan_mask)
+    trans, blr_params = ds_view_kwargs(self, return_blr_params=True)
     all_ds_views = [ds.view(mask=fig_data.filter_mask[ds], **trans)
                     for ds in all_ds]
 
     # check to see if anything changed since the last view we had
     view_keys = ['chan_mask', 'pp', 'blr_method', 'blr_segmented',
-                 'blr_inverted', 'blr_lb', 'blr_ub']
-    for k in sorted(params):
+                 'blr_inverted', 'blr_lb', 'blr_ub', 'blr_step']
+    for k in sorted(blr_params):
       view_keys.append('blr_' + k)
     view_params = tuple(self.get_argument(k, '') for k in view_keys)
     # if the view changed, invalidate the cache

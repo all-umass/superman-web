@@ -173,6 +173,7 @@ function add_baseline_args(ctx, post_data, method) {
   post_data['blr_inverted'] = table.find('.blr_inverted').is(':checked');
   post_data['blr_lb'] = table.find('.blr_lb').val();
   post_data['blr_ub'] = table.find('.blr_ub').val();
+  post_data['blr_step'] = table.find('.blr_step').val();
   if (method) {
     var idx = method.length + 1;
     table.find('td.param.'+method+'>span').each(function(i,e){
