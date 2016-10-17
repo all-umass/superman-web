@@ -229,16 +229,6 @@ XAS:
       Dyar et al. (2016) American Mineralogist, 101, 744-748.
     urls:
       - http://www.hou.usra.edu/meetings/lpsc2015/pdf/1388.pdf
-  Silicate Glass (SA-corrected):
-    loader: load_silicate_glass
-    files:
-      - /srv/nfs/common/spectra/misc/silicate_glass.hdf5
-      - full/withSA
-    description: >-
-      Glass Fe K absorption edge x-ray absorption data from
-      Dyar et al. (2016) American Mineralogist, 101, 744-748.
-    urls:
-      - http://www.hou.usra.edu/meetings/lpsc2015/pdf/1388.pdf
   Amphibole:
     vector: true
     file: /srv/nfs/common/spectra/misc/amphiboleFe3.hdf5
