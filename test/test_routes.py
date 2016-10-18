@@ -1,5 +1,4 @@
 import numpy as np
-import os.path
 import time
 import unittest
 from mock import Mock
@@ -8,9 +7,6 @@ from numpy.testing import assert_array_equal
 from server import MatplotlibServer, BaseHandler
 from server.handlers.baseline_handlers import BaselineHandler
 from server.handlers.handlers import SelectHandler
-from server.handlers.page_handlers import (
-    MainPage, LoginPage, DatasetsPage, DataExplorerPage, BaselinePage,
-    SearcherPage, PeakFitPage)
 from server.web_datasets import (
     DATASETS, WebTrajDataset, WebVectorDataset,
     LookupMetadata, NumericMetadata, BooleanMetadata, PrimaryKeyMetadata,
@@ -39,83 +35,23 @@ def _load_vector_set(ds):
   return True
 
 
-class TestDatasetLoading(unittest.TestCase):
-  def _generic_checks(self, ds):
-    for _ in range(20):
-      if ds.name in DATASETS[ds.kind]:
-        break
-      time.sleep(0.1)
-    else:
-      self.fail('Loader thread timed out after 2 seconds')
-    # Once more for good measure
-    time.sleep(0.1)
-
-    # could check `ds is x`, but that sometimes isn't true due to threading.
-    x = DATASETS[ds.kind][ds.name]
-    self.assertIsNotNone(x)
-    self.assertEqual(ds.kind, x.kind)
-    self.assertEqual(ds.name, x.name)
-
-  def test_traj_dataset_load(self):
-    ds = WebTrajDataset('Test Set', 'Raman', '', _load_traj_set)
-    self._generic_checks(ds)
-    self.assertEqual(ds.num_spectra(), 2)
-    self.assertIsNone(ds.num_dimensions())
-
-  def test_vector_dataset_load(self):
-    ds = WebVectorDataset('Test 2', 'NIR', '', _load_vector_set)
-    self._generic_checks(ds)
-    self.assertEqual(ds.num_spectra(), 3)
-    self.assertEqual(ds.num_dimensions(), 14)
-
-
-class TestNoDataPages(unittest.TestCase):
-  def setUp(self):
-    tpl = os.path.join(os.path.dirname(__file__), '..', 'templates')
-    self.app = MatplotlibServer(cookie_secret='foobar', template_path=tpl)
-
-  def test_main_page(self):
-    req = Mock(cookies=dict(), headers=dict())
-    h = MainPage(self.app, req)
-    h.finish = Mock()
-    h.get()
-    self.assertEqual(len(h.finish.call_args_list), 1)
-
-  def test_login_page(self):
-    req = Mock(cookies=dict(), headers=dict(), arguments=dict(msg=['Message']))
-    h = LoginPage(self.app, req)
-    h.finish = Mock()
-    h.get()
-    self.assertEqual(len(h.finish.call_args_list), 1)
-
-  def test_subpages(self):
-    # these don't _need_ datasets to render
-    req = Mock(cookies=dict(), headers=dict(), arguments=dict())
-    for page_cls in (DatasetsPage, DataExplorerPage, BaselinePage,
-                     SearcherPage, PeakFitPage):
-      h = page_cls(self.app, req)
-      h.finish = Mock()
-      h.get()
-      self.assertEqual(len(h.finish.call_args_list), 1)
+WebTrajDataset('Test Set', 'Raman', _load_traj_set)
+WebVectorDataset('Test 2', 'NIR', _load_vector_set)
+for _ in range(20):
+  if len(DATASETS['Raman']) == 1 and len(DATASETS['NIR']) == 1:
+    break
+  time.sleep(0.25)
+else:
+  assert False
 
 
 class RouteTester(unittest.TestCase):
   def setUp(self):
-    WebTrajDataset('Test Set', 'Raman', '', _load_traj_set)
-    WebVectorDataset('Test 2', 'NIR', '', _load_vector_set)
-
     self.app = MatplotlibServer(cookie_secret='foobar')
 
     # Python3 compat
     if not hasattr(self, 'assertRegex'):
       self.assertRegex = self.assertRegexpMatches
-
-    for _ in range(20):
-      if len(DATASETS['Raman']) == 1 and len(DATASETS['NIR']) == 1:
-        break
-      time.sleep(0.1)
-    else:
-      self.fail('Loader threads timed out after 2 seconds')
 
 
 class TestGenericRoutes(RouteTester):
@@ -175,6 +111,7 @@ class TestBaselineRoutes(RouteTester):
 
     self.assertEqual(len(h.write.call_args_list), 6)
     self.assertEqual(len(h.finish.call_args_list), 1)
+
 
 if __name__ == '__main__':
   unittest.main()
