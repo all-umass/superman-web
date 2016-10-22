@@ -3,28 +3,68 @@
 <link rel="stylesheet" href="//code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css">
 <script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
+<style type="text/css">
+#ds_selector {
+  background-color: #005189;
+  padding: 0.25em 0 0 1.5em;
+  margin: 0.5em -1.5em;
+}
+#ds_selector > ul { list-style-type: none; display: block; }
+#ds_selector > ul > li {
+  display: inline-block;
+  padding: 6px 1em;
+  cursor: pointer;
+  font-size: larger;
+  font-weight: bold;
+  background-color: #006fa7;
+}
+#ds_selector > ul > li.active { background-color: #ee1c26; cursor: default; }
+#ds_selector > ul > li:hover { background-color: #f2c3b2; }
+#ds_selector > ul > li.active:hover { background-color: #ee1c26; }
+#ds_selector > fieldset { display: none; cursor: default; margin-top: 0.25em; }
+#ds_selector > fieldset.active { display: inline-block; }
+#ds_selector > fieldset > label {
+  display: inline-block;
+  cursor: pointer;
+  padding: 0.5em;
+  background-color: #024972;
+  font-weight: bold;
+}
+#ds_selector > fieldset > input { display: none; }
+#ds_selector > fieldset > input:checked + label { background-color: #e69b71; }
+#ds_filters_container { min-height: 0.25em; }
+</style>
 <script type='text/javascript'>
 function collect_ds_info() {
-  var infos = $("#ds_select").val();
-  var all_data = {name: [], kind: []};
-  for (var i = 0; i < infos.length; i++) {
-    var parts = infos[i].split(',');
-    all_data.name.push(parts[0]);
-    all_data.kind.push(parts[1]);
-  }
-  return all_data;
+  var ds_info = {name: [], kind: []};
+  $('#ds_selector > fieldset.active > input:checked').each(function(i,x){
+    var parts = x.value.split(',');
+    ds_info.name.push(parts[0]);
+    ds_info.kind.push(parts[1]);
+  });
+  return ds_info;
+}
+function toggle_filters() {
+  $('#ds_filters_container .box').toggle();
 }
 function load_ds_filters() {
-  var all_data = collect_ds_info();
+  var ds_info = collect_ds_info();
   var cont = $('#ds_filters_container').empty();
-  for (var i = 0; i < all_data.name.length; i++) {
-    var post_data = {name: all_data.name[i], kind: all_data.kind[i]};
-    $('<div class="box"></div>').appendTo(cont).load('/_dataset_filterer', post_data);
+  var num_ds = ds_info.name.length;
+  for (var i = 0; i < num_ds; i++) {
+    $('<div class="box"></div>').appendTo(cont).load('/_dataset_filterer',
+      {name: ds_info.name[i], kind: ds_info.kind[i]});
   }
-  $('#ds_plot_options_container').load('/_dataset_plot_options', all_data,
-                                       function(){
-    $('#dl_metadata').chosen({search_contains: true});
-  });
+  var plot_options = $('#ds_plot_options_container');
+  if (num_ds > 0) {
+    plot_options.load(
+      '/_dataset_plot_options', ds_info,
+      function() { $('#dl_metadata').chosen({search_contains: true}); }
+    );
+    $('<button onclick="toggle_filters();">show/hide</button>').appendTo(cont);
+  } else {
+    plot_options.empty();
+  }
 }
 function changed(kind, val) {
   $('td.'+val).hide();
@@ -67,8 +107,8 @@ function do_filtered_plot() {
   $('#plot_button>.dots').text("ting...").fadeIn();
   var post_data = collect_plot_options();
   var ds_info = collect_ds_info();
-  post_data['ds_name'] = ds_info.name;
   post_data['ds_kind'] = ds_info.kind;
+  post_data['ds_name'] = ds_info.name;
   post_data['fignum'] = fig.id;
 
   var cbs = make_post_callbacks('#plot_button>.dots');
@@ -76,59 +116,57 @@ function do_filtered_plot() {
 }
 function download_data() {
   var ds_info = collect_ds_info();
-  var args = {};
-  args['ds_name'] = ds_info.name;
-  args['ds_kind'] = ds_info.kind;
-  args['meta_keys'] = $('#dl_metadata option:selected').map(function(){
-    return this.value;
-  }).toArray();
+  var args = {
+    ds_name: ds_info.name,
+    ds_kind: ds_info.kind,
+    meta_keys: $('#dl_metadata option:selected').map(
+                function(){return this.value;}).toArray(),
+  };
   var url = '/'+fig.id+'/spectra.csv?' + $.param(args);
   window.open(url, '_blank');
 }
+function click_ds_kind(elt) {
+  var nav = $(elt);
+  if (nav.hasClass('active')) return;
+  nav.siblings('.active').removeClass('active');
+  nav.addClass('active');
+  var kind = nav.text();
+  $('.ds_select.active').removeClass('active');
+  $('.ds_select.' + kind).addClass('active');
+  window.history.pushState(kind, '', 'explorer?ds_kind=' + kind);
+}
 $(document).ready(function(){
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
-  $('#ds_select').chosen({search_contains: true}).change(function(evt){
-    var elt = $(evt.target);
-    var selected = elt.val();
-    if (!selected || selected.length == 0) {
-      // (re)-enable all datasets
-      elt.find('option').prop('disabled', false);
-    } else if (selected.length == 1) {
-      // disable everything but this kind of dataset
-      var kind = selected[0].split(',')[1];
-      elt.find('option').prop('disabled', true);
-      elt.find('option.' + kind).prop('disabled', false);
-    }
-    elt.trigger('chosen:updated');
-  });
-{% if ds_kind and ds_name %}
-  $('#ds_select option.{{ds_kind}}').filter(function(i,e){
-    return $(e).text() == "{{ds_name}}";
-  }).prop('selected', true);
-  $('#ds_select').change();
-  load_ds_filters();
-{% end %}
+  {% if ds_kind and ds_name %}
+    $('#{{ds_kind}},{{ds_name}}').prop('checked', true);
+    load_ds_filters();
+  {% end %}
 });
 </script>
 {% end %}
 
 {% block body_matter %}
 <div id="easter_egg" onclick="$('body,div.box').toggleClass('darby');"></div>
-<div>
-  <select id="ds_select" data-placeholder="Select dataset(s)" multiple=true>
-  {% for kind, k_dict in sorted(datasets.items()) %}
-    <optgroup label="{{kind}} Datasets">
-      {% for name in sorted(k_dict) %}
-        <option class="{{kind}}" value="{{name}},{{kind}}">{{name}}</option>
-      {% end %}
-    </optgroup>
-  {% end %}
-  </select>
-  <button onclick="load_ds_filters()">Load</button>
-</div>
-<br style="clear:both">
 
-<div id='ds_filters_container' style='display: inline;'></div>
+<div id="ds_selector"><ul>
+{% for kind in sorted(datasets) %}
+  <li {% if kind == ds_kind %}class='active'{% end %}
+      onclick='click_ds_kind(this);'>{{kind}}</li>
+{% end %}
+</ul>
+{% for kind, k_dict in datasets.items() %}
+  <fieldset class="ds_select {{kind}}{% if kind == ds_kind %} active{% end %}">
+    {% for name in sorted(k_dict) %}
+      {% set cbid = name + ',' + kind %}
+      <input type="checkbox" id="{{cbid}}" value="{{cbid}}">
+      <label for="{{cbid}}">{{name}}</label>
+    {% end %}
+    <button onclick='load_ds_filters()'>Load Dataset(s)</button>
+  </fieldset>
+{% end %}
+<div id='ds_filters_container'></div>
+</div>
+
 <div id='ds_plot_options_container' class='box'></div>
 
 <!-- BLR / PP -->

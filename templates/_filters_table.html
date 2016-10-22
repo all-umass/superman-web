@@ -1,25 +1,17 @@
-<table class="ds_table">
-<caption>{{str(ds)}} Filters</caption>
-{% for row in html_parts %}
-  <tr>
-  {% for cls, td in row %}
-    <td class="filter {{cls}}">{% raw td %}</td>
-  {% end %}
-  </tr>
+<fieldset class="ds_filters">
+<legend>{{ds.name}}</legend>
+<div class="filters">
+{% for td in html_parts %}
+  <div class="filter">{% raw td %}</div>
 {% end %}
-  <tr>
-    <td colspan="{{num_cols}}">
-      <button onclick='do_filter(this, {
+</div>
+<button onclick='do_filter(this,{ds_name:"{{ds.name}}",ds_kind:"{{ds.kind}}",
         {% for name, js in collect_js %}
           {{name}}: JSON.stringify({% raw js %}),
-        {% end %}
-        ds_name: "{{ds.name}}",
-        ds_kind: "{{ds.kind}}" } );'>
-        Filter<span class='ing'></span>
-      </button>
-    </td>
-  </tr>
-</table>
+        {% end %} } );'>
+  Filter<span class='ing'></span>
+</button>
+</fieldset>
 
 <script type="text/javascript">
 // Initialize filters

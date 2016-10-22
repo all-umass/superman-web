@@ -45,9 +45,9 @@ class DatasetFiltererHandler(DatasetHandler):
     if ds.pkey is None and not ds.metadata:
       return self.write('<span>No metadata to filter on</span>')
 
-    html_parts, init_js, collect_js = ds.filter_ui(num_cols=2)
+    html_parts, init_js, collect_js = ds.filter_ui()
     return self.render('_filters_table.html', ds=ds, html_parts=html_parts,
-                       init_js=init_js, collect_js=collect_js, num_cols=2)
+                       init_js=init_js, collect_js=collect_js)
 
 
 class DatasetPlotOptionsHandler(DatasetHandler):

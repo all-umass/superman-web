@@ -10,6 +10,44 @@ body { padding: 1.5em; }
 tr:last-child button { width: 100% }
 .data_input { display: inline-block; }
 #selector { display: inline-flex; padding-right: 1em; min-width: 5em; }
+.box {
+  border: 1px solid black;
+  border-radius: 1em;
+  display: inline-block;
+  vertical-align: top;
+  background-color: lightgray;
+  margin: 0.25em;
+}
+
+.ds_filters { float: left; margin: 0 1em 0.5em 1em; text-align: center; }
+.ds_filters > legend { font-weight: bold; text-align: center; }
+.ds_filters > button { text-align: center; width: 100%; }
+.ds_filters > .filters {
+  max-height: 20em;
+  overflow: auto;
+  padding: 0.25em 0.8em;
+}
+.ds_filters .filter {
+  padding: 0.3em 1em 0.3em 1em;
+  vertical-align: middle;
+  display: table-row;
+}
+.ds_filters .filter > * { text-align: left; }
+.ds_filters .filter > .chosen-container { min-width: 100%; }
+.ds_filters .filter .slider {
+  margin: 0.1em 0 0.5em 0;
+  height: 36px;
+  width: 350px;
+  border-radius: 0px;
+  background-repeat: no-repeat;
+}
+.ds_filters .filter .ui-slider .ui-slider-range { background: rgba(0,0,0,0.2); }
+.ds_filters .filter .ui-slider .ui-slider-handle {
+  height: 115%;
+  width: 1em;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid;
+}
 
 .ds_table { float: left; margin: 0 1em 0.5em 1em; }
 .ds_table td { padding: 0.3em 1em 0.3em 1em; vertical-align: middle; text-align: center;}
@@ -19,34 +57,16 @@ tr:last-child button { width: 100% }
 .ds_table caption { font-weight: bold; }
 .ds_table input[type="number"] { width: 4em; }
 
-.pp_table { margin: 1em; border-collapse: collapse; display: inline; }
+.pp_table {
+  margin: 1em;
+  border-collapse: collapse;
+  display: inline;
+  table-layout: fixed;
+  max-width: 40em;
+}
 .pp_table th { font-weight: bold; }
 .pp_table td { text-align: center; padding: 0 0.5em; }
 .pp_table input[type="number"] { width: 4em; }
-
-div.box {
-  border: 1px solid black;
-  border-radius: 1em;
-  display: inline-block;
-  vertical-align: top;
-  background-color: lightgray;
-  margin: 0.25em;
-}
-
-td .slider {
-  margin: 0.1em 0 0.5em 0;
-  height: 36px;
-  width: 350px;
-  border-radius: 0px;
-  background-repeat: no-repeat;
-}
-td .ui-slider .ui-slider-range { background: rgba(0,0,0,0.2); }
-td .ui-slider .ui-slider-handle {
-  height: 115%;
-  width: 1em;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid;
-}
 
 .fake_button {
   -moz-appearance: button;
@@ -83,10 +103,6 @@ td .ui-slider .ui-slider-handle {
   padding-right: 2em;
 }
 
-.pp_table {
-  table-layout: fixed;
-  max-width: 40em;
-}
 .pp_staging {
   list-style-type: none;
   -webkit-user-select: none;

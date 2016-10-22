@@ -57,7 +57,7 @@ class _ReloadableMixin(object):
       return '2 Theta'
     return 'Unknown units'
 
-  def filter_ui(self, num_cols=2):
+  def filter_ui(self):
     # get a unique string for this dataset
     ds_key = 'ds%d' % hash(str(self))
     # Get HTML+JS for filters
@@ -65,27 +65,19 @@ class _ReloadableMixin(object):
     if self.pkey is not None:
       metas.append(('pkey', self.pkey))
     # Collect all the fragments
-    init_js, collect_js, tds, comp_tds = [], [], [], []
+    init_js, collect_js, filter_htmls, comp_htmls = [], [], [], []
     for key, m in metas:
       full_key = ds_key + '_' + key
       ijs, cjs = _get_filter_js(m, full_key)
       init_js.append(ijs)
       collect_js.append((key, cjs))
       if isinstance(m, CompositionMetadata):
-        comp_tds.extend(_get_composition_filter_html(m, key, full_key))
+        comp_htmls.extend(_get_composition_filter_html(m, key, full_key))
       else:
-        tds.append(('', _get_filter_html(m, key, full_key)))
-    tds += comp_tds
-    # reshape tds
-    html_parts = [[]]
-    for td in tds:
-      if len(html_parts[-1]) == num_cols:
-        html_parts.append([td])
-      else:
-         html_parts[-1].append(td)
-    last_row_pad = num_cols - len(html_parts[-1])
-    html_parts[-1].extend([('','')]*last_row_pad)
-    return html_parts, init_js, collect_js
+        filter_htmls.append(_get_filter_html(m, key, full_key))
+    # Make sure composition filters come last
+    filter_htmls.extend(comp_htmls)
+    return filter_htmls, init_js, collect_js
 
   def metadata_names(self, allowed_baseclasses=(object,)):
     for key, m in self.metadata.items():
@@ -207,8 +199,7 @@ def _get_filter_js(m, full_key):
       init_parts.append(ijs)
       collect_parts.append('%s: %s' % (k, cjs))
     collect_js = '{' + ','.join(collect_parts) + '}'
-    init_js = '$("#%s_toggle").click();\n%s' % (full_key, '\n'.join(init_parts))
-    return init_js, collect_js
+    return '\n'.join(init_parts), collect_js
   # only LookupMetadata and PrimaryKeyMetadata remain
   jq = '$("#%s_chooser")' % full_key
   # initialize the chosen dropdown, adding some width for the scrollbar
@@ -250,11 +241,8 @@ def _get_filter_html(m, key, full_key):
 
 def _get_composition_filter_html(m, key, full_key):
   disp = m.display_name(key)
-  # CSS class for our filters, and CSS ID for our button
-  css = full_key + '_toggle'
-  td = ('%s: <button onclick="$(\'.%s\').toggle()" '
-        'id="%s">Show/Hide</button>') % (disp, css, css)
-  html = [('', td)]
+  html_parts = []
   for k, m in m.comps.items():
-    html.append((css, _get_filter_html(m, key + '-' + k, full_key + '-' + k)))
-  return html
+    html = _get_filter_html(m, key + '-' + k, full_key + '-' + k)
+    html_parts.append(disp + ' ' + html)
+  return html_parts

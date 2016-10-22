@@ -154,10 +154,10 @@ class CompositionsPage(Subpage):
     comp_pairs = sorted(ds.metadata_names((CompositionMetadata,)))
     num_pairs = sorted(ds.metadata_names((NumericMetadata,)))
 
-    html_parts, init_js, collect_js = ds.filter_ui(num_cols=2)
+    html_parts, init_js, collect_js = ds.filter_ui()
     self.render(ds=ds, comp_pairs=comp_pairs, num_pairs=num_pairs,
                 html_parts=html_parts, init_js=init_js,
-                collect_js=collect_js, num_cols=2)
+                collect_js=collect_js)
 
 
 class PeakFitPage(Subpage):
