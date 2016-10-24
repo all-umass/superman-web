@@ -100,9 +100,9 @@ class DataExplorerPage(Subpage):
   figsize = (14, 6)
 
   def get(self):
-    ds_tree = defaultdict(list)
+    ds_tree = defaultdict(dict)
     for ds in self.all_datasets():
-      ds_tree[ds.kind].append(ds.name)
+      ds_tree[ds.kind][ds.name] = hash(ds)
     self.render(datasets=ds_tree, ds_kind=self.get_argument('ds_kind', ''),
                 ds_name=self.get_argument('ds_name', ''),
                 cmaps=cmaps, default_cmap=rcParams['image.cmap'],

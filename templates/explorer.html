@@ -6,7 +6,7 @@
 <style type="text/css">
 #ds_selector {
   background-color: #005189;
-  padding: 0.25em 0 0 1.5em;
+  padding: 0.25em 1.5em;
   margin: 0.5em -1.5em;
 }
 #ds_selector > ul { list-style-type: none; display: block; }
@@ -33,6 +33,7 @@
 #ds_selector > fieldset > input { display: none; }
 #ds_selector > fieldset > input:checked + label { background-color: #e69b71; }
 #ds_filters_container { min-height: 0.25em; }
+.collapse { float: right; }
 </style>
 <script type='text/javascript'>
 function collect_ds_info() {
@@ -44,8 +45,9 @@ function collect_ds_info() {
   });
   return ds_info;
 }
-function toggle_filters() {
-  $('#ds_filters_container .box').toggle();
+function toggle_collapse(elt, selectors) {
+  $(elt).nextAll(selectors).toggle();
+  $(elt).text(elt.innerHTML === '^' ? 'v' : '^');
 }
 function load_ds_filters() {
   var ds_info = collect_ds_info();
@@ -61,7 +63,6 @@ function load_ds_filters() {
       '/_dataset_plot_options', ds_info,
       function() { $('#dl_metadata').chosen({search_contains: true}); }
     );
-    $('<button onclick="toggle_filters();">show/hide</button>').appendTo(cont);
   } else {
     plot_options.empty();
   }
@@ -138,7 +139,8 @@ function click_ds_kind(elt) {
 $(document).ready(function(){
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
   {% if ds_kind and ds_name %}
-    $('#{{ds_kind}},{{ds_name}}').prop('checked', true);
+    $('.ds_select.{{ds_kind}} input[value="{{ds_name}},{{ds_kind}}"]'
+      ).prop('checked', true);
     load_ds_filters();
   {% end %}
 });
@@ -148,7 +150,10 @@ $(document).ready(function(){
 {% block body_matter %}
 <div id="easter_egg" onclick="$('body,div.box').toggleClass('darby');"></div>
 
-<div id="ds_selector"><ul>
+<div id="ds_selector">
+<button class="collapse"
+  onclick="toggle_collapse(this, '.active,#ds_filters_container');">^</button>
+<ul>
 {% for kind in sorted(datasets) %}
   <li {% if kind == ds_kind %}class='active'{% end %}
       onclick='click_ds_kind(this);'>{{kind}}</li>
@@ -156,9 +161,8 @@ $(document).ready(function(){
 </ul>
 {% for kind, k_dict in datasets.items() %}
   <fieldset class="ds_select {{kind}}{% if kind == ds_kind %} active{% end %}">
-    {% for name in sorted(k_dict) %}
-      {% set cbid = name + ',' + kind %}
-      <input type="checkbox" id="{{cbid}}" value="{{cbid}}">
+    {% for name, cbid in sorted(k_dict.items()) %}
+      <input type="checkbox" id="{{cbid}}" value="{{name}},{{kind}}">
       <label for="{{cbid}}">{{name}}</label>
     {% end %}
     <button onclick='load_ds_filters()'>Load Dataset(s)</button>
