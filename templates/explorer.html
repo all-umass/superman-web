@@ -4,13 +4,20 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
 <style type="text/css">
-#ds_selector {
-  background-color: #005189;
+.horiz_section {
   padding: 0.25em 1.5em;
-  margin: 0.5em -1.5em;
+  margin: 0 -1.5em;
+  background-color: #b4b2b3;
 }
-#ds_selector > ul { list-style-type: none; display: block; }
-#ds_selector > ul > li {
+.horiz_section:nth-child(even) {
+  background-color: #e1dfe0;
+}
+.section_heading {
+  font-size: large;
+  text-align: center;
+}
+#ds_kind_choices { list-style-type: none; display: block; }
+#ds_kind_choices > li {
   display: inline-block;
   padding: 6px 1em;
   cursor: pointer;
@@ -18,27 +25,34 @@
   font-weight: bold;
   background-color: #006fa7;
 }
-#ds_selector > ul > li.active { background-color: #ee1c26; cursor: default; }
-#ds_selector > ul > li:hover { background-color: #f2c3b2; }
-#ds_selector > ul > li.active:hover { background-color: #ee1c26; }
-#ds_selector > fieldset { display: none; cursor: default; margin-top: 0.25em; }
-#ds_selector > fieldset.active { display: inline-block; }
-#ds_selector > fieldset > label {
+#ds_kind_choices > li.active { background-color: #ee1c26; cursor: default; }
+#ds_kind_choices > li:hover { background-color: #f2c3b2; }
+#ds_kind_choices > li.active:hover { background-color: #ee1c26; }
+.ds_select { display: none; cursor: default; margin-top: 0.25em; }
+.ds_select.active { display: inline-block; }
+.ds_select > label {
   display: inline-block;
   cursor: pointer;
   padding: 0.5em;
-  background-color: #024972;
+  background-color: #005189;
   font-weight: bold;
 }
-#ds_selector > fieldset > input { display: none; }
-#ds_selector > fieldset > input:checked + label { background-color: #e69b71; }
+.ds_select > input { display: none; }
+.ds_select > input:checked + label { background-color: #e69b71; }
 #ds_filters_container { min-height: 0.25em; }
-.collapse { float: right; }
+#ds_filters_container > div {
+  display: inline-block;
+  margin: 0.25em;
+}
+.ds_filters {
+  border: 2px groove;
+}
 </style>
+
 <script type='text/javascript'>
 function collect_ds_info() {
   var ds_info = {name: [], kind: []};
-  $('#ds_selector > fieldset.active > input:checked').each(function(i,x){
+  $('.ds_select.active > input:checked').each(function(i,x){
     var parts = x.value.split(',');
     ds_info.name.push(parts[0]);
     ds_info.kind.push(parts[1]);
@@ -47,15 +61,16 @@ function collect_ds_info() {
 }
 function toggle_collapse(elt, selectors) {
   $(elt).nextAll(selectors).toggle();
-  $(elt).text(elt.innerHTML === '^' ? 'v' : '^');
+  $(elt).toggleClass('up_chevron down_chevron');
 }
 function load_ds_filters() {
   var ds_info = collect_ds_info();
-  var cont = $('#ds_filters_container').empty();
+  var container = $('#ds_filters_container').empty();
   var num_ds = ds_info.name.length;
   for (var i = 0; i < num_ds; i++) {
-    $('<div class="box"></div>').appendTo(cont).load('/_dataset_filterer',
-      {name: ds_info.name[i], kind: ds_info.kind[i]});
+    $('<div><img src="/loading_bar.gif"></div>')
+      .appendTo(container)
+      .load('/_dataset_filterer', {name:ds_info.name[i],kind:ds_info.kind[i]});
   }
   var plot_options = $('#ds_plot_options_container');
   if (num_ds > 0) {
@@ -79,7 +94,6 @@ function child_vals(selector){
   }).toArray() + "]";
 }
 function collect_plot_options() {
-  var table = $('#blr_pp > table');
   var opts = {
     xaxis: $("#xaxis").val(),
     yaxis: $("#yaxis").val(),
@@ -100,9 +114,9 @@ function collect_plot_options() {
     line_width: $("#plt_lw").val(),
     cmap: $("#plt_cmap").val(),
     chan_mask: +$("#chan_mask").is(":checked"),
-    pp: collect_pp_args(table),
+    pp: collect_pp_args($('#pp_options')),
   };
-  return add_baseline_args(table, opts);
+  return add_baseline_args($('#blr_options'), opts);
 }
 function do_filtered_plot() {
   $('#plot_button>.dots').text("ting...").fadeIn();
@@ -150,10 +164,12 @@ $(document).ready(function(){
 {% block body_matter %}
 <div id="easter_egg" onclick="$('body,div.box').toggleClass('darby');"></div>
 
-<div id="ds_selector">
-<button class="collapse"
-  onclick="toggle_collapse(this, '.active,#ds_filters_container');">^</button>
-<ul>
+<div class="horiz_section">
+<div class='section_heading'>Select Data</div>
+<button class="collapse up_chevron"
+  onclick="toggle_collapse(this, 'ul,div');"></button>
+<div>
+<ul id="ds_kind_choices">
 {% for kind in sorted(datasets) %}
   <li {% if kind == ds_kind %}class='active'{% end %}
       onclick='click_ds_kind(this);'>{{kind}}</li>
@@ -170,46 +186,32 @@ $(document).ready(function(){
 {% end %}
 <div id='ds_filters_container'></div>
 </div>
-
-<div id='ds_plot_options_container' class='box'></div>
-
-<!-- BLR / PP -->
-<div class='box' id='blr_pp'>
-{% include '_blr_pp_table.html' %}
+<br style="clear: both">
 </div>
 
-<div class='box'>
-<table class="ds_table">
-<caption>Plot Options</caption>
-
-<tr><td>Line Width (<span id="lw_val">{{default_lw}}</span>)<br />
-  <input id="plt_lw" type="range" min=1 max=20 value={{default_lw}} step=0.5
-         onchange="$('#lw_val').text((+this.value).toFixed(2));"
-         oninput="$('#lw_val').text((+this.value).toFixed(2));">
-</td><td>Transparency (<span id="alpha_val">1.00</span>)<br />
-  <input id="plt_alpha" type="range" min=0 max=1 value=1 step=0.05
-         onchange="$('#alpha_val').text((+this.value).toFixed(2));"
-         oninput="$('#alpha_val').text((+this.value).toFixed(2));">
-</td></tr>
-
-<tr><td>Color Map
-<a href="http://matplotlib.org/examples/color/colormaps_reference.html"
- class="small">[?]</a><br />
-  <select id="plt_cmap">
-    <option value="_auto" selected><b>auto</b></option>
-  {% for cmap in cmaps %}
-    <option value="{{cmap}}">{{cmap}}</option>
-  {% end %}
-  </select>
-</td><td>
-  Clear plot:<input id="plt_clear" type="checkbox" checked><br />
-  Show legend:<input id="plt_legend" type="checkbox" checked>
-</td></tr>
-
+<div class="horiz_section">
+<div class='section_heading'>Transform Data</div>
+<button class="collapse up_chevron"
+  onclick="toggle_collapse(this, 'table');"></button>
+<table class='ds_table' id="blr_options">
+  <caption>Baseline Correction</caption>
+  {% include '_blr_rows.html' %}
 </table>
+<table class='ds_table' id="pp_options">
+  <caption>Preprocessing</caption>
+  {% include '_pp_rows.html' %}
+</table>
+<br style="clear: both">
 </div>
 
+<div class="horiz_section">
+<div class='section_heading'>Plot Data</div>
+<button class="collapse up_chevron"
+  onclick="toggle_collapse(this, 'div');"></button>
+<div id="ds_plot_options_container"></div>
 <div id="figure"></div>
-<br style="clear:both">
 {% include '_zoom_control.html' %}
+<br style="clear:both">
+</div>
+
 {% end %}

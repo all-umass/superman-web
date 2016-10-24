@@ -193,6 +193,19 @@ input[type=range]::-ms-thumb {
   background: #555;
 }
 
+/* Expand/Collapse buttons */
+.collapse {
+  float: right;
+  width: 24px;
+  height: 24px;
+}
+.down_chevron {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAAC6V+0/AAAAqFBMVEUAAABhYWFgYGD////v7+9VVVVZWVn////t7e1ra2vw8PCHh4d4eHhiYmKFhYX7+/v6+vr8/PxfX1/9/f1ra2tiYmL///////93d3f///////98fHz///9qampUVFT///93d3f///9UVFT///////9eXl7///////////+FhYV3d3dqamqSkpKfn59eXl7Z2dm+vr6ioqLd3d21tbW0tLSpqamLi4uCgoJl9SrzAAAAKXRSTlMACRIM9uKEWP3y7Ovm4d/d2sfHvr62rpaWinVjUVFLRTw5LSonIR4GA8spfx8AAACKSURBVBjTxY5XDoUgFERVLK/33quKCNjd/85EDGos356fO5lkbo7Uh9yRFU0vu4f2KcKekM2/iDohc4UPpgih8T2f7BDjmpdgGzqMk/yasZNSg2/sM00ghAvIwJOneH9TfZfjrc1K5LfyMMZ+cLTqbuBA40g1mp6X0fLb9nyDYTylyrOO8GzAPQUZglQXj4vSRNMAAAAASUVORK5CYII=);
+}
+.up_chevron {
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAAC6V+0/AAAAq1BMVEUAAADQ0ND////l5eV0dHT///99fX1qamrg4OB4eHjq6uqGhoaoqKjd3d14eHiGhob19fWTk5P5+fn6+vrt7e1ra2uSkpKenp74+Pj///9qamr///////93d3eenp6oqKj///+FhYWoqKj///+FhYWSkpL///////9qamqFhYV3d3eSkpJeXl6fn59lZWXp6enT09PMzMzCwsKsrKympqaWlpaAgIBxcXFUVFSzlZM2AAAAKHRSTlMABywMaWATCfj49fXr6ejj3drRysi+t66enJyZioqBdVdRSD8zJyEVT4gb/wAAAIlJREFUGNPFzkcSgzAQRNGRRHDOOWdjMcI53P9klhAlipoD8FZdvfrgMKB2jTX5VkqpcVi4glFsdI+QO7QvVn3rPq8qpYyvT6kt7RXOIu3V49P7V49hAJpoISaPuQDY1D6I6KV9gySq+Gnnqa9+bx+Mc7PDs062uE3A4iLv3LNyOoF2GqQz4zqpPx5ZF0t9qewGAAAAAElFTkSuQmCC);
+}
+
 /* Silly things */
 #easter_egg {
   position: absolute;
@@ -200,7 +213,7 @@ input[type=range]::-ms-thumb {
   right: 0px;
   width: 16px;
   height: 19px;
-  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAATCAYAAACZZ43PAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAAZdEVYdFNvZnR3YXJlAEFkb2JlIEltYWdlUmVhZHlxyWU8AAADNElEQVQ4T22T22tcVRTGf/ucOWfuMxlbE9uasb4UvDRKERW1UjUU+u5T/wBffJGCqCCIL1IQRBD/CSEioghStJhWi4iYNlN8aNMkNWamc8tcz/1s15mZaqx+w+ac2Wd931rrW3srLeAeBN113OYVzPQRlJlGt38ht3QOVGoW8Q+M2fNfsCpHqW98x85Xr1L7bJnrf/z2v+QE/xFY3Vqjcv4M32+ucuy25uNdzcmvv+CBN4/zzY3VWdQ+JC3cheN29evfntcbgy09CiK91rutR+6O3h7t6JXti/qNCx/owbAxi57ibw9awzEdJ6Z6X4GrrZieH2EqRSRFJsVnUgYFG0J3xEIBDpfyCY2ZQMzK712C7AGerGiutn1sac5KGpTPQQyuHzKONL3QYoERZx8riQHWVMCVODOKhKDA9yVNKERh7R+QIWqTZeKZKQLTpCAVqlgEdj/9BKO2Tua5Z9n7fAX/5i3hhuiJkIgoA2VbksXCLBVI5UqYzzzNkXffQwUi0Fm9TN5zUUcfwmvUJ8lJ28SSMUaqko1ELJLqdBhgeh5OKsvhUy+KgLg98vvkckW8ICKQVnQ8LT+UdyVkaR0tv1grtJSdsiw8xyVvSgv+3g09+vIkmQdfFnWfcPcniTal1wlLlgRJERNMnjFGcRErbtOpnhMBaaEt21lZkazE0ISXdLF/3d1LYpKxJv9Vz0F57aa++cpL5DIZ1KOP4Pf30OU5VKWCTmekEkkrPev+gLjdxOh1sYvy/crPxG+/k5gY6/oPF8lsbsBwiFOrEbYbxL2+EMeTtFp6Nsol4mIB81CV/BNLtMKY+eXT03Nwy/FY76VZyMXk5ATZpsZOSZFK3BcTQ6nbCzUjIck8GQQmY2fE6UPZqUAYuHx06Q4tu0Qkt67jK3E88U8MlGkoGWckkykbMcfvT1OvN3h+HpYfX5wKiB+CJp1fr9GWwzafmaNsiq1RIiRjTUqIXVpZg3azwXyxzMGlFyasfQJw/c4Wb134kB83L1ORS3QwPyen12LgdOnn5rDtHGePneH9U6/NGPcIJBiHDn/2dqltr3Gpfo2WN+TEgYc5UX1KbmqVxeLCLDIB/AXaeb9KWrsNGgAAAABJRU5ErkJggg==');
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAATCAMAAACuuX39AAAB71BMVEX///9ev/XzoR7/8/Hg///m///b///Y///3/v///v3s9PTq8O/fUkvbRz7cQTjZLijzoh77///y///I6P77//3J8/35/PzT9/y+4/y64/zf//r//fr6+vm04viv4Pj/+Pfm8/T/9fNuw/Pk7+/n7+7g9OPY69/+19bD4M3py8vsysruw8PafHbbdW/laWXZVE0nhzTXMSzXKSLt//+77//S7f+y5/+n4P/Z+v7X8f77+/31+/3a+/nz+vmY1fne9vip3viO0vf1+/bI8/ba8Pbu9vWx5vTO5fT///PZ6vOn2fOd1vL3+O/w9e91xO/g6+ys1+yl0uz57ev//+rz9Oni8uj1+OXr6OXR8eO70+KAveKJvuH68Nz129v/2tb67tP80tHw183o2cv80MnoxsbpwsTr0cO228Kt4sDlwMDjwb72473az73tzb3eub30u7zkvLv14LbVxLTntbSwzq7pqKHVpJ/vo57roZzy2Zvoy5l+v5mSwpbllJLrlZDek5D10IlruohwvIZ0toHigX1gr3XeeXNMpWvZaGPaY13hYl33vlvat1nLtFn2ulXbYFUkmVDeV045kkffSkcek0Y3kEIQhzz1rzrgODQShTAXdCz6rSfXKCGZlxzvohngGxfalAoAdwkIaQnLjQFbdABCKQTKAAABE0lEQVQY02MAg/jKwuwGaQYE8OhZsLgXia8xbe7CJYtmpcP4Po2q1hFhqhlNIRA+lyeHsKSEpISwqbsCiM8ZYG7pICcrK+fl7RgIMphDjFNekRkEFOXFhIACtXrlPPz8RnOM+A35JrdwMgim5sdqa2tpaWqmZBYU58kwWPmK2LpycXFzq6goKyv4czPEzOvuY2ISYAICAYHps6sYBFmFjFlZWVhY2NjY2dnYXRiCDGd06Xfq6ujodujz8syvZxDJqqjTm8jLx8fL099WWhbOwGBvJipuwSIlZSPuLGrixsHAIBPtp8QIBkp2UZEgtwfn5iTGqasnJCcVpUF8p9Y+02DqJIMpE6ph/ndSK2lurdEIBbEB4Vg6cSg21SkAAAAASUVORK5CYII=);
 }
 div.box.darby {
   background: -moz-linear-gradient(left,
