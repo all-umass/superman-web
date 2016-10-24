@@ -6,17 +6,12 @@ import os
 import tornado.web
 from collections import defaultdict
 from superman.baseline import BL_CLASSES
-from matplotlib import cm, rcParams
 
 from .base import BaseHandler
 from ..web_datasets import CompositionMetadata, NumericMetadata
 
 MPL_JS = sorted(os.listdir(os.path.join(matplotlib.__path__[0],
                                         'backends/web_backend/jquery/js')))
-bad_cmaps = set(('gist_gray', 'gist_yarg', 'binary'))
-cmaps = sorted(
-    [m for m in cm.cmap_d if not m.endswith('_r') and m not in bad_cmaps],
-    key=lambda x: x.lower())
 
 
 def compute_step(lb, ub, kind):
@@ -104,9 +99,7 @@ class DataExplorerPage(Subpage):
     for ds in self.all_datasets():
       ds_tree[ds.kind][ds.name] = hash(ds)
     self.render(datasets=ds_tree, ds_kind=self.get_argument('ds_kind', ''),
-                ds_name=self.get_argument('ds_name', ''),
-                cmaps=cmaps, default_cmap=rcParams['image.cmap'],
-                default_lw=rcParams['lines.linewidth'], **blr_kwargs)
+                ds_name=self.get_argument('ds_name', ''), **blr_kwargs)
 
 
 class BaselinePage(Subpage):
