@@ -36,6 +36,10 @@ class CompositionPlotHandler(BaseHandler):
       xlabel = title + ': ' + xlabel
       ylabel = title + ': ' + ylabel
 
+    if ds.kind != 'LIBS' or ds.name != 'MSL ChemCam':
+      self.write('Downloading spectrum data for non-ChemCam data is NYI.')
+      return
+
     # TODO: remove ChemCam-specific stuff here
     mask = fig_data.filter_mask[ds]
     sols = ds.metadata['sol'].get_array(mask)
