@@ -8,6 +8,7 @@
   padding: 0.25em 1.5em;
   margin: 0 -1.5em;
   background-color: #b4b2b3;
+  text-align: center;
 }
 .horiz_section:nth-child(even) {
   background-color: #e1dfe0;
@@ -44,9 +45,20 @@
   display: inline-block;
   margin: 0.25em;
 }
-.ds_filters {
-  border: 2px groove;
+.ds_filters { border: 2px groove; }
+.plot_data td { text-align: left; }
+.plot_data td:first-child { text-align: right; }
+.plot_options {
+  display: inline-block;
+  margin: 0 1em 0.5em 1em;
+  vertical-align: top;
 }
+.plot_options > div { padding-bottom: 1em; }
+
+/* Hacks to disable the float: left from .ds_table */
+#blr_options { display: inline-block; float: none; }
+#pp_options { display: inline-block; float: none; }
+.plot_data { display: inline-block; float: none; }
 </style>
 
 <script type='text/javascript'>
@@ -60,7 +72,7 @@ function collect_ds_info() {
   return ds_info;
 }
 function toggle_collapse(elt, selectors) {
-  $(elt).nextAll(selectors).toggle();
+  $(elt).parent().nextAll(selectors).toggle();
   $(elt).toggleClass('up_chevron down_chevron');
 }
 function load_ds_filters() {
@@ -165,9 +177,10 @@ $(document).ready(function(){
 <div id="easter_egg" onclick="$('body,div.box').toggleClass('darby');"></div>
 
 <div class="horiz_section">
-<div class='section_heading'>Select Data</div>
+<div class='section_heading'>Select
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'ul,div');"></button>
+</div>
 <div>
 <ul id="ds_kind_choices">
 {% for kind in sorted(datasets) %}
@@ -186,13 +199,13 @@ $(document).ready(function(){
 {% end %}
 <div id='ds_filters_container'></div>
 </div>
-<br style="clear: both">
 </div>
 
 <div class="horiz_section">
-<div class='section_heading'>Transform Data</div>
+<div class='section_heading'>Transform
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'table');"></button>
+</div>
 <table class='ds_table' id="blr_options">
   <caption>Baseline Correction</caption>
   {% include '_blr_rows.html' %}
@@ -201,17 +214,16 @@ $(document).ready(function(){
   <caption>Preprocessing</caption>
   {% include '_pp_rows.html' %}
 </table>
-<br style="clear: both">
 </div>
 
 <div class="horiz_section">
-<div class='section_heading'>Plot Data</div>
+<div class='section_heading'>Plot
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'div');"></button>
+</div>
 <div id="ds_plot_options_container"></div>
 <div id="figure"></div>
 {% include '_zoom_control.html' %}
-<br style="clear:both">
 </div>
 
 {% end %}

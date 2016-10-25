@@ -12,7 +12,12 @@
 #target_prep { display: none; }
 #query_prep[disabled] { display: none; }
 td.param,td.pp_param { padding: 0.3em; }
-#results { float: left; margin: 0 1em; border: 2px solid black; }
+#results {
+  display: inline-block;
+  vertical-align: top;
+  margin: 0 1em;
+  border: 2px solid black;
+}
 #results td,#results th {
   border: 1px solid black;
   padding: 0.2em;
@@ -42,8 +47,8 @@ function target_selected(input) {
   var parts = input.value.split(',');
   var post_data = {name: parts[0], kind: parts[1]};
   dest.load('/_dataset_filterer', post_data, function(){
-    dest.find('table').css('width', '100%').find('caption').html(
-      '<button onclick="$(this).parent().next().toggle()">' +
+    dest.find('legend').html(
+      '<button onclick="$(this).parent().nextAll().toggle()">' +
       'Show/Hide Filters (Optional)</button>'
     ).children().click();
   });

@@ -6,7 +6,7 @@
 @keyframes flash { 50% { background-color: pink; } }
 .err_msg { display: none; color: red; }
 .wait { display: none; }
-#model_error { display: inline-block; padding: 0.25em 1em; }
+#model_error { display: inline-block; padding: 0.25em 1em; vertical-align: top; }
 #model_error thead { border-bottom: 1px solid black; font-weight: bold; }
 #model_error th { padding: 0 0.5em; }
 #model_error td { padding: 0 0.5em; text-align: right; }
@@ -203,10 +203,10 @@ $(document).ready(function(){
 </td></tr></table></div>
 
 <div id="fig_wrapper">
+<div id="figure"></div>
 <table id="model_error">
   <thead><tr><th>Variable</th><th>R²</th><th>RMSE</th></tr></thead>
   <tbody></tbody>
 </table>
-<div id="figure"></div>
 </div>
 {% end %}
