@@ -31,6 +31,7 @@ class FigData(object):
     self.filter_mask = dict()
     self.baseline = None
     self.hist_data = []
+    self.last_plot = None
     self._ds_view = None
     self._transformations = [None, None, None]
     # HACK: cache keys/data for the explorer page

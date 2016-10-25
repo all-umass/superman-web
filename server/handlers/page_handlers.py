@@ -129,30 +129,6 @@ class SearcherPage(Subpage):
     self.render(datasets=pkey_ds, **blr_kwargs)
 
 
-class CompositionsPage(Subpage):
-  template = 'composition.html'
-  title = 'Mars Compositions'
-  description = 'Plot predicted compositions of Mars LIBS shots.'
-  figsize = (10, 6)
-
-  def get(self):
-    ds = self.get_dataset('LIBS', 'MSL ChemCam')
-    if ds is None:
-      page = '''
-      <body style="text-align:center;padding-top:25vh;font-size:larger">
-      Mars data is not available.<br /><a href="/">Go back</a></body>'''
-      return self.write(page)
-
-    # Get composition and numeric metadata (key, display_name) pairs
-    comp_pairs = sorted(ds.metadata_names((CompositionMetadata,)))
-    num_pairs = sorted(ds.metadata_names((NumericMetadata,)))
-
-    html_parts, init_js, collect_js = ds.filter_ui()
-    self.render(ds=ds, comp_pairs=comp_pairs, num_pairs=num_pairs,
-                html_parts=html_parts, init_js=init_js,
-                collect_js=collect_js)
-
-
 class PeakFitPage(Subpage):
   template = 'peakfit.html'
   title = 'Peak Fitting'
@@ -202,7 +178,6 @@ routes = [
     (r'/explorer', DataExplorerPage),
     (r'/baseline', BaselinePage),
     (r'/search', SearcherPage),
-    (r'/compositions', CompositionsPage),
     (r'/peakfit', PeakFitPage),
     (r'/login', LoginPage),
     (r'/predict', PredictionPage),

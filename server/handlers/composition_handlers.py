@@ -6,7 +6,6 @@ import scipy.stats
 from scipy import odr
 from tornado.escape import json_encode
 
-from ..web_datasets import DATASETS
 from .base import BaseHandler
 
 
@@ -14,7 +13,9 @@ class CompositionPlotHandler(BaseHandler):
   def get(self, fignum):
     '''Downloads plot data as text.'''
     fig_data = self.get_fig_data(int(fignum))
-    if fig_data is None:
+    ds = self.get_dataset(self.get_argument('ds_kind'),
+                          self.get_argument('ds_name'))
+    if fig_data is None or ds is None or fig_data.last_plot != 'compositions':
       self.write('Oops, something went wrong. Try again?')
       return
 
@@ -35,7 +36,7 @@ class CompositionPlotHandler(BaseHandler):
       xlabel = title + ': ' + xlabel
       ylabel = title + ': ' + ylabel
 
-    ds = DATASETS['LIBS']['MSL ChemCam']
+    # TODO: remove ChemCam-specific stuff here
     mask = fig_data.filter_mask[ds]
     sols = ds.metadata['sol'].get_array(mask)
     locs = ds.metadata['loc'].get_array(mask)
@@ -61,9 +62,11 @@ class CompositionPlotHandler(BaseHandler):
 
   def post(self):
     fig_data = self.get_fig_data()
-    if fig_data is None:
+    ds = self.get_dataset(self.get_argument('ds_kind'),
+                          self.get_argument('ds_name'))
+    if fig_data is None or ds is None:
       return
-    ds = DATASETS['LIBS']['MSL ChemCam']
+
     do_fit = bool(int(self.get_argument('do_fit')))
     use_mols = bool(int(self.get_argument('use_mols')))
     x_input = self.get_argument('x_comps')
@@ -78,8 +81,10 @@ class CompositionPlotHandler(BaseHandler):
     use_group_name = len(set(k[0] for k in (x_keys + y_keys))) > 1
     do_sum = x_keys and y_keys
     mask = fig_data.filter_mask[ds]
-    x_data, x_labels = comps_with_labels(ds, mask, x_keys, use_group_name, use_mols, do_sum)
-    y_data, y_labels = comps_with_labels(ds, mask, y_keys, use_group_name, use_mols, do_sum)
+    x_data, x_labels = comps_with_labels(ds, mask, x_keys, use_group_name,
+                                         use_mols, do_sum)
+    y_data, y_labels = comps_with_labels(ds, mask, y_keys, use_group_name,
+                                         use_mols, do_sum)
 
     if do_fit:
       # handle NaNs
@@ -155,12 +160,13 @@ class CompositionPlotHandler(BaseHandler):
 
     # draw!
     fig_data.manager.canvas.draw()
+    fig_data.last_plot = 'compositions'
 
     # respond with fit parameters and zoom info
     results['zoom'] = (xlim[0], xlim[1], ylim[0], ylim[1])
     return self.write(json_encode(results))
 
-
+"""
 class CompositionBatchHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
@@ -191,6 +197,7 @@ class CompositionBatchHandler(BaseHandler):
 
     # filter results by the passed arguments
     # TODO
+"""
 
 
 def comps_with_labels(ds, mask, comp_keys, use_group_name=True, use_mols=True,

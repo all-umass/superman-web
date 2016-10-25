@@ -4,7 +4,7 @@ import tornado.web
 from matplotlib import cm, rcParams
 
 from .base import BaseHandler
-from ..web_datasets import DATASETS
+from ..web_datasets import DATASETS, CompositionMetadata, NumericMetadata
 
 bad_cmaps = set(('gist_gray', 'gist_yarg', 'binary'))
 cmaps = sorted(
@@ -72,6 +72,21 @@ class DatasetPlotOptionsHandler(DatasetHandler):
                        default_lw=rcParams['lines.linewidth'])
 
 
+class DatasetCompositionOptionsHandler(DatasetHandler):
+  def post(self):
+    all_ds = self.get_all_ds()
+    if len(all_ds) != 1:
+      return self.write('This only works for 1 dataset at a time.')
+    ds, = all_ds
+    logging.info('Generating composotion options HTML for: %s', ds)
+
+    # Get composition and numeric metadata (key, display_name) pairs
+    comp_pairs = sorted(ds.metadata_names((CompositionMetadata,)))
+    num_pairs = sorted(ds.metadata_names((NumericMetadata,)))
+    return self.render('_comp_options_table.html', ds=ds,
+                       comp_pairs=comp_pairs, num_pairs=num_pairs)
+
+
 class DatasetRemovalHandler(DatasetHandler):
   def post(self):
     ds = self.get_ds()
@@ -86,6 +101,7 @@ routes = [
     (r'/_dataset_selector', DatasetSelectorHandler),
     (r'/_dataset_filterer', DatasetFiltererHandler),
     (r'/_dataset_plot_options', DatasetPlotOptionsHandler),
+    (r'/_dataset_comp_options', DatasetCompositionOptionsHandler),
     (r'/_dataset_remover', DatasetRemovalHandler),
     (r'/refresh', RefreshHandler),
 ]

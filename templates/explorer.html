@@ -55,6 +55,14 @@
 }
 .plot_options > div { padding-bottom: 1em; }
 
+/* Composition stuff */
+#ds_comp_options_container { display: inline-block; }
+#fit_info { display: inline-block; vertical-align: top; }
+#fit_info caption { border-bottom: 1px solid black; font-weight: bold; }
+#fit_info td:first-child { border-right: 1px solid black; font-weight: bold; }
+#fit_info td:last-child { text-align: right; }
+#fit_info th { padding-top: 0.5em; }
+
 /* Hacks to disable the float: left from .ds_table */
 #blr_options { display: inline-block; float: none; }
 #pp_options { display: inline-block; float: none; }
@@ -62,6 +70,20 @@
 </style>
 
 <script type='text/javascript'>
+function toggle_collapse(elt, selectors) {
+  $(elt).parent().nextAll(selectors).toggle();
+  $(elt).toggleClass('up_chevron down_chevron');
+}
+function click_ds_kind(elt) {
+  var nav = $(elt);
+  if (nav.hasClass('active')) return;
+  nav.siblings('.active').removeClass('active');
+  nav.addClass('active');
+  var kind = nav.text();
+  $('.ds_select.active').removeClass('active');
+  $('.ds_select.' + kind).addClass('active');
+  window.history.pushState(kind, '', 'explorer?ds_kind=' + kind);
+}
 function collect_ds_info() {
   var ds_info = {name: [], kind: []};
   $('.ds_select.active > input:checked').each(function(i,x){
@@ -70,10 +92,6 @@ function collect_ds_info() {
     ds_info.kind.push(parts[1]);
   });
   return ds_info;
-}
-function toggle_collapse(elt, selectors) {
-  $(elt).parent().nextAll(selectors).toggle();
-  $(elt).toggleClass('up_chevron down_chevron');
 }
 function load_ds_filters() {
   var ds_info = collect_ds_info();
@@ -85,13 +103,18 @@ function load_ds_filters() {
       .load('/_dataset_filterer', {name:ds_info.name[i],kind:ds_info.kind[i]});
   }
   var plot_options = $('#ds_plot_options_container');
+  var comp_options = $('#ds_comp_options_container');
   if (num_ds > 0) {
     plot_options.load(
       '/_dataset_plot_options', ds_info,
       function() { $('#dl_metadata').chosen({search_contains: true}); }
     );
+    comp_options.load('/_dataset_comp_options', ds_info, function() {
+      $('#x_comp_options,#y_comp_options').chosen();
+    });
   } else {
     plot_options.empty();
+    comp_options.empty();
   }
 }
 function changed(kind, val) {
@@ -141,7 +164,37 @@ function do_filtered_plot() {
   var cbs = make_post_callbacks('#plot_button>.dots');
   $.post('/_filterplot', post_data, cbs['success'], 'json').fail(cbs['fail']);
 }
-function download_data() {
+function plot_compositions() {
+  var xc = $('#x_comp_options option:selected').map(
+    function(){return this.value;}).toArray();
+  var yc = $('#y_comp_options option:selected').map(
+    function(){return this.value;}).toArray();
+  if (xc.length + yc.length == 0) {
+    alert('Please select at least one composition to plot.');
+    return;
+  }
+  var ds_info = collect_ds_info();
+  var post_data = {
+    x_comps: xc.join('+'),
+    y_comps: yc.join('+'),
+    color_by: $('#color_by > option:selected').val(),
+    do_fit: +$('#do_fit').is(':checked'),
+    use_mols: +$('#use_mols').is(':checked'),
+    fignum: fig.id,
+    ds_kind: ds_info.kind[0],
+    ds_name: ds_info.name[0],
+  };
+  $.post('/_plot_compositions', post_data, function(data, status) {
+    if (status !== 'success') return;
+    $('#fit_info td:last-child span').empty()
+    update_zoom_ctrl(data['zoom']);
+    delete data['zoom'];
+    for (key in data) {
+      $('#fit_' + key).text(data[key].toFixed(3));
+    }
+  }, 'json');
+}
+function download_spectrum_data() {
   var ds_info = collect_ds_info();
   var args = {
     ds_name: ds_info.name,
@@ -149,18 +202,12 @@ function download_data() {
     meta_keys: $('#dl_metadata option:selected').map(
                 function(){return this.value;}).toArray(),
   };
-  var url = '/'+fig.id+'/spectra.csv?' + $.param(args);
-  window.open(url, '_blank');
+  window.open('/'+fig.id+'/spectra.csv?' + $.param(args), '_blank');
 }
-function click_ds_kind(elt) {
-  var nav = $(elt);
-  if (nav.hasClass('active')) return;
-  nav.siblings('.active').removeClass('active');
-  nav.addClass('active');
-  var kind = nav.text();
-  $('.ds_select.active').removeClass('active');
-  $('.ds_select.' + kind).addClass('active');
-  window.history.pushState(kind, '', 'explorer?ds_kind=' + kind);
+function download_composition_data() {
+  var ds_info = collect_ds_info();
+  var args = { ds_name: ds_info.name[0], ds_kind: ds_info.kind[0] };
+  window.open('/'+fig.id+'/compositions.csv?' + $.param(args), '_blank');
 }
 $(document).ready(function(){
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
@@ -217,11 +264,38 @@ $(document).ready(function(){
 </div>
 
 <div class="horiz_section">
-<div class='section_heading'>Plot
+<div class='section_heading'>Plot Spectra
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'div');"></button>
 </div>
 <div id="ds_plot_options_container"></div>
+</div>
+
+<div class="horiz_section">
+<div class='section_heading'>Plot Compositions
+<button class="collapse up_chevron"
+  onclick="toggle_collapse(this, 'div,table');"></button>
+</div>
+<div id="ds_comp_options_container"></div>
+<table id="fit_info">
+<caption>Fit parameters</caption>
+<tr><td>R&#0178;</td><td><span id="fit_rval"></span></td></tr>
+<tr><td>slope</td>
+    <td><span id="fit_slope"></span> &plusmn;
+        <span id="fit_slope_err"></span></td></tr>
+<tr><td>Y int.</td>
+    <td><span id="fit_yint"></span> &plusmn;
+        <span id="fit_yint_err"></span></td></tr>
+<tr><td>X int.</td>
+    <td><span id="fit_xint"></span> &plusmn;
+        <span id="fit_xint_err"></span></td></tr>
+<tr><th colspan=2>
+<button class="needs_plot" disabled onclick="download_composition_data();">
+Download compositions</button></th></tr>
+</table>
+</div>
+
+<div class="horiz_section">
 <div id="figure"></div>
 {% include '_zoom_control.html' %}
 </div>

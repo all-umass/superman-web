@@ -47,7 +47,7 @@ class FilterPlotHandler(BaseHandler):
     if fig_data is None:
       self.write('Oops, something went wrong. Try again?')
       return
-    if fig_data.explorer_data is None:
+    if fig_data.explorer_data is None or fig_data.last_plot != 'filterplot':
       self.write('No plotted data to download.')
       return
 
@@ -184,6 +184,8 @@ class FilterPlotHandler(BaseHandler):
 
     # draw it, then return the axis limits
     fig_data.manager.canvas.draw()
+    fig_data.last_plot = 'filterplot'
+
     xmin,xmax = ax.get_xlim()
     ymin,ymax = ax.get_ylim()
     return self.write(json_encode([xmin,xmax,ymin,ymax]))

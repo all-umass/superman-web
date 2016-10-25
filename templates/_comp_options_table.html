@@ -1,0 +1,41 @@
+<table class='ds_table plot_data' style="table-layout: fixed;">
+
+<!-- x axis options -->
+<tr><td class="vcenter bold">X axis</td><td>
+<select id='x_comp_options' multiple>
+{% for key, name in comp_pairs %}
+  <option value="{{key}}">{{name}}</option>
+{% end %}
+</select>
+</td></tr>
+
+<!-- y axis options -->
+<tr><td class="vcenter bold">Y axis</td><td>
+<select id='y_comp_options' multiple>
+{% for key, name in comp_pairs %}
+  <option value="{{key}}">{{name}}</option>
+{% end %}
+</select>
+</td></tr>
+
+<!-- color options -->
+<tr><td class="bold">Color by</td>
+<td><select id="color_by">
+  <option value="">None</option>
+{% for key, name in num_pairs %}
+  <option value="{{key}}">{{name}}</option>
+{% end %}
+</select></td></tr>
+
+<!-- misc options -->
+<tr><td colspan=2 style="text-align: center;">
+<label>Linear fit:<input type="checkbox" id="do_fit" checked></label>
+<label>Convert to mols:<input type="checkbox" id="use_mols" checked></label>
+</td></tr>
+
+<!-- plot button -->
+<tr id='last_row'><td colspan=2>
+  <button class="needs_filter" onclick="plot_compositions();"
+   disabled>Plot compositions</button>
+</td></tr>
+</table>
