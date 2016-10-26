@@ -64,7 +64,11 @@ class DatasetImportHandler(BaseHandler):
     for subfile in zf.infolist():
       if subfile.file_size <= 0:
         continue
+      # ignore directory prefixes
       fname = os.path.basename(subfile.filename)
+      # ignore hidden files
+      if fname.startswith('.'):
+        continue
       # read and wrap, because the ZipExtFile object isn't seekable
       sub_fh = BytesIO(zf.open(subfile).read())
       try:
