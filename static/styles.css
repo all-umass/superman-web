@@ -19,12 +19,18 @@ tr:last-child button { width: 100% }
   margin: 0.25em;
 }
 
-.ds_filters { float: left; margin: 0 1em 0.5em 1em; text-align: center; }
-.ds_filters > legend { font-weight: bold; text-align: center; }
-.ds_filters > button { text-align: center; width: 100%; }
+.ds_filters {
+  border: 2px groove;
+  margin: 0 1em 0.5em 1em;
+  text-align: center;
+}
+.ds_filters > legend { font-weight: bold; }
+.ds_filters > button { width: 100%; }
 .ds_filters > .filters {
-  max-height: 20em;
+  max-height: 21em;
+  min-height: 5em;
   overflow: auto;
+  resize: vertical;
   padding: 0.25em 0.8em;
 }
 .ds_filters .filter {
