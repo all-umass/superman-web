@@ -81,7 +81,6 @@ function click_ds_kind(elt) {
   var kind = nav.text();
   $('.ds_select.active').removeClass('active');
   $('.ds_select.' + kind).addClass('active');
-  window.history.pushState(kind, '', 'explorer?ds_kind=' + kind);
 }
 function collect_ds_info() {
   var ds_info = {name: [], kind: []};
@@ -115,9 +114,12 @@ function load_ds_filters() {
         $('#x_comp_options,#y_comp_options').chosen();
       }
     });
+    var kind = ds_info.kind[0];
+    window.history.pushState(kind, '', 'explorer?ds_kind=' + kind);
   } else {
     plot_options.empty();
     comp_options.empty();
+    window.history.pushState('', '', 'explorer');
   }
 }
 function changed(kind, val) {
