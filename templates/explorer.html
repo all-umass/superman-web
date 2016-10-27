@@ -104,12 +104,16 @@ function load_ds_filters() {
   var plot_options = $('#ds_plot_options_container');
   var comp_options = $('#ds_comp_options_container');
   if (num_ds > 0) {
-    plot_options.load(
-      '/_dataset_plot_options', ds_info,
-      function() { $('#dl_metadata').chosen({search_contains: true}); }
-    );
+    plot_options.load('/_dataset_plot_options', ds_info, function() {
+      $('#dl_metadata').chosen({search_contains: true});
+    });
     comp_options.load('/_dataset_comp_options', ds_info, function() {
-      $('#x_comp_options,#y_comp_options').chosen();
+      // if no comps are loaded, hide the "Plot Compositions" section
+      if ($('#x_comp_options option').length === 0) {
+        $('#ds_comp_options_container').prev().children('.up_chevron').click();
+      } else {
+        $('#x_comp_options,#y_comp_options').chosen();
+      }
     });
   } else {
     plot_options.empty();
