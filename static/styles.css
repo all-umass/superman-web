@@ -99,9 +99,8 @@ tr:last-child button { width: 100% }
 #figure .ui-icon {
   background-image: url("_static/jquery/css/themes/base/images/ui-icons_222222_256x240.png");
 }
-#figure .mpl-message {
-  float: right;
-}
+#figure>div>div:last-child { text-align: left; }
+#figure .mpl-message { padding-left: 1em; }
 
 #figure_controls {
   display: inline-block;
