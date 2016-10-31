@@ -243,6 +243,14 @@ def load_mhc_libs(ds, data_dir, master_file):
   target = meta['Target']
   # atmosphere = meta['Atmosphere'] # only 1 unique val
   # dist = meta['DistToTarget'] # same
+  projects = meta['Projects']
+  exploded_projects = [set(p.split(',')) for p in projects]
+  all_projects = set.union(*exploded_projects)
+  all_projects.discard('')
+  proj_meta = {}
+  for p in sorted(all_projects):
+    mask = np.array([(p in pp) for pp in exploded_projects], dtype=bool)
+    proj_meta[p] = BooleanMetadata(mask, display_name=p)
   logging.info('Making MHC LIBS metadata...')
   compositions = {}
   for key in meta.files:
@@ -261,6 +269,7 @@ def load_mhc_libs(ds, data_dir, master_file):
               powers=LookupMetadata(power, 'Laser Power'),
               # atmospheres=LookupMetadata(atmosphere, 'Atmosphere'),
               # dists=LookupMetadata(dist, 'Distance to Target'),
+              **proj_meta
               )
   logging.info('Finished MHC LIBS setup.')
   return True
