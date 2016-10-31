@@ -78,13 +78,25 @@ class DatasetCompositionOptionsHandler(DatasetHandler):
     if len(all_ds) != 1:
       return self.write('This only works for 1 dataset at a time.')
     ds, = all_ds
-    logging.info('Generating composotion options HTML for: %s', ds)
+    logging.info('Generating composition options HTML for: %s', ds)
 
     # Get composition and numeric metadata (key, display_name) pairs
     comp_pairs = sorted(ds.metadata_names((CompositionMetadata,)))
     num_pairs = sorted(ds.metadata_names((NumericMetadata,)))
     return self.render('_compositions.html', ds=ds,
                        comp_pairs=comp_pairs, num_pairs=num_pairs)
+
+
+class DatasetPredictionOptionsHandler(DatasetHandler):
+  def post(self):
+    all_ds = self.get_all_ds()
+    if len(all_ds) != 1:
+      return self.write('This only works for 1 dataset at a time.')
+    ds, = all_ds
+    logging.info('Generating prediction options HTML for: %s', ds)
+
+    pairs = sorted(ds.metadata_names((NumericMetadata, CompositionMetadata)))
+    return self.render('_predictions.html', ds=ds, meta_pairs=pairs)
 
 
 class DatasetRemovalHandler(DatasetHandler):
@@ -102,6 +114,7 @@ routes = [
     (r'/_dataset_filterer', DatasetFiltererHandler),
     (r'/_dataset_plot_options', DatasetPlotOptionsHandler),
     (r'/_dataset_comp_options', DatasetCompositionOptionsHandler),
+    (r'/_dataset_pred_options', DatasetPredictionOptionsHandler),
     (r'/_dataset_remover', DatasetRemovalHandler),
     (r'/refresh', RefreshHandler),
 ]

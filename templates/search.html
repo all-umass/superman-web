@@ -60,10 +60,9 @@ function do_search() {
     return
   }
   // make sure we run the final pp before searching
-  var query_table = $('#query_prep>.ds_table');
-  do_pp(collect_pp_args(query_table));
+  do_pp(collect_pp_args($('#query_prep>table')));
   // collect search params
-  var target_table = $('#target_prep>.ds_table');
+  var target_table = $('#target_prep>table');
   var post_data = {
     target_name: parts[0], target_kind: parts[1],
     pp: collect_pp_args(target_table),
@@ -85,7 +84,7 @@ function do_search() {
   });
 }
 function do_compare(names, target_name, target_kind) {
-  var target_table = $('#target_prep>.ds_table');
+  var target_table = $('#target_prep>table');
   var post_data = {
     compare: JSON.stringify(names),
     target_name: target_name,
@@ -102,7 +101,7 @@ function download_data() {
 $(document).ready(function(){
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
   // make the query prep interactive
-  var query_table = $('#query_prep>.ds_table');
+  var query_table = $('#query_prep>table');
   query_table.find('tr').slice(0,2).find('select,input').change(function(){
     do_baseline(query_table);
   });

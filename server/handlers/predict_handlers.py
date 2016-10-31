@@ -184,14 +184,6 @@ class RegressionModelHandler(BaseHandler):
     return self.write(json_encode(res))
 
 
-class GetPredictableMetadataHandler(DatasetHandler):
-  def post(self):
-    ds = self.get_ds()
-    names = ds.metadata_names(allowed_baseclasses=(NumericMetadata,
-                                                   CompositionMetadata))
-    return self.write(json_encode(list(names)))
-
-
 class _PLS(object):
   @staticmethod
   def load(fh):
@@ -266,7 +258,6 @@ class PLS2(_PLS):
 
 
 routes = [
-    (r'/_predictable', GetPredictableMetadataHandler),
     (r'/_run_model', RegressionModelHandler),
     (r'/([0-9]+)/pls_predictions\.csv', RegressionModelHandler),
     (r'/_load_model', ModelIOHandler),

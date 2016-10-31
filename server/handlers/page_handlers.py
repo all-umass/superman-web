@@ -8,7 +8,6 @@ from collections import defaultdict
 from superman.baseline import BL_CLASSES
 
 from .base import BaseHandler
-from ..web_datasets import CompositionMetadata, NumericMetadata
 
 MPL_JS = sorted(os.listdir(os.path.join(matplotlib.__path__[0],
                                         'backends/web_backend/jquery/js')))
@@ -98,7 +97,8 @@ class DataExplorerPage(Subpage):
     ds_tree = defaultdict(dict)
     for ds in self.all_datasets():
       ds_tree[ds.kind][ds.name] = hash(ds)
-    self.render(datasets=ds_tree, ds_kind=self.get_argument('ds_kind', ''),
+    self.render(datasets=ds_tree, logged_in=(self.current_user is not None),
+                ds_kind=self.get_argument('ds_kind', ''),
                 ds_name=self.get_argument('ds_name', ''), **blr_kwargs)
 
 
@@ -139,20 +139,6 @@ class PeakFitPage(Subpage):
     self.render(datasets=self.all_datasets(), **blr_kwargs)
 
 
-class PredictionPage(Subpage):
-  template = 'predict.html'
-  title = 'PLS Prediction'
-  description = 'Run PLS regression to build predictive models.'
-  figsize = (8, 6)
-  public = False
-
-  @tornado.web.authenticated
-  def get(self):
-    all_ds = [ds for ds in self.all_datasets()
-              if any(ds.metadata_names((CompositionMetadata,NumericMetadata)))]
-    self.render(datasets=all_ds, **blr_kwargs)
-
-
 class DatasetImportPage(Subpage):
   template = 'import.html'
   title = 'Dataset Import'
@@ -180,7 +166,6 @@ routes = [
     (r'/search', SearcherPage),
     (r'/peakfit', PeakFitPage),
     (r'/login', LoginPage),
-    (r'/predict', PredictionPage),
     (r'/import', DatasetImportPage),
     (r'/debug', DebugPage),
 ]

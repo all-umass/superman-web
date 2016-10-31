@@ -1,0 +1,55 @@
+<table class="flow">
+<caption>Values to Predict</caption>
+<tr><td>
+<select id="target_meta" data-placeholder="Choose variables" multiple>
+{% for key, name in meta_pairs %}
+  <option value="{{key}}">{{name}}</option>
+{% end %}
+</select>
+<span class="err_msg">Select at least one.</span>
+</td></tr></table>
+
+<table class="ds_table nofloat_ds_table aligned_table">
+<caption>PLS Regression</caption>
+<tr class="uline">
+<td class="rline">
+  <button disabled class="needs_filter" onclick="run_model(this, true);">
+  Train<span class="wait">ing</span> Model<span class="wait">...</span></button>
+</td><td>
+  <label><input type="number" id="pls_comps" min=1 max=1000 step=1 value=6 />
+  components</label>
+  <select id="pls_kind">
+    <option value="pls1" selected>Univariate (PLS-1)</option>
+    <option value="pls2">Multivariate (PLS-2)</option>
+  </select>
+</td>
+</tr><tr class="uline">
+<td class="rline">
+  <button disabled class="needs_filter" onclick="load_model(this);">
+  Load<span class="wait">ing</span> Model<span class="wait">...</span></button>
+</td><td>
+  <input type="file" id="modelfile" />
+  <div id="load_model_failed"></div>
+</td></tr>
+<tr class="uline"><td class="rline">
+  <button disabled class="needs_model" onclick="run_model(this, false);">
+  Run<span class="wait">ning</span> Predictions<span class="wait">...</span></button>
+</td><td>
+  <label><input type="number" id="pls_folds" min=1 max=1 step=1 value=1 />
+  cross-validation folds</label>
+</td></tr>
+<tr><td colspan=2>
+<button disabled class="needs_model" onclick="download_preds();">Download Predictions</button>
+</td></tr></table>
+
+<table class="flow">
+<caption>Current&nbsp;Model</caption>
+<tr><td id="model_info">None</td></tr>
+<tr><td><button disabled class="needs_model"
+                onclick="download_model();">Download</button>
+</td></tr></table>
+
+<table id="model_error">
+  <thead><tr><th>Variable</th><th>R²</th><th>RMSE</th></tr></thead>
+  <tbody></tbody>
+</table>

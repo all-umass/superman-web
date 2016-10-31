@@ -212,6 +212,7 @@ def comps_with_labels(ds, mask, comp_keys, use_group_name=True, use_mols=True,
     m2 = m1.comps[k2]
     name = m2.display_name(k2)
     if use_mols:
+      # TODO: handle case where name not in MOL_DATA
       factor, name = MOL_DATA[name]
     else:
       factor = 1

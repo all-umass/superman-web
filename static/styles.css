@@ -8,8 +8,8 @@ body { padding: 1.5em; }
 .small { font-size: 75%; vertical-align: super; }
 .bold { font-weight: bold; }
 tr:last-child button { width: 100% }
-.data_input { display: inline-block; }
 #selector { display: inline-flex; padding-right: 1em; min-width: 5em; }
+.flow { display: inline-block; vertical-align: top; }
 .box {
   border: 1px solid black;
   border-radius: 1em;
