@@ -83,7 +83,7 @@ class DatasetCompositionOptionsHandler(DatasetHandler):
     # Get composition and numeric metadata (key, display_name) pairs
     comp_pairs = sorted(ds.metadata_names((CompositionMetadata,)))
     num_pairs = sorted(ds.metadata_names((NumericMetadata,)))
-    return self.render('_comp_options_table.html', ds=ds,
+    return self.render('_compositions.html', ds=ds,
                        comp_pairs=comp_pairs, num_pairs=num_pairs)
 
 
