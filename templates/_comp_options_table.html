@@ -39,3 +39,20 @@
    disabled>Plot compositions</button>
 </td></tr>
 </table>
+
+<table id="fit_info">
+<caption>Fit parameters</caption>
+<tr><td>R&#0178;</td><td><span id="fit_rval"></span></td></tr>
+<tr><td>slope</td>
+    <td><span id="fit_slope"></span> &plusmn;
+        <span id="fit_slope_err"></span></td></tr>
+<tr><td>Y int.</td>
+    <td><span id="fit_yint"></span> &plusmn;
+        <span id="fit_yint_err"></span></td></tr>
+<tr><td>X int.</td>
+    <td><span id="fit_xint"></span> &plusmn;
+        <span id="fit_xint_err"></span></td></tr>
+<tr><th colspan=2>
+<button class="needs_plot" disabled onclick="download_composition_data();">
+Download compositions</button></th></tr>
+</table>

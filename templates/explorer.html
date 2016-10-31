@@ -60,7 +60,7 @@
 .plot_options > div { padding-bottom: 1em; }
 
 /* Composition stuff */
-#ds_comp_options_container { display: inline-block; }
+#ds_compositions_container { display: inline-block; }
 #fit_info { display: inline-block; vertical-align: top; }
 #fit_info caption { border-bottom: 1px solid black; font-weight: bold; }
 #fit_info td:first-child { border-right: 1px solid black; font-weight: bold; }
@@ -105,8 +105,8 @@ function load_ds_filters() {
       .appendTo(container)
       .load('/_dataset_filterer', {name:ds_info.name[i],kind:ds_info.kind[i]});
   }
-  var plot_options = $('#ds_plot_options_container');
-  var comp_options = $('#ds_comp_options_container');
+  var plot_options = $('#ds_plotting_container');
+  var comp_options = $('#ds_compositions_container');
   if (num_ds > 0) {
     plot_options.load('/_dataset_plot_options', ds_info, function() {
       $('#dl_metadata').chosen({search_contains: true});
@@ -114,7 +114,7 @@ function load_ds_filters() {
     comp_options.load('/_dataset_comp_options', ds_info, function() {
       // if no comps are loaded, hide the "Plot Compositions" section
       if ($('#x_comp_options option').length === 0) {
-        $('#ds_comp_options_container').prev().children('.up_chevron').click();
+        $('#ds_compositions_container').prev().children('.up_chevron').click();
       } else {
         $('#x_comp_options,#y_comp_options').chosen();
       }
@@ -278,31 +278,23 @@ $(document).ready(function(){
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'div');"></button>
 </div>
-<div id="ds_plot_options_container"></div>
+<div id="ds_plotting_container"></div>
 </div>
 
 <div class="horiz_section">
 <div class='section_heading'>Plot Compositions
 <button class="collapse up_chevron"
-  onclick="toggle_collapse(this, 'div,table');"></button>
+  onclick="toggle_collapse(this, 'div');"></button>
 </div>
-<div id="ds_comp_options_container"></div>
-<table id="fit_info">
-<caption>Fit parameters</caption>
-<tr><td>R&#0178;</td><td><span id="fit_rval"></span></td></tr>
-<tr><td>slope</td>
-    <td><span id="fit_slope"></span> &plusmn;
-        <span id="fit_slope_err"></span></td></tr>
-<tr><td>Y int.</td>
-    <td><span id="fit_yint"></span> &plusmn;
-        <span id="fit_yint_err"></span></td></tr>
-<tr><td>X int.</td>
-    <td><span id="fit_xint"></span> &plusmn;
-        <span id="fit_xint_err"></span></td></tr>
-<tr><th colspan=2>
-<button class="needs_plot" disabled onclick="download_composition_data();">
-Download compositions</button></th></tr>
-</table>
+<div id="ds_compositions_container"></div>
+</div>
+
+<div class="horiz_section">
+<div class='section_heading'>Train PLS Models
+<button class="collapse up_chevron"
+  onclick="toggle_collapse(this, 'div');"></button>
+</div>
+<div id="ds_prediction_container"></div>
 </div>
 
 <div class="horiz_section">
