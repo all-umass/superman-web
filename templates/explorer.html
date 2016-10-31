@@ -7,11 +7,11 @@
 .horiz_section {
   padding: 0.25em 1.5em;
   margin: 0 -1.5em;
-  background-color: #b4b2b3;
+  background-color: #abe3ff;
   text-align: center;
 }
 .horiz_section:nth-child(even) {
-  background-color: #e1dfe0;
+  background-color: #8ec0d8;
 }
 .section_heading {
   font-size: large;
@@ -20,14 +20,19 @@
 #ds_kind_choices { list-style-type: none; display: block; }
 #ds_kind_choices > li {
   display: inline-block;
-  padding: 6px 1em;
+  padding: 5px 1em;
   cursor: pointer;
   font-size: larger;
   font-weight: bold;
   background-color: #006fa7;
+  border: 1px outset;
 }
-#ds_kind_choices > li.active { background-color: #ee1c26; cursor: default; }
 #ds_kind_choices > li:hover { background-color: #f2c3b2; }
+#ds_kind_choices > li.active {
+  background-color: #ee1c26;
+  cursor: default;
+  border: none;
+}
 #ds_kind_choices > li.active:hover { background-color: #ee1c26; }
 .ds_select { display: none; cursor: default; margin-top: 0.25em; }
 .ds_select.active { display: inline-block; }
@@ -35,7 +40,7 @@
   display: inline-block;
   cursor: pointer;
   padding: 0.5em;
-  background-color: #005189;
+  background-color: #4992c4;
   font-weight: bold;
 }
 .ds_select > input { display: none; }
@@ -226,7 +231,7 @@ $(document).ready(function(){
 {% end %}
 
 {% block body_matter %}
-<div id="easter_egg" onclick="$('body,div.box').toggleClass('darby');"></div>
+<div id="easter_egg" onclick="$('body,.horiz_section').toggleClass('darby');"></div>
 
 <div class="horiz_section">
 <div class='section_heading'>Select
