@@ -36,11 +36,13 @@ $(document).ready(function(){
 </script>
 <style type="text/css">
 p { padding: 1em 0; }
+.flow { display: inline-block; vertical-align: top; }
+#input_table td { padding: 0.3em 1em 0.3em 1em; }
+#input_table input[type="number"] { width: 4em; }
+#input_table tr:last-child button { width: 100%; }
 .instructions {
-  display: inline-block;
   border-radius: 5px;
   padding: 0.5em;
-  vertical-align: top;
   background-color: lightgreen;
 }
 .instructions caption { font-style: italic; }
@@ -51,7 +53,6 @@ p { padding: 1em 0; }
 .csv td::after { content: ","; }
 .csv td:last-child::after { content: ""; }
 .wait { display: none; }
-#metadata_instructions { display: none; }
 </style>
 {% end %}
 {% block body_matter %}
@@ -60,8 +61,8 @@ Upload a new dataset by providing files for spectrum data and
 (optionally) associated metadata.
 </p>
 
-<form enctype="multipart/form-data" onsubmit="return false;">
-<table class="ds_table">
+<form enctype="multipart/form-data" onsubmit="return false;" class="flow">
+<table id="input_table">
 <tr><td>Dataset name</td>
     <td><input type="text" name="ds_name" required /></td></tr>
 <tr><td>Spectrum kind</td><td><select id="ds_kind">
@@ -72,6 +73,11 @@ Upload a new dataset by providing files for spectrum data and
 <tr id="spectrum_row">
     <td>Spectrum data</td>
     <td><input type="file" name="spectra" required /></td></tr>
+<tr><td>Resample (optional)</td>
+<td><input type="number" name="lb" placeholder="min" step="any"> to
+    <input type="number" name="ub" placeholder="max" step="any"> by
+    <input type="number" name="step" placeholder="step" step="any">
+</td></tr>
 <tr id="metadata_row">
     <td>Metadata</td>
     <td><input type="file" name="metadata" /></td></tr>
@@ -82,10 +88,10 @@ Upload a new dataset by providing files for spectrum data and
 <div id="import_result"></div>
 </td></tr></table></form>
 
-<div id="spectrum_instructions">
+<div id="spectrum_instructions" class="flow">
 Upload either a CSV file of spectrum intensities sampled at shared wavelengths,
 or a ZIP archive of individual spectrum files.<br />
-<table class="csv instructions">
+<table class="csv instructions flow">
 <caption>CSV format for spectrum data</caption>
 <tr><th>wave</th><th>sample1</th><th>sample2</th><th>sample3</th></tr>
 <tr><td>23.0</td><td>3</td><td>1</td><td>2</td></tr>
@@ -96,7 +102,7 @@ or a ZIP archive of individual spectrum files.<br />
 <tr><td>25.5</td><td>4</td><td>5</td><td>4</td></tr>
 </table>
 <span style="line-height: 8em;">&mdash; OR &mdash;</span>
-<table class="instructions">
+<table class="instructions flow">
 <caption>ZIP archive of spectrum files</caption>
 <tr><th>Filename</th><th>File Type</th></tr>
 <tr><td>sample1</td><td>[OPUS file]</td></tr>
@@ -105,10 +111,10 @@ or a ZIP archive of individual spectrum files.<br />
 </table>
 </div>
 
-<div id="metadata_instructions">
+<div id="metadata_instructions" class="flow" style="display: none;">
 Optionally upload a CSV file of metadata, with one row per spectrum.<br />
 The first column must correspond exactly with the spectrum names.<br />
-<table class="csv instructions">
+<table class="csv instructions flow">
 <caption>CSV format for metadata</caption>
 <tr><th>pkey</th><th>% pure</th><th>treatment</th></tr>
 <tr><td>sample1</td><td>34.5</td><td>A</td></tr>

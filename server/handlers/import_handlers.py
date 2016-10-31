@@ -18,6 +18,11 @@ class DatasetImportHandler(BaseHandler):
     ds_name = self.get_argument('ds_name')
     ds_kind = self.get_argument('ds_kind')
 
+    resample = (self.get_argument('lb', ''), self.get_argument('ub', ''),
+                self.get_argument('step', ''))
+    if not any(resample):
+      resample = None
+
     if ds_kind not in DATASETS:
       return self._raise_error(400, 'Invalid dataset kind.',
                                'Invalid ds_kind: %r' % ds_kind)
@@ -39,11 +44,13 @@ class DatasetImportHandler(BaseHandler):
     if is_zipfile(fh):
       # interpret this as a ZIP of csv files
       fh.seek(0)
-      success = self._traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys)
+      success = self._traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys,
+                              resample)
     else:
       # this is one single csv file with all spectra in it
       fh.seek(0)
-      success = self._vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys)
+      success = self._vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys,
+                                resample)
 
     if success:
       self.write('/explorer?ds_kind=%s&ds_name=%s' % (
@@ -58,7 +65,7 @@ class DatasetImportHandler(BaseHandler):
     self.finish(user_msg)
     return False
 
-  def _traj_ds(self, fh, ds_name, ds_kind, meta_kwargs, meta_pkeys):
+  def _traj_ds(self, fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample):
     zf = ZipFile(fh)
     traj_data = {}
     for subfile in zf.infolist():
@@ -72,6 +79,7 @@ class DatasetImportHandler(BaseHandler):
       # read and wrap, because the ZipExtFile object isn't seekable
       sub_fh = BytesIO(zf.open(subfile).read())
       try:
+        # TODO: ensure each traj has wavelengths in increasing order
         traj_data[fname] = parse_spectrum(sub_fh)
       except Exception as e:
         return self._raise_error(
@@ -91,17 +99,32 @@ class DatasetImportHandler(BaseHandler):
         if pkey not in traj_data:
           return self._raise_error(415, 'Failed: %r not in spectra.' % pkey)
 
-    def _load(ds):
-      ds.set_data(meta_pkeys, traj_data, **meta_kwargs)
-      ds.is_public = False
-      ds.user_added = True
-      ds.description = 'Added using the Dataset Import tool.'
-      return True
+    if resample is None:
+      _load = _make_loader_function(meta_pkeys, traj_data, **meta_kwargs)
+      WebTrajDataset(ds_name, ds_kind, _load)
+    else:
+      lb, ub, step = map(_maybe_float, resample)
+      waves = [t[:,0] for t in traj_data.values()]
+      if lb is None:
+        lb = max(w[0] for w in waves)
+      if ub is None:
+        ub = min(w[-1] for w in waves)
+      if step is None:
+        step = min(np.diff(w).min() for w in waves)
 
-    WebTrajDataset(ds_name, ds_kind, _load)
+      wave = np.arange(lb, ub + step/2, step, dtype=waves[0].dtype)
+      spectra = np.zeros((len(waves), len(wave)), dtype=wave.dtype)
+      for i, key in enumerate(meta_pkeys):
+        traj = traj_data[key]
+        spectra[i] = np.interp(wave, traj[:,0], traj[:,1])
+      pkey = PrimaryKeyMetadata(meta_pkeys)
+
+      _load = _make_loader_function(wave, spectra, pkey=pkey, **meta_kwargs)
+      WebVectorDataset(ds_name, ds_kind, _load)
+
     return True
 
-  def _vector_ds(self, fh, ds_name, ds_kind, meta_kwargs, meta_pkeys):
+  def _vector_ds(self, fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample):
     try:
       pkey = np.array(next(fh).strip().split(',')[1:])
       data = np.genfromtxt(fh, dtype=np.float32, delimiter=',', unpack=True)
@@ -110,6 +133,12 @@ class DatasetImportHandler(BaseHandler):
     except Exception as e:
       return self._raise_error(415, 'Unable to parse spectrum data CSV.',
                                'bad spectra file: %s' % e)
+
+    # cut out empty rows (where wave is NaN)
+    mask = np.isfinite(wave)
+    if np.count_nonzero(mask) != len(mask):
+      wave = wave[mask]
+      spectra = spectra[:, mask]
 
     if ds_kind == 'LIBS' and wave.shape != (6144,):
       return self._raise_error(415, 'Wrong number of channels for LIBS data.')
@@ -133,14 +162,33 @@ class DatasetImportHandler(BaseHandler):
     except AssertionError:  # XXX: convert this to a real error
       return self._raise_error(415, 'Primary keys not unique.')
 
-    # async loading machinery automatically registers us with DATASETS
-    def _load(ds):
-      ds.set_data(wave, spectra, pkey=pkey, **meta_kwargs)
-      ds.is_public = False
-      ds.user_added = True
-      ds.description = 'Added using the Dataset Import tool.'
-      return True
+    # make sure wave is in increasing order
+    order = np.argsort(wave)
+    if not np.array_equal(order, np.arange(len(wave))):
+      wave = wave[order]
+      spectra = spectra[:, order]
 
+    if resample is not None:
+      lb, ub, step = resample
+      lb = _maybe_float(lb, wave[0])
+      ub = _maybe_float(ub, wave[-1])
+      step = _maybe_float(step)
+      if step is not None:
+        new_wave = np.arange(lb, ub + step/2, step, dtype=wave.dtype)
+        new_spectra = np.zeros((len(spectra), len(new_wave)),
+                               dtype=spectra.dtype)
+        for i, y in enumerate(spectra):
+          new_spectra[i] = np.interp(new_wave, wave, y)
+        wave = new_wave
+        spectra = new_spectra
+      else:
+        lb_idx = np.searchsorted(wave, lb)
+        ub_idx = np.searchsorted(wave, ub, side='right')
+        spectra = spectra[:, lb_idx:ub_idx]
+        wave = wave[lb_idx:ub_idx]
+
+    # async loading machinery automatically registers us with DATASETS
+    _load = _make_loader_function(wave, spectra, pkey=pkey, **meta_kwargs)
     if ds_kind == 'LIBS':
       WebLIBSDataset(ds_name, _load)
     else:
@@ -178,6 +226,23 @@ class DatasetImportHandler(BaseHandler):
         m = LookupMetadata(x, display_name=name)
       meta_kwargs[key] = m
     return meta_kwargs, meta_pkeys
+
+
+def _maybe_float(x, default=None):
+  try:
+    return float(x)
+  except ValueError:
+    return default
+
+
+def _make_loader_function(*args, **kwargs):
+  def _load(ds):
+    ds.set_data(*args, **kwargs)
+    ds.is_public = False
+    ds.user_added = True
+    ds.description = 'Added using the Dataset Import tool.'
+    return True
+  return _load
 
 routes = [
     (r'/_import', DatasetImportHandler),
