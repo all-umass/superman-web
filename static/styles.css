@@ -27,7 +27,7 @@ tr:last-child button { width: 100% }
 .ds_filters > legend { font-weight: bold; }
 .ds_filters > button { width: 100%; }
 .ds_filters > .filters {
-  max-height: 21em;
+  height: 18em;
   min-height: 5em;
   overflow: auto;
   resize: vertical;
