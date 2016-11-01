@@ -71,14 +71,13 @@
 @keyframes flash { 50% { background-color: pink; } }
 .err_msg { display: none; color: red; }
 .wait { display: none; }
-#model_error { display: inline-block; padding: 0.25em 1em; vertical-align: top; }
+#model_error { padding: 0.25em 1em; margin: 0.25em auto; text-align: center; }
 #model_error thead { border-bottom: 1px solid black; font-weight: bold; }
 #model_error th { padding: 0 0.5em; }
 #model_error td { padding: 0 0.5em; text-align: right; }
 #model_error td:first-child { text-align: left; }
 #load_model_failed { display: none; text-align: center; color: red; }
-#pls_comps { width: 2em; }
-#pls_folds { width: 2em; }
+#ds_prediction_container input[type="number"] { width: 3em; }
 {% end %}
 
 /* Hacks to disable the float: left from .ds_table */
@@ -146,6 +145,9 @@ function load_ds_filters() {
     window.history.pushState('', '', 'explorer');
   }
 }
+function _value() {
+  return this.value;
+}
 function changed(kind, val) {
   $('td.'+val).hide();
   $('td.'+val+'.'+kind).show();
@@ -194,10 +196,8 @@ function do_filtered_plot() {
   $.post('/_filterplot', post_data, cbs['success'], 'json').fail(cbs['fail']);
 }
 function plot_compositions() {
-  var xc = $('#x_comp_options option:selected').map(
-    function(){return this.value;}).toArray();
-  var yc = $('#y_comp_options option:selected').map(
-    function(){return this.value;}).toArray();
+  var xc = $('#x_comp_options option:selected').map(_value).toArray();
+  var yc = $('#y_comp_options option:selected').map(_value).toArray();
   if (xc.length + yc.length == 0) {
     alert('Please select at least one composition to plot.');
     return;
@@ -224,8 +224,55 @@ function plot_compositions() {
   }, 'json');
 }
 {% if logged_in %}
-function run_model(btn, do_train) {
+function run_preds(btn) {
   var ds_info = collect_ds_info();
+  _run_model(btn, ds_info, false);
+}
+function make_model(btn) {
+  var ds_info = collect_ds_info();
+  var file_input = $('#modelfile')[0];
+  if (file_input.files.length > 0) {
+    _upload_model(btn, file_input, ds_info.kind[0]);
+  } else {
+    _run_model(btn, ds_info, true);
+  }
+}
+function _upload_model(btn, file_input, ds_kind) {
+  var f = file_input.files[0];
+  if (f.size > 5000000) {
+    $('#load_model_failed').text('File too big (max 5 MB)').show();
+    // flash the file input's enclosing <td>
+    var td = $(file_input).parent().css('animation', 'flash 1s');
+    setTimeout(function() { td.css('animation', ''); }, 1000);
+    return
+  }
+  var post_data = new FormData();
+  post_data.append('fignum', fig.id);
+  post_data.append('modelfile', f);
+  post_data.append('ds_kind', ds_kind);
+  var wait = $('.wait', btn).show();
+  $.ajax({
+    url: '/_load_model',
+    data: post_data,
+    processData: false,
+    contentType: false,
+    type: 'POST',
+    error: function(jqXHR, textStatus, errorThrown) {
+      wait.hide();
+      file_input.value = '';  // reset the input
+      $('#load_model_failed').text(jqXHR.responseText).show();
+    },
+    success: function(data) {
+      wait.hide();
+      $('#load_model_failed').hide();
+      file_input.value = '';  // reset the input
+      $('.needs_model').attr('disabled', false);
+      $('#model_info').html(JSON.parse(data).info);
+    }
+  });
+}
+function _run_model(btn, ds_info, do_train) {
+  var pred_vars = $('#target_meta option:selected').map(_value).toArray();
   var post_data = {
       ds_name: ds_info.name[0],
       ds_kind: ds_info.kind[0],
@@ -233,15 +280,13 @@ function run_model(btn, do_train) {
       do_train: +do_train,
       pp: collect_pp_args($('#pp_options')),
       pls_comps: +$('#pls_comps').val(),
-      pls_folds: +$('#pls_folds').val(),
-      pls_kind: $('#pls_kind option:selected').val(),
-      pred_meta: $('#target_meta option:selected').map(function(){
-        return this.value;
-      }).toArray(),
+      pls_kind: $('#pls_kind').val(),
+      pred_meta: pred_vars,
   };
   add_baseline_args($('#blr_options'), post_data);
+
   var msg = $('#target_meta').nextAll('.err_msg');
-  if (post_data.pred_meta.length == 0) {
+  if (pred_vars.length == 0) {
     msg.show('highlight');
     var box = $('#target_meta').closest('.box');
     box.css('animation', 'flash 1s');
@@ -264,51 +309,48 @@ function run_model(btn, do_train) {
     $('#model_info').html(data.info);
   }, 'json');
 }
-function load_model(btn) {
-  var elt = $('#modelfile')[0];
-  if (elt.files.length != 1) {
-    $('#load_model_failed').text('Choose a file to upload.').show();
-    // flash the file input
-    var td = $(elt).parent().css('animation', 'flash 1s');
-    setTimeout(function() { td.css('animation', ''); }, 1000);
-    return
-  }
-  var f = elt.files[0];
-  if (f.size > 5000000) {
-    $('#load_model_failed').text('File too big (max 5 MB)').show();
-    return
-  }
+function run_crossval(btn) {
   var ds_info = collect_ds_info();
-  var post_data = new FormData();
-  post_data.append('fignum', fig.id);
-  post_data.append('modelfile', f);
-  post_data.append('ds_kind', ds_info.kind[0]);
+  var pred_vars = $('#target_meta option:selected').map(_value).toArray();
+  var post_data = {
+      ds_name: ds_info.name[0],
+      ds_kind: ds_info.kind[0],
+      fignum: fig.id,
+      pp: collect_pp_args($('#pp_options')),
+      pls_kind: $('#pls_kind').val(),
+      pred_meta: pred_vars,
+      cv_folds: +$('#cv_folds').val(),
+      cv_min_comps: +$('#cv_min_comps').val(),
+      cv_max_comps: +$('#cv_max_comps').val(),
+  };
+  add_baseline_args($('#blr_options'), post_data);
+
+  var msg = $('#target_meta').nextAll('.err_msg');
+  if (pred_vars.length == 0) {
+    msg.show('highlight');
+    var box = $('#target_meta').closest('.box');
+    box.css('animation', 'flash 1s');
+    setTimeout(function() { box.css('animation', ''); }, 1000);
+    return;
+  } else {
+    msg.hide();
+  }
   var wait = $('.wait', btn).show();
-  $.ajax({
-    url: '/_load_model',
-    data: post_data,
-    processData: false,
-    contentType: false,
-    type: 'POST',
-    error: function(jqXHR, textStatus, errorThrown) {
-      wait.hide();
-      elt.value = '';  // reset the input
-      $('#load_model_failed').text(jqXHR.responseText).show();
-    },
-    success: function(data) {
-      wait.hide();
-      $('#load_model_failed').hide();
-      elt.value = '';  // reset the input
-      $('.needs_model').attr('disabled', false);
-      $('#model_info').html(JSON.parse(data).info);
-    }
-  });
+  $.post('/_run_model', post_data, function(){wait.hide();});
 }
-function download_preds() {
-  window.open('/'+fig.id+'/pls_predictions.csv', '_blank');
-}
-function download_model() {
-  window.open('/'+fig.id+'/pls_model.pkl', '_blank');
+function predict_download(btn) {
+  var dl_type = $(btn).next('select').val();
+  var dl_url = '/'+fig.id+'/pls_';
+  if (dl_type === 'preds') {
+    var ds_info = collect_ds_info();
+    dl_url += 'predictions.csv?' + $.param({ds_name: ds_info.name[0],
+                                            ds_kind: ds_info.kind[0]});
+  } else if (dl_type === 'pkl') {
+    dl_url += 'model.pkl';
+  } else {
+    dl_url += 'model.csv';
+  }
+  window.open(dl_url, '_blank');
 }
 {% end %}
 function download_spectrum_data() {
@@ -316,8 +358,7 @@ function download_spectrum_data() {
   var args = {
     ds_name: ds_info.name,
     ds_kind: ds_info.kind,
-    meta_keys: $('#dl_metadata option:selected').map(
-                function(){return this.value;}).toArray(),
+    meta_keys: $('#dl_metadata option:selected').map(_value).toArray(),
   };
   window.open('/'+fig.id+'/spectra.csv?' + $.param(args), '_blank');
 }

@@ -8,34 +8,56 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.externals.joblib.numpy_pickle import (
     load as load_pickle, dump as dump_pickle)
 from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.model_selection import GridSearchCV
 from tempfile import mkstemp
 from tornado.escape import json_encode
 
 from .base import BaseHandler
 from .baseline_handlers import ds_view_kwargs
-from .dataset_handlers import DatasetHandler
-from ..web_datasets import NumericMetadata, CompositionMetadata
 
 
-# TODO: provide a download for loadings/weights of model
 class ModelIOHandler(BaseHandler):
-  def get(self, fignum):
+  def get(self, fignum, ext):
     fig_data = self.get_fig_data(int(fignum))
     if fig_data is None:
       self.write('Oops, something went wrong. Try again?')
       return
 
+    model = fig_data.pred_model
+    if ext.lower() == 'pkl':
+      self._serve_pickle(model)
+    else:
+      self._serve_csv(model)
+
+  def _serve_pickle(self, pred_model):
     _, tmp_path = mkstemp()
-    fig_data.pred_model.save(tmp_path)
+    pred_model.save(tmp_path)
 
     fname = os.path.basename(self.request.path)
     self.set_header('Content-Type', 'application/octet-stream')
-    self.set_header('Content-Disposition',
-                    'attachment; filename='+fname)
+    self.set_header('Content-Disposition', 'attachment; filename='+fname)
     with open(tmp_path, 'rb') as fh:
       shutil.copyfileobj(fh, self)
     self.finish()
     os.remove(tmp_path)
+
+  def _serve_csv(self, pred_model):
+    fname = os.path.basename(self.request.path)
+    self.set_header('Content-Type', 'text/plain')
+    self.set_header('Content-Disposition', 'attachment; filename='+fname)
+    # write header comment with model info
+    self.write('# %s - %s\n' % (pred_model, pred_model.ds_kind))
+    # TODO: use wavelength info here as first column
+    self.write(','.join(pred_model.var_names) + '\n')
+    # write model coefficients as CSV
+    if isinstance(pred_model, PLS2):
+      all_coefs = pred_model.clf.coef_
+    else:
+      all_coefs = np.column_stack([pred_model.models[key].coef_
+                                   for key in pred_model.var_keys])
+    for row in all_coefs:
+      self.write(','.join('%g' % x for x in row) + '\n')
+    self.finish()
 
   def post(self):
     fig_data = self.get_fig_data()
@@ -81,6 +103,18 @@ class RegressionModelHandler(BaseHandler):
     if fig_data is None:
       self.write('Oops, something went wrong. Try again?')
       return
+    ds_name = self.get_argument('ds_name')
+    ds_kind = self.get_argument('ds_kind')
+    ds = self.get_dataset(ds_kind, ds_name)
+    if ds is None:
+      self.write("Couldn't find the requested dataset.")
+      return
+
+    mask = fig_data.filter_mask[ds]
+    if ds.pkey is None:
+      pkey, = np.where(mask)
+    else:
+      pkey = ds.pkey.keys[mask]
 
     names, actuals, preds = [], [], []
     for ax in fig_data.figure.axes:
@@ -96,19 +130,19 @@ class RegressionModelHandler(BaseHandler):
     self.set_header('Content-Type', 'text/plain')
     self.set_header('Content-Disposition',
                     'attachment; filename='+fname)
-    # first header line: foo,,bar,,baz,
-    self.write(','.join(n+',' for n in names) + '\n')
-    # secondary header: Actual,Pred,Actual,Pred,Actual,Pred
-    self.write(','.join(['Actual,Pred']*len(names)) + '\n')
-    row = np.empty((len(names) * 2,), dtype=float)
+    # first header line: spectrum,foo,,bar,,baz,
+    self.write('Spectrum,' + ',,'.join(names) + ',\n')
+    # secondary header: ,Actual,Pred,Actual,Pred,Actual,Pred
+    self.write(',' + ','.join(['Actual,Pred']*len(names)) + '\n')
 
     if actuals and preds:
       actuals = np.column_stack(actuals)
       preds = np.column_stack(preds)
-      for arow, prow in zip(actuals, preds):
-        row[::2] = arow
-        row[1::2] = prow
-        self.write(','.join('%g' % x for x in row) + '\n')
+      row = np.empty((len(names) * 2,), dtype=float)
+      for i, key in enumerate(pkey):
+        row[::2] = actuals[i]
+        row[1::2] = preds[i]
+        self.write('%s,' % key + ','.join('%g' % x for x in row) + '\n')
     self.finish()
 
   def post(self):
@@ -126,7 +160,6 @@ class RegressionModelHandler(BaseHandler):
 
     mask = fig_data.filter_mask[ds]
     ds_view = ds.view(**ds_view_kwargs(self, mask=mask, nan_gap=None))
-
     variables = {key: ds_view.get_metadata(key)
                  for key in self.get_arguments('pred_meta[]')}
 
@@ -138,53 +171,103 @@ class RegressionModelHandler(BaseHandler):
       self.set_status(400)
       return
 
-    if bool(int(self.get_argument('do_train'))):
-      comps = int(self.get_argument('pls_comps'))
-      pls_kind = self.get_argument('pls_kind')
-      logging.info('Training %s(%d) on %d inputs, predicting %d vars',
-                   pls_kind, comps, X.shape[0], len(variables))
+    pls_kind = self.get_argument('pls_kind')
+    do_train = self.get_argument('do_train', None)
+    if do_train is None:
+      # run cross validation
+      folds = int(self.get_argument('cv_folds'))
+      comps = np.arange(int(self.get_argument('cv_min_comps')),
+                        int(self.get_argument('cv_max_comps')) + 1)
+      logging.info('Running %d-fold cross-val in range [%d,%d]', folds,
+                   comps[0], comps[-1])
+
+      # convert pls2 into pls1 format via hacks
+      if pls_kind == 'pls2':
+        Y = np.column_stack([y for y, name in variables.values()])
+        variables = dict(combined=(Y, None))
+
+      # run the cross-val and plot scores for each n_components
+      fig_data.figure.clf(keep_observers=True)
+      axes = _axes_grid(fig_data.figure, len(variables),
+                        '# components', 'MSE')
+      for i, key in enumerate(sorted(variables)):
+        pls = GridSearchCV(PLSRegression(scale=False),
+                           dict(n_components=comps),
+                           cv=folds, scoring='neg_mean_squared_error',
+                           return_train_score=False)
+        pls.fit(X, variables[key][0])
+        axes[i].errorbar(comps, -pls.cv_results_['mean_test_score'],
+                         yerr=pls.cv_results_['std_test_score'])
+      fig_data.manager.canvas.draw()
+      return
+
+    if bool(int(do_train)):
+      # train on all the data
       cls = PLS1 if pls_kind == 'pls1' else PLS2
-      fig_data.pred_model = cls.train(X, variables, comps, ds_kind)
+      model = cls(int(self.get_argument('pls_comps')), ds_kind)
+      logging.info('Training %s on %d inputs, predicting %d vars',
+                   model, X.shape[0], len(variables))
+      model.train(X, variables)
+      fig_data.pred_model = model
+    else:
+      model = fig_data.pred_model
+      if model.ds_kind != ds_kind:
+        logging.warning('Mismatching model kind. Expected %r, got %r', ds_kind,
+                        model.ds_kind)
 
     # get predictions for each variable
-    folds = int(self.get_argument('pls_folds'))
-    preds, stats = fig_data.pred_model.predict(X, variables, folds, ds_kind)
+    preds, stats = model.predict(X, variables)
 
-    # plot actual vs predicted
-    fig = fig_data.figure
-    fig.clf(keep_observers=True)
-    n = len(preds)
-    if n > 0:
-      r = np.floor(np.sqrt(n))
-      r, c = int(r), int(np.ceil(n / r))
-      for i, key in enumerate(sorted(preds)):
-        ax = fig.add_subplot(r, c, i+1)
-        y, name = variables[key]
-        p = preds[key].ravel()
-        ax.scatter(y, p)
-        xlims = ax.get_xlim()
-        ylims = ax.get_ylim()
-        ax.errorbar(y, p, yerr=stats[i]['rmse'], fmt='none', ecolor='k',
-                    elinewidth=1, capsize=0, alpha=0.5, zorder=0)
-        ax.set_title(name)
-        # plot best fit line
-        xylims = [np.min([xlims, ylims]), np.max([xlims, ylims])]
-        best_fit = np.poly1d(np.polyfit(y, p, 1))(xylims)
-        ax.plot(xylims, best_fit, 'k--', alpha=0.75, zorder=-1)
-        ax.set_aspect('equal')
-        ax.set_xlim(xylims)
-        ax.set_ylim(xylims)
-        if i % c == 0:
-          ax.set_ylabel('Predicted')
-        if i >= c * (r - 1):
-          ax.set_xlabel('Actual')
+    _plot_actual_vs_predicted(preds, stats, fig_data.figure, variables)
     fig_data.manager.canvas.draw()
 
-    res = dict(stats=stats, info=fig_data.pred_model.info())
+    res = dict(stats=stats, info=fig_data.pred_model.info_html())
     return self.write(json_encode(res))
 
 
+def _plot_actual_vs_predicted(preds, stats, fig, variables):
+  fig.clf(keep_observers=True)
+  axes = _axes_grid(fig, len(preds), 'Actual', 'Predicted')
+  for i, key in enumerate(sorted(preds)):
+    ax = axes[i]
+    y, name = variables[key]
+    p = preds[key].ravel()
+    ax.scatter(y, p)
+    xlims = ax.get_xlim()
+    ylims = ax.get_ylim()
+    ax.errorbar(y, p, yerr=stats[i]['rmse'], fmt='none', ecolor='k',
+                elinewidth=1, capsize=0, alpha=0.5, zorder=0)
+    ax.set_title(name)
+    # plot best fit line
+    xylims = [np.min([xlims, ylims]), np.max([xlims, ylims])]
+    best_fit = np.poly1d(np.polyfit(y, p, 1))(xylims)
+    ax.plot(xylims, best_fit, 'k--', alpha=0.75, zorder=-1)
+    ax.set_aspect('equal')
+    ax.set_xlim(xylims)
+    ax.set_ylim(xylims)
+
+
+def _axes_grid(fig, n, xlabel, ylabel):
+  r = np.floor(np.sqrt(n))
+  r, c = int(r), int(np.ceil(n / r))
+  axes = []
+  for i in range(n):
+    ax = fig.add_subplot(r, c, i+1)
+    if i % c == 0:
+      ax.set_ylabel(ylabel)
+    if i >= c * (r - 1):
+      ax.set_xlabel(xlabel)
+    axes.append(ax)
+  return axes
+
+
 class _PLS(object):
+  def __init__(self, k, ds_kind):
+    self.n_components = k
+    self.ds_kind = ds_kind
+    self.var_names = []
+    self.var_keys = []
+
   @staticmethod
   def load(fh):
     return load_pickle(fh)
@@ -192,40 +275,33 @@ class _PLS(object):
   def save(self, fname):
     dump_pickle(self, fname, compress=3)
 
-  def predict(self, X, variables, folds, ds_kind):
-    if ds_kind != self.ds_kind:
-      logging.warning('Mismatching ds_kind in PLS prediction: %r != %r',
-                      ds_kind, self.ds_kind)
-    preds = {}
-    stats = []
-    # TODO: use cross-validation to compute r2/rmse values
+  def predict(self, X, variables):
+    preds, stats = {}, []
     for key, p in self._predict(X, variables):
       y, name = variables[key]
       preds[key] = p
       stats.append(dict(r2=r2_score(y, p),
                         rmse=np.sqrt(mean_squared_error(y, p)),
-                        name=name))
-    stats.sort(key=lambda s: s['name'])
+                        name=name, key=key))
+    stats.sort(key=lambda s: s['key'])
     return preds, stats
 
-  def info(self):
-    var_list = '\n'.join('<li>%s</li>' % n for n in sorted(self.var_names))
-    return '%s &mdash; %s<br><ul>%s</ul>' % (
-        self.__class__.__name__, self.ds_kind, var_list)
+  def info_html(self):
+    return '%s &mdash; %s' % (self, self.ds_kind)
+
+  def __str__(self):
+    return '%s(%d)' % (self.__class__.__name__, self.n_components)
 
 
 class PLS1(_PLS):
-  @staticmethod
-  def train(X, variables, k, ds_kind):
-    res = PLS1()
-    res.ds_kind = ds_kind
-    res.models = {}
-    res.var_names = [name for _, name in variables.values()]
+  def train(self, X, variables):
+    self.models = {}
     for key in variables:
-      clf = PLSRegression(scale=False, n_components=k)
-      y, _ = variables[key]
-      res.models[key] = clf.fit(X, y)
-    return res
+      clf = PLSRegression(scale=False, n_components=self.n_components)
+      y, name = variables[key]
+      self.models[key] = clf.fit(X, y)
+      self.var_keys.append(key)
+      self.var_names.append(name)
 
   def _predict(self, X, variables):
     for key in variables:
@@ -237,16 +313,15 @@ class PLS1(_PLS):
 
 
 class PLS2(_PLS):
-  @staticmethod
-  def train(X, variables, k, ds_kind):
-    res = PLS2()
-    res.ds_kind = ds_kind
-    res.clf = PLSRegression(scale=False, n_components=k)
-    res.var_keys = variables.keys()
-    res.var_names = [variables[key][1] for key in res.var_keys]
-    Y = np.column_stack([variables[key][0] for key in res.var_keys])
-    res.clf.fit(X, Y)
-    return res
+  def train(self, X, variables):
+    self.clf = PLSRegression(scale=False, n_components=self.n_components)
+    self.var_keys = variables.keys()
+    y_cols = []
+    for key in self.var_keys:
+      y, name = variables[key]
+      y_cols.append(y)
+      self.var_names.append(name)
+    self.clf.fit(X, np.column_stack(y_cols))
 
   def _predict(self, X, variables):
     P = self.clf.predict(X)
@@ -261,5 +336,5 @@ routes = [
     (r'/_run_model', RegressionModelHandler),
     (r'/([0-9]+)/pls_predictions\.csv', RegressionModelHandler),
     (r'/_load_model', ModelIOHandler),
-    (r'/([0-9]+)/pls_model\.pkl', ModelIOHandler),
+    (r'/([0-9]+)/pls_model\.(\w+)', ModelIOHandler),
 ]

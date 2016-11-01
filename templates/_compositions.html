@@ -3,7 +3,7 @@
 
 <!-- x axis options -->
 <tr><td class="vcenter bold">X axis</td><td>
-<select id='x_comp_options' multiple>
+<select id='x_comp_options' multiple data-placeholder='select composition(s)'>
 {% for key, name in comp_pairs %}
   <option value="{{key}}">{{name}}</option>
 {% end %}
@@ -12,7 +12,7 @@
 
 <!-- y axis options -->
 <tr><td class="vcenter bold">Y axis</td><td>
-<select id='y_comp_options' multiple>
+<select id='y_comp_options' multiple data-placeholder='select composition(s)'>
 {% for key, name in comp_pairs %}
   <option value="{{key}}">{{name}}</option>
 {% end %}
@@ -42,7 +42,7 @@
 </table>
 
 <table id="fit_info">
-<caption>Fit parameters</caption>
+<caption>Linear fit parameters</caption>
 <tr><td>R&#0178;</td><td><span id="fit_rval"></span></td></tr>
 <tr><td>slope</td>
     <td><span id="fit_slope"></span> &plusmn;
