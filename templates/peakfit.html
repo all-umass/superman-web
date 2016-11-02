@@ -75,7 +75,7 @@ $(document).ready(function(){
   onready_boilerplate("{{ws_uri}}", {{ fig_id }});
   // make the blr/pp interactive
   var table = $('#blr_pp_steps>table');
-  table.find('tr').slice(0,2).find('select,input').change(function(){
+  table.find('tr').slice(0,3).find('select,input').change(function(){
     do_baseline(table);
     do_pp(collect_pp_args(table));
   });
