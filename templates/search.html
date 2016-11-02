@@ -102,7 +102,7 @@ $(document).ready(function(){
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
   // make the query prep interactive
   var query_table = $('#query_prep>table');
-  query_table.find('tr').slice(0,2).find('select,input').change(function(){
+  query_table.find('tr').slice(0,3).find('select,input').change(function(){
     do_baseline(query_table);
   });
   var pp_watcher = new MutationObserver(function(){
