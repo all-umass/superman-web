@@ -47,16 +47,17 @@ class ModelIOHandler(BaseHandler):
     self.set_header('Content-Disposition', 'attachment; filename='+fname)
     # write header comment with model info
     self.write('# %s - %s\n' % (pred_model, pred_model.ds_kind))
-    # TODO: use wavelength info here as first column
-    self.write(','.join(pred_model.var_names) + '\n')
     # write model coefficients as CSV
+    self.write('wavelength,' + ','.join(pred_model.var_names) + '\n')
     if isinstance(pred_model, PLS2):
       all_coefs = pred_model.clf.coef_
     else:
       all_coefs = np.column_stack([pred_model.models[key].coef_
                                    for key in pred_model.var_keys])
-    for row in all_coefs:
-      self.write(','.join('%g' % x for x in row) + '\n')
+    wave = pred_model.wave
+    fmt_str = ','.join(['%g'] * (all_coefs.shape[1] + 1)) + '\n'
+    for i, row in enumerate(all_coefs):
+      self.write(fmt_str % ((wave[i],) + tuple(row)))
     self.finish()
 
   def post(self):
@@ -164,10 +165,9 @@ class RegressionModelHandler(BaseHandler):
                  for key in self.get_arguments('pred_meta[]')}
 
     try:
-      # TODO: remember the bands (first result) used in the model
-      _, X = ds_view.get_vector_data()
+      wave, X = ds_view.get_vector_data()
     except ValueError as e:
-      logging.error("Failed to get vector data: %s" % e.message)
+      logging.error("Failed to get vector data: %s", e.message)
       self.set_status(400)
       return
 
@@ -204,7 +204,7 @@ class RegressionModelHandler(BaseHandler):
     if bool(int(do_train)):
       # train on all the data
       cls = PLS1 if pls_kind == 'pls1' else PLS2
-      model = cls(int(self.get_argument('pls_comps')), ds_kind)
+      model = cls(int(self.get_argument('pls_comps')), ds_kind, wave)
       logging.info('Training %s on %d inputs, predicting %d vars',
                    model, X.shape[0], len(variables))
       model.train(X, variables)
@@ -262,9 +262,10 @@ def _axes_grid(fig, n, xlabel, ylabel):
 
 
 class _PLS(object):
-  def __init__(self, k, ds_kind):
+  def __init__(self, k, ds_kind, wave):
     self.n_components = k
     self.ds_kind = ds_kind
+    self.wave = wave
     self.var_names = []
     self.var_keys = []
 
