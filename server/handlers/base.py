@@ -39,3 +39,12 @@ class BaseHandler(tornado.web.RequestHandler):
 
   def dataset_kinds(self):
     return DATASETS.keys()
+
+  def request_many_ds(self, kind_arg='ds_kind[]', name_arg='ds_name[]'):
+    return filter(None, [self.get_dataset(k, n) for k, n in
+                         zip(self.get_arguments(kind_arg),
+                             self.get_arguments(name_arg))])
+
+  def request_one_ds(self, kind_arg='ds_kind', name_arg='ds_name'):
+    return self.get_dataset(self.get_argument(kind_arg),
+                            self.get_argument(name_arg))

@@ -36,11 +36,6 @@ PlotData = namedtuple('PlotData', ('trajs', 'xlabel', 'ylabel', 'xticks',
 
 
 class FilterPlotHandler(BaseHandler):
-  def get_all_ds(self):
-    return filter(None, [self.get_dataset(k, n) for k, n in
-                         zip(self.get_arguments('ds_kind[]'),
-                             self.get_arguments('ds_name[]'))])
-
   def get(self, fignum):
     '''Downloads plot data as text.'''
     fig_data = self.get_fig_data(int(fignum))
@@ -56,7 +51,7 @@ class FilterPlotHandler(BaseHandler):
     xlabel = _sanitize_csv(ax.get_xlabel()) or 'x'
     ylabel = _sanitize_csv(ax.get_ylabel()) or 'y'
 
-    all_ds = self.get_all_ds()
+    all_ds = self.request_many_ds()
     if not all_ds:
       self.write('No datasets selected.')
       return
@@ -109,7 +104,7 @@ class FilterPlotHandler(BaseHandler):
 
   def post(self):
     fig_data = self.get_fig_data()
-    all_ds = self.get_all_ds()
+    all_ds = self.request_many_ds()
 
     if fig_data is None or not all_ds:
       logging.warning('No data: %s, %s', fig_data, all_ds)

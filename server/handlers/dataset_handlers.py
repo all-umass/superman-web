@@ -26,26 +26,16 @@ class RefreshHandler(BaseHandler):
     self.redirect('/datasets')
 
 
-class DatasetHandler(BaseHandler):
-  def get_ds(self):
-    return self.get_dataset(self.get_argument('kind'),
-                            self.get_argument('name'))
-
-  def get_all_ds(self):
-    return [self.get_dataset(k, n) for k, n in
-            zip(self.get_arguments('kind[]'), self.get_arguments('name[]'))]
-
-
-class DatasetSelectorHandler(DatasetHandler):
+class DatasetSelectorHandler(BaseHandler):
   def post(self):
-    ds = self.get_ds()
+    ds = self.request_one_ds('kind', 'name')
     logging.info('Generating selector for dataset: %s', ds)
     return self.render('_spectrum_selector.html', ds=ds)
 
 
-class DatasetFiltererHandler(DatasetHandler):
+class DatasetFiltererHandler(BaseHandler):
   def post(self):
-    ds = self.get_ds()
+    ds = self.request_one_ds('kind', 'name')
     logging.info('Generating filter HTML for dataset: %s', ds)
 
     if ds.pkey is None and not ds.metadata:
@@ -56,9 +46,9 @@ class DatasetFiltererHandler(DatasetHandler):
                        init_js=init_js, collect_js=collect_js)
 
 
-class DatasetPlotOptionsHandler(DatasetHandler):
+class DatasetPlotOptionsHandler(BaseHandler):
   def post(self):
-    all_ds = self.get_all_ds()
+    all_ds = self.request_many_ds('kind[]', 'name[]')
     logging.info('Generating plot options HTML for: %s', map(str, all_ds))
     is_libs = any(ds.kind == 'LIBS' for ds in all_ds)
     meta_names = sorted(set.intersection(*[set(ds.metadata_names())
@@ -72,9 +62,9 @@ class DatasetPlotOptionsHandler(DatasetHandler):
                        default_lw=rcParams['lines.linewidth'])
 
 
-class DatasetCompositionOptionsHandler(DatasetHandler):
+class DatasetCompositionOptionsHandler(BaseHandler):
   def post(self):
-    all_ds = self.get_all_ds()
+    all_ds = self.request_many_ds('kind[]', 'name[]')
     if len(all_ds) != 1:
       return self.write('This only works for 1 dataset at a time.')
     ds, = all_ds
@@ -87,9 +77,9 @@ class DatasetCompositionOptionsHandler(DatasetHandler):
                        comp_pairs=comp_pairs, num_pairs=num_pairs)
 
 
-class DatasetPredictionOptionsHandler(DatasetHandler):
+class DatasetPredictionOptionsHandler(BaseHandler):
   def post(self):
-    all_ds = self.get_all_ds()
+    all_ds = self.request_many_ds('kind[]', 'name[]')
     if len(all_ds) != 1:
       return self.write('This only works for 1 dataset at a time.')
     ds, = all_ds
@@ -99,9 +89,9 @@ class DatasetPredictionOptionsHandler(DatasetHandler):
     return self.render('_predictions.html', ds=ds, meta_pairs=pairs)
 
 
-class DatasetRemovalHandler(DatasetHandler):
+class DatasetRemovalHandler(BaseHandler):
   def post(self):
-    ds = self.get_ds()
+    ds = self.request_one_ds('kind', 'name')
     if not ds.user_added:
       return self.write('Cannot remove this dataset.')
     logging.info('Removing user-added dataset: %s', ds)
