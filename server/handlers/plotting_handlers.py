@@ -12,8 +12,7 @@ from matplotlib.patches import Patch
 from tornado.escape import json_encode
 from six.moves import xrange
 
-from .base import BaseHandler
-from .baseline_handlers import ds_view_kwargs
+from .base import MultiDatasetHandler
 
 # old matplotlib used a different key
 if 'axes.prop_cycle' not in rcParams:
@@ -35,7 +34,7 @@ PlotData = namedtuple('PlotData', ('trajs', 'xlabel', 'ylabel', 'xticks',
                                    'yticks', 'scatter'))
 
 
-class FilterPlotHandler(BaseHandler):
+class FilterPlotHandler(MultiDatasetHandler):
   def get(self, fignum):
     '''Downloads plot data as text.'''
     fig_data = self.get_fig_data(int(fignum))
@@ -104,35 +103,13 @@ class FilterPlotHandler(BaseHandler):
 
   def post(self):
     fig_data = self.get_fig_data()
-    all_ds = self.request_many_ds()
+    if fig_data is None:
+      self.set_status(403)
+      return
 
-    if fig_data is None or not all_ds:
-      logging.warning('No data: %s, %s', fig_data, all_ds)
+    all_ds_views, num_spectra = self.prepare_ds_views(fig_data)
+    if all_ds_views is None:
       return self.write('{}')
-
-    num_spectra = sum(np.count_nonzero(fig_data.filter_mask[ds])
-                      for ds in all_ds)
-
-    logging.info('FilterPlot request for %d spectra', num_spectra)
-    if not 0 < num_spectra <= 99999:
-      logging.warning('Data not plottable, %d spectra chosen', num_spectra)
-      return self.write('{}')
-
-    # set up the dataset view object
-    trans, blr_params = ds_view_kwargs(self, return_blr_params=True)
-    all_ds_views = [ds.view(mask=fig_data.filter_mask[ds], **trans)
-                    for ds in all_ds]
-
-    # check to see if anything changed since the last view we had
-    view_keys = ['chan_mask', 'pp', 'blr_method', 'blr_segmented',
-                 'blr_inverted', 'blr_lb', 'blr_ub', 'blr_step']
-    for k in sorted(blr_params):
-      view_keys.append('blr_' + k)
-    view_params = tuple(self.get_argument(k, '') for k in view_keys)
-    # if the view changed, invalidate the cache
-    if view_params != fig_data.explorer_view_params:
-      fig_data.clear_explorer_cache()
-      fig_data.explorer_view_params = view_params
 
     # parse plot information from request arguments
     xaxis = self._get_axis_info('x')

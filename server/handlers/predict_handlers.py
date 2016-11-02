@@ -13,7 +13,6 @@ from tempfile import mkstemp
 from tornado.escape import json_encode
 
 from .base import BaseHandler
-from .baseline_handlers import ds_view_kwargs
 
 
 class ModelIOHandler(BaseHandler):
@@ -160,7 +159,7 @@ class RegressionModelHandler(BaseHandler):
       return
 
     mask = fig_data.filter_mask[ds]
-    ds_view = ds.view(**ds_view_kwargs(self, mask=mask, nan_gap=None))
+    ds_view = ds.view(**self.ds_view_kwargs(mask=mask, nan_gap=None))
     variables = {key: ds_view.get_metadata(key)
                  for key in self.get_arguments('pred_meta[]')}
 

@@ -1,49 +1,9 @@
 from __future__ import absolute_import
-import ast
 import logging
 import numpy as np
 import os
-from superman.baseline import BL_CLASSES
-from superman.baseline.common import Baseline
 
 from .base import BaseHandler
-
-
-def ds_view_kwargs(request, return_blr_params=False, **extra_kwargs):
-  method = request.get_argument('blr_method', '').lower()
-  segmented_str = request.get_argument('blr_segmented', 'false')
-  inverted_str = request.get_argument('blr_inverted', 'false')
-
-  if method and method not in BL_CLASSES:
-    raise ValueError('Invalid blr method: %r' % method)
-  if segmented_str not in ('true', 'false'):
-    raise ValueError('Invalid blr segmented flag: %r' % segmented_str)
-  if inverted_str not in ('true', 'false'):
-    raise ValueError('Invalid blr inverted flag: %r' % inverted_str)
-
-  segmented = segmented_str == 'true'
-  inverted = inverted_str == 'true'
-  lb = float(request.get_argument('blr_lb', '') or '-inf')
-  ub = float(request.get_argument('blr_ub', '') or 'inf')
-  step = float(request.get_argument('blr_step', '') or 0)
-
-  # initialize the baseline correction object
-  bl_obj = BL_CLASSES[method]() if method else NullBaseline()
-  params = {}
-  for key in bl_obj.param_ranges():
-    param = ast.literal_eval(request.get_argument('blr_' + key, 'None'))
-    if param is not None:
-      params[key] = param
-      setattr(bl_obj, key, param)
-
-  trans = dict(
-      chan_mask=bool(int(request.get_argument('chan_mask', 0))),
-      pp=request.get_argument('pp', ''), blr_obj=bl_obj, blr_inverted=inverted,
-      blr_segmented=segmented, crop=(lb, ub, step), **extra_kwargs)
-
-  if return_blr_params:
-    return trans, params
-  return trans
 
 
 class BaselineHandler(BaseHandler):
@@ -68,7 +28,7 @@ class BaselineHandler(BaseHandler):
     if fig_data is None:
       return
 
-    trans = ds_view_kwargs(self)
+    trans = self.ds_view_kwargs()
     del trans['pp']
     del trans['chan_mask']
 
@@ -95,15 +55,3 @@ routes = [
     (r'/_baseline', BaselineHandler),
     (r'/([0-9]+)/baseline\.txt', BaselineHandler),
 ]
-
-
-# A do-nothing baseline, for consistency
-class NullBaseline(Baseline):
-  def _fit_many(self, bands, intensities):
-    return 0
-
-  def fit_transform(self, bands, intensities, segment=False, invert=False):
-    return intensities
-
-  def param_ranges(self):
-    return {}

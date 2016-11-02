@@ -8,13 +8,13 @@ from superman.preprocess import preprocess
 from superman.dataset import LookupMetadata
 
 from .base import BaseHandler
-from .baseline_handlers import ds_view_kwargs
 
 
 class SearchHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
-    if fig_data is None:
+    ds = self.request_one_ds('target_kind', 'target_name')
+    if fig_data is None or ds is None:
       return
     # get the most up to date spectrum
     try:
@@ -24,8 +24,6 @@ class SearchHandler(BaseHandler):
       return
 
     num_results = int(self.get_argument('num_results', 10))
-    ds = self.get_dataset(self.get_argument('target_kind'),
-                          self.get_argument('target_name'))
 
     metric = self.get_argument('metric')
     metric += ':' + self.get_argument('param')
@@ -45,7 +43,7 @@ class SearchHandler(BaseHandler):
       query[:,1] = preprocess(query[:,1:2].T, 'normalize:max').ravel()
 
     # prepare the target library
-    trans = ds_view_kwargs(self, nan_gap=None)
+    trans = self.ds_view_kwargs(nan_gap=None)
     if not trans['pp']:
       logging.warning('Applying max-normalization to library before search')
       trans['pp'] = 'normalize:max'
@@ -120,13 +118,12 @@ class CompareHandler(BaseHandler):
 
   def post(self):
     fig_data = self.get_fig_data()
-    if fig_data is None:
+    ds = self.request_one_ds('target_kind', 'target_name')
+    if fig_data is None or ds is None:
       return
-    ds = self.get_dataset(self.get_argument('target_kind'),
-                          self.get_argument('target_name'))
 
     # emulate the library preparation process
-    trans = ds_view_kwargs(self, nan_gap=None)
+    trans = self.ds_view_kwargs(nan_gap=None)
     if not trans['pp']:
       trans['pp'] = 'normalize:max'
 
