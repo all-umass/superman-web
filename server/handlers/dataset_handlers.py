@@ -80,13 +80,13 @@ class DatasetCompositionOptionsHandler(BaseHandler):
 class DatasetPredictionOptionsHandler(BaseHandler):
   def post(self):
     all_ds = self.request_many_ds('kind[]', 'name[]')
-    if len(all_ds) != 1:
-      return self.write('This only works for 1 dataset at a time.')
-    ds, = all_ds
-    logging.info('Generating prediction options HTML for: %s', ds)
+    logging.info('Generating prediction options HTML for: %s', map(str,all_ds))
 
-    pairs = sorted(ds.metadata_names((NumericMetadata, CompositionMetadata)))
-    return self.render('_predictions.html', ds=ds, meta_pairs=pairs)
+    # TODO: exclude boolean metadata from this
+    pairs = [set(ds.metadata_names((NumericMetadata, CompositionMetadata)))
+             for ds in all_ds]
+    pairs = sorted(set.intersection(*pairs))
+    return self.render('_predictions.html', meta_pairs=pairs)
 
 
 class DatasetRemovalHandler(BaseHandler):

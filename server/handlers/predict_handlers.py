@@ -12,7 +12,7 @@ from sklearn.model_selection import GridSearchCV
 from tempfile import mkstemp
 from tornado.escape import json_encode
 
-from .base import BaseHandler
+from .base import BaseHandler, MultiDatasetHandler
 
 
 class ModelIOHandler(BaseHandler):
@@ -96,26 +96,33 @@ class ModelIOHandler(BaseHandler):
     return self.write(json_encode(dict(info=model.info())))
 
 
-class RegressionModelHandler(BaseHandler):
+class RegressionModelHandler(MultiDatasetHandler):
   def get(self, fignum):
     '''Download predictions as CSV.'''
     fig_data = self.get_fig_data(int(fignum))
     if fig_data is None:
       self.write('Oops, something went wrong. Try again?')
       return
-    ds_name = self.get_argument('ds_name')
-    ds_kind = self.get_argument('ds_kind')
-    ds = self.get_dataset(ds_kind, ds_name)
-    if ds is None:
-      self.write("Couldn't find the requested dataset.")
+    if fig_data.last_plot != 'pls_preds':
+      self.write('No plotted data to download.')
       return
 
-    mask = fig_data.filter_mask[ds]
-    if ds.pkey is None:
-      pkey, = np.where(mask)
-    else:
-      pkey = ds.pkey.keys[mask]
+    all_ds = self.request_many_ds()
+    if not all_ds:
+      self.write('No datasets selected.')
+      return
 
+    # collect primary keys for row labels
+    all_pkeys = []
+    for ds in all_ds:
+      mask = fig_data.filter_mask[ds]
+      if ds.pkey is None:
+        pkey, = np.where(mask)
+      else:
+        pkey = ds.pkey.keys[mask]
+      all_pkeys.extend(pkey)
+
+    # get data from the scatterplots
     names, actuals, preds = [], [], []
     for ax in fig_data.figure.axes:
       if not ax.collections:
@@ -139,7 +146,7 @@ class RegressionModelHandler(BaseHandler):
       actuals = np.column_stack(actuals)
       preds = np.column_stack(preds)
       row = np.empty((len(names) * 2,), dtype=float)
-      for i, key in enumerate(pkey):
+      for i, key in enumerate(all_pkeys):
         row[::2] = actuals[i]
         row[1::2] = preds[i]
         self.write('%s,' % key + ','.join('%g' % x for x in row) + '\n')
@@ -150,26 +157,19 @@ class RegressionModelHandler(BaseHandler):
     if fig_data is None:
       self.set_status(403)
       return
-    ds_name = self.get_argument('ds_name')
-    ds_kind = self.get_argument('ds_kind')
-    ds = self.get_dataset(ds_kind, ds_name)
-    if ds is None:
-      logging.error("Failed to look up dataset: %s [%s]" % (ds_name, ds_kind))
+
+    all_ds_views, _ = self.prepare_ds_views(fig_data, nan_gap=None)
+    if all_ds_views is None:
+      logging.error("Failed to look up dataset(s)")
       self.set_status(404)
       return
 
-    mask = fig_data.filter_mask[ds]
-    ds_view = ds.view(**self.ds_view_kwargs(mask=mask, nan_gap=None))
-    variables = {key: ds_view.get_metadata(key)
-                 for key in self.get_arguments('pred_meta[]')}
-
-    try:
-      wave, X = ds_view.get_vector_data()
-    except ValueError as e:
-      logging.error("Failed to get vector data: %s", e.message)
+    ds_kind, wave, X = self._collect_spectra(all_ds_views)
+    if X is None:
       self.set_status(400)
       return
 
+    variables = self._collect_variables(all_ds_views)
     pls_kind = self.get_argument('pls_kind')
     do_train = self.get_argument('do_train', None)
     if do_train is None:
@@ -198,6 +198,7 @@ class RegressionModelHandler(BaseHandler):
         axes[i].errorbar(comps, -pls.cv_results_['mean_test_score'],
                          yerr=pls.cv_results_['std_test_score'])
       fig_data.manager.canvas.draw()
+      fig_data.last_plot = 'pls_crossval'
       return
 
     if bool(int(do_train)):
@@ -219,9 +220,43 @@ class RegressionModelHandler(BaseHandler):
 
     _plot_actual_vs_predicted(preds, stats, fig_data.figure, variables)
     fig_data.manager.canvas.draw()
+    fig_data.last_plot = 'pls_preds'
 
     res = dict(stats=stats, info=fig_data.pred_model.info_html())
     return self.write(json_encode(res))
+
+  def _collect_spectra(self, all_ds_views):
+    '''collect vector-format data from all datasets'''
+    ds_kind, wave, X = None, None, []
+    for dv in all_ds_views:
+      try:
+        w, x = dv.get_vector_data()
+      except ValueError as e:
+        logging.error("Failed to get vector data from %s: %s", dv.ds, e.message)
+        return ds_kind, wave, None
+      if wave is None:
+        wave = w
+        ds_kind = dv.ds.kind
+      else:
+        if wave.shape != w.shape or not np.allclose(wave, w):
+          logging.error("Mismatching wavelength data in %s", dv.ds)
+          return ds_kind, wave, None
+        if ds_kind != dv.ds.kind:
+          logging.error("Mismatching ds_kind: %s not in %s", dv.ds, ds_kind)
+          return ds_kind, wave, None
+      X.append(x)
+    return ds_kind, wave, np.vstack(X)
+
+  def _collect_variables(self, all_ds_views):
+    '''collect variables to predict from all datasets'''
+    variables = {}
+    for key in self.get_arguments('pred_meta[]'):
+      yy, name = [], None
+      for dv in all_ds_views:
+        y, name = dv.get_metadata(key)
+        yy.append(y)
+      variables[key] = (np.concatenate(yy), name)
+    return variables
 
 
 def _plot_actual_vs_predicted(preds, stats, fig, variables):

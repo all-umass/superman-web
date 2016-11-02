@@ -91,7 +91,8 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 class MultiDatasetHandler(BaseHandler):
-  def prepare_ds_views(self, fig_data, max_num_spectra=99999):
+  def prepare_ds_views(self, fig_data, max_num_spectra=99999,
+                       **extra_view_kwargs):
     all_ds = self.request_many_ds()
 
     if not all_ds:
@@ -107,7 +108,8 @@ class MultiDatasetHandler(BaseHandler):
       return None, num_spectra
 
     # set up the dataset view object
-    trans, blr_params = self.ds_view_kwargs(return_blr_params=True)
+    trans, blr_params = self.ds_view_kwargs(return_blr_params=True,
+                                            **extra_view_kwargs)
     all_ds_views = [ds.view(mask=fig_data.filter_mask[ds], **trans)
                     for ds in all_ds]
 

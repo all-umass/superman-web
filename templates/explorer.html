@@ -274,8 +274,8 @@ function _upload_model(btn, file_input, ds_kind) {
 function _run_model(btn, ds_info, do_train) {
   var pred_vars = $('#target_meta option:selected').map(_value).toArray();
   var post_data = {
-      ds_name: ds_info.name[0],
-      ds_kind: ds_info.kind[0],
+      ds_name: ds_info.name,
+      ds_kind: ds_info.kind,
       fignum: fig.id,
       do_train: +do_train,
       pp: collect_pp_args($('#pp_options')),
@@ -313,8 +313,8 @@ function run_crossval(btn) {
   var ds_info = collect_ds_info();
   var pred_vars = $('#target_meta option:selected').map(_value).toArray();
   var post_data = {
-      ds_name: ds_info.name[0],
-      ds_kind: ds_info.kind[0],
+      ds_name: ds_info.name,
+      ds_kind: ds_info.kind,
       fignum: fig.id,
       pp: collect_pp_args($('#pp_options')),
       pls_kind: $('#pls_kind').val(),
@@ -343,8 +343,8 @@ function predict_download(btn) {
   var dl_url = '/'+fig.id+'/pls_';
   if (dl_type === 'preds') {
     var ds_info = collect_ds_info();
-    dl_url += 'predictions.csv?' + $.param({ds_name: ds_info.name[0],
-                                            ds_kind: ds_info.kind[0]});
+    dl_url += 'predictions.csv?' + $.param({ds_name: ds_info.name,
+                                            ds_kind: ds_info.kind});
   } else if (dl_type === 'pkl') {
     dl_url += 'model.pkl';
   } else {
