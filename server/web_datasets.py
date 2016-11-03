@@ -12,12 +12,10 @@ from six import BytesIO, string_types
 
 from superman.dataset import (
     VectorDataset, TrajDataset, NumericMetadata, BooleanMetadata,
-    PrimaryKeyMetadata, LookupMetadata, CompositionMetadata)
+    PrimaryKeyMetadata, LookupMetadata, CompositionMetadata, TagMetadata)
 
 __all__ = [
-    'WebTrajDataset', 'WebVectorDataset', 'WebLIBSDataset',
-    'NumericMetadata', 'BooleanMetadata', 'PrimaryKeyMetadata',
-    'LookupMetadata', 'CompositionMetadata', 'UploadedDataset'
+    'WebTrajDataset', 'WebVectorDataset', 'WebLIBSDataset', 'UploadedDataset'
 ]
 
 # Global structure for all loaded datasets.
@@ -181,10 +179,10 @@ def _generate_histogram(m):
 
 
 def _get_filter_js(m, full_key):
+  if isinstance(m, BooleanMetadata):
+    return '', '$("#%s").val()' % full_key
   if isinstance(m, NumericMetadata):
     elt = '$("#%s")' % full_key
-    if isinstance(m, BooleanMetadata):
-      return '', elt + '.val()'
     lb, ub = m.bounds
     init_js = ('%s.slider({min: %.17g, max: %.17g, step: %.17g, range: true, '
                'values: [%.17g,%.17g], slide: function(e,ui){'
@@ -200,13 +198,15 @@ def _get_filter_js(m, full_key):
       collect_parts.append('%s: %s' % (k, cjs))
     collect_js = '{' + ','.join(collect_parts) + '}'
     return '\n'.join(init_parts), collect_js
-  # only LookupMetadata and PrimaryKeyMetadata remain
+  # only chosen selects remain (Lookup/PrimaryKey/Tag)
   jq = '$("#%s_chooser")' % full_key
   # initialize the chosen dropdown, adding some width for the scrollbar
   init_js = jq + ".css('width', '+=20').chosen({search_contains: true});"
   prefix = ''
-  dtype = (m.uniques if isinstance(m,LookupMetadata) else m.keys).dtype
-  if np.issubdtype(dtype, np.number):
+  if ((isinstance(m, LookupMetadata) and
+       np.issubdtype(m.uniques.dtype, np.number)) or
+      (isinstance(m, PrimaryKeyMetadata) and
+       np.issubdtype(m.keys.dtype, np.number))):
     prefix = '+'  # convert JS string to number
   collect_js = jq + ('.next().find(".search-choice").map(function(){'
                      'return %s($(this).text())}).toArray()') % prefix
@@ -228,10 +228,15 @@ def _get_filter_html(m, key, full_key):
             '<div class="slider" id="%s" style="background-image: '
             'url(data:img/png;base64,%s);"></div>') % (
                 disp, full_key, lb, ub, full_key, m.hist_image)
-  # only LookupMetadata and PrimaryKeyMetadata remain
-  uniques = sorted(m.keys) if isinstance(m, PrimaryKeyMetadata) else m.uniques
+  # only chosen selects remain (Lookup/PrimaryKey/Tag)
   html = ('%s:<br /><select id="%s_chooser" data-placeholder="All" '
           'class="chosen-select" multiple>\n') % (disp, full_key)
+  if isinstance(m, PrimaryKeyMetadata):
+    uniques = sorted(m.keys)
+  elif isinstance(m, TagMetadata):
+    uniques = sorted(m.tags)
+  else:
+    uniques = m.uniques
   html += '\n'.join(
       '<option value="%s">%s</option>' % (x, xhtml_escape(str(x)))
       for x in uniques)
