@@ -7,7 +7,7 @@ from superman.file_io import parse_spectrum
 from tornado.escape import json_encode
 
 from .base import BaseHandler
-from ..web_datasets import UploadedDataset
+from ..web_datasets import UploadedSpectrumDataset
 
 
 class SelectHandler(BaseHandler):
@@ -94,7 +94,7 @@ class UploadHandler(BaseHandler):
         logging.error('Failed to parse uploaded file: %s', e.message)
         self.set_status(415)
         return
-    ds = UploadedDataset(fname, query)
+    ds = UploadedSpectrumDataset(fname, query)
     fig_data.set_selected(ds.view(), title=fname)
     axlimits = fig_data.plot()
     return self.write(json_encode(axlimits))

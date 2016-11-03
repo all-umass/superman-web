@@ -15,7 +15,8 @@ from superman.dataset import (
     PrimaryKeyMetadata, LookupMetadata, CompositionMetadata, TagMetadata)
 
 __all__ = [
-    'WebTrajDataset', 'WebVectorDataset', 'WebLIBSDataset', 'UploadedDataset'
+    'WebTrajDataset', 'WebVectorDataset', 'WebLIBSDataset',
+    'UploadedSpectrumDataset'
 ]
 
 # Global structure for all loaded datasets.
@@ -134,7 +135,7 @@ class WebLIBSDataset(WebVectorDataset):
     return VectorDataset.view(self, **kwargs)
 
 
-class UploadedDataset(TrajDataset):
+class UploadedSpectrumDataset(TrajDataset):
   def __init__(self, name, traj):
     TrajDataset.__init__(self, name, '<unknown>')
     # do some cleanup on the spectrum
