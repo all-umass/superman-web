@@ -6,10 +6,9 @@ import os.path
 import re
 from six.moves import xrange
 
-from server.web_datasets import (
-    LookupMetadata, NumericMetadata, BooleanMetadata, PrimaryKeyMetadata,
-    CompositionMetadata
-)
+from superman.dataset import (
+    NumericMetadata, BooleanMetadata, PrimaryKeyMetadata, LookupMetadata,
+    CompositionMetadata, TagMetadata)
 
 
 def _generic_traj_loader(meta_mapping):
@@ -235,23 +234,8 @@ def load_mhc_libs(ds, data_dir, master_file):
     logging.warning('Failed to load data in %s!' % data_dir)
     logging.warning(str(e))
     return None
-  carousel = meta['Carousel']
-  power = meta['LaserAttenuation']
-  location = meta['Location']
-  shot_no = meta['Number']
-  sample = meta['Sample']
-  target = meta['Target']
-  # atmosphere = meta['Atmosphere'] # only 1 unique val
-  # dist = meta['DistToTarget'] # same
-  projects = meta['Projects']
-  exploded_projects = [set(p.split(',')) for p in projects]
-  all_projects = set.union(*exploded_projects)
-  all_projects.discard('')
-  proj_meta = {}
-  for p in sorted(all_projects):
-    mask = np.array([(p in pp) for pp in exploded_projects], dtype=bool)
-    proj_meta[p] = BooleanMetadata(mask, display_name=p)
   logging.info('Making MHC LIBS metadata...')
+  projects = [set(filter(None, p.split(','))) for p in meta['Projects']]
   compositions = {}
   for key in meta.files:
     if key.startswith('e_'):
@@ -261,15 +245,16 @@ def load_mhc_libs(ds, data_dir, master_file):
         compositions[elem] = NumericMetadata(vals, display_name=elem)
   ds.set_data(bands, hdf5['/spectra'],
               Composition=CompositionMetadata(compositions),
-              samples=LookupMetadata(sample, 'Sample Name'),
-              carousels=LookupMetadata(carousel, 'Carousel #'),
-              locations=LookupMetadata(location, 'Location #'),
-              shots=NumericMetadata(shot_no, 1, 'Shot #'),
-              targets=LookupMetadata(target, 'Target Name'),
-              powers=LookupMetadata(power, 'Laser Power'),
-              # atmospheres=LookupMetadata(atmosphere, 'Atmosphere'),
-              # dists=LookupMetadata(dist, 'Distance to Target'),
-              **proj_meta
+              samples=LookupMetadata(meta['Sample'], 'Sample Name'),
+              carousels=LookupMetadata(meta['Carousel'], 'Carousel #'),
+              locations=LookupMetadata(meta['Location'], 'Location #'),
+              shots=NumericMetadata(meta['Number'], 1, 'Shot #'),
+              targets=LookupMetadata(meta['Target'], 'Target Name'),
+              powers=LookupMetadata(meta['LaserAttenuation'], 'Laser Power'),
+              projects=TagMetadata(projects, 'Project'),
+              # NOTE: These have only one unique value for now.
+              # atmospheres=LookupMetadata(meta['Atmosphere'], 'Atmosphere'),
+              # dists=LookupMetadata(meta['DistToTarget'],'Distance to Target')
               )
   logging.info('Finished MHC LIBS setup.')
   return True
