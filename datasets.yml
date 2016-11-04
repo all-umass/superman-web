@@ -175,6 +175,14 @@ FTIR:
       Natural Resources Conservation Service (NRCS).
     urls:
       - http://websoilsurvey.sc.egov.usda.gov/App/HomePage.htm
+  Watts Minerals:
+    vector: true
+    file: /srv/nfs/common/spectra/FTIR/watts_minerals.hdf5
+    metadata:
+      - [pkey, PrimaryKeyMetadata, None]
+      - [mineral, LookupMetadata, Mineral]
+    description: >-
+      Reflection spectra of minerals, collected by Erica Watts in 2015.
 NIR:
   Corn:
     loader: load_corn
