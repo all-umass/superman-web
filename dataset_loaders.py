@@ -252,6 +252,7 @@ def load_mhc_libs(ds, data_dir, master_file):
               targets=LookupMetadata(meta['Target'], 'Target Name'),
               powers=LookupMetadata(meta['LaserAttenuation'], 'Laser Power'),
               projects=TagMetadata(projects, 'Project'),
+              # date=LookupMetadata(meta['Date'], 'Date'), # needs a better widget to use
               # NOTE: These have only one unique value for now.
               # atmospheres=LookupMetadata(meta['Atmosphere'], 'Atmosphere'),
               # dists=LookupMetadata(meta['DistToTarget'],'Distance to Target')
