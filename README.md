@@ -29,6 +29,7 @@ of the process running `superman_server.py`.
  * `pyyaml`
  * `superman` (and its dependencies)
  * `tornado`
+ * `pandas`
 
 
 ### Testing
