@@ -185,6 +185,7 @@ def load_silicate_glass(ds, filepath, treatment):
   meta = data['/meta']
   ds.set_data(meta['pkey'], data['/spectra/' + treatment],
               fe3=NumericMetadata(meta['fe3'], display_name='% Fe3+'),
+              fo2=NumericMetadata(meta['fO2_dQFM'], display_name='fO2 (dQFM)'),
               Formula=LookupMetadata(meta['formula']))
   return True
 
