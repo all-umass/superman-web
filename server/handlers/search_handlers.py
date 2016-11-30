@@ -6,11 +6,14 @@ import os
 from collections import defaultdict
 from superman.preprocess import preprocess
 from superman.dataset import LookupMetadata
+from tornado import gen
+from threading import Thread
 
 from .base import BaseHandler
 
 
 class SearchHandler(BaseHandler):
+  @gen.coroutine
   def post(self):
     fig_data = self.get_fig_data()
     ds = self.request_one_ds('target_kind', 'target_name')
@@ -30,9 +33,9 @@ class SearchHandler(BaseHandler):
     min_window = int(self.get_argument('min_window'))
     num_comps = int(self.get_argument('num_comps'))
     score_pct = int(self.get_argument('score_pct'))
-
-    logging.info('Search params: metric=%s, min_window=%d, num_comps=%d,'
-                 ' score_pct=%d%%', metric, min_window, num_comps, score_pct)
+    kwargs = dict(num_endmembers=num_comps, num_results=num_results,
+                  metric=metric, min_window=min_window, score_pct=score_pct)
+    logging.info('Search params: %r', kwargs)
 
     if query[0,0] > query[1,0]:
       query = np.flipud(query)
@@ -52,9 +55,7 @@ class SearchHandler(BaseHandler):
 
     # search!
     try:
-      top_names, top_sim = ds_view.whole_spectrum_search(
-          query, num_endmembers=num_comps, num_results=num_results,
-          metric=metric, min_window=min_window, score_pct=score_pct)
+      top_names, top_sim = yield gen.Task(_async_search, ds_view, query, kwargs)
     except ValueError as e:
       logging.error('During whole_spectrum_search: %s', str(e))
       return
@@ -77,9 +78,16 @@ class SearchHandler(BaseHandler):
     if len(top_names[0]) > 1:
       header[2] = 'Matches'
     rows = zip(top_sim, top_names)
-    return self.render('_search_results.html', header=header, rows=rows,
-                       ds_name=ds.name, ds_kind=ds.kind, top_meta=top_meta,
-                       query_name=query_name, query_meta=query_meta)
+    self.render('_search_results.html', header=header, rows=rows,
+                ds_name=ds.name, ds_kind=ds.kind, top_meta=top_meta,
+                query_name=query_name, query_meta=query_meta)
+
+
+def _async_search(ds_view, query, wsm_kwargs, callback=None):
+  t = Thread(target=lambda: callback(
+      ds_view.whole_spectrum_search(query, **wsm_kwargs)))
+  t.daemon = True
+  t.start()
 
 
 def _lookup_metas(ds_view):
