@@ -10,6 +10,8 @@ from sklearn.externals.joblib.numpy_pickle import (
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import GridSearchCV
 from tempfile import mkstemp
+from threading import Thread
+from tornado import gen
 from tornado.escape import json_encode
 
 from .base import BaseHandler, MultiDatasetHandler
@@ -152,6 +154,7 @@ class RegressionModelHandler(MultiDatasetHandler):
         self.write('%s,' % key + ','.join('%g' % x for x in row) + '\n')
     self.finish()
 
+  @gen.coroutine
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
@@ -189,14 +192,7 @@ class RegressionModelHandler(MultiDatasetHandler):
       fig_data.figure.clf(keep_observers=True)
       axes = _axes_grid(fig_data.figure, len(variables),
                         '# components', 'MSE')
-      for i, key in enumerate(sorted(variables)):
-        pls = GridSearchCV(PLSRegression(scale=False),
-                           dict(n_components=comps),
-                           cv=folds, scoring='neg_mean_squared_error',
-                           return_train_score=False)
-        pls.fit(X, variables[key][0])
-        axes[i].errorbar(comps, -pls.cv_results_['mean_test_score'],
-                         yerr=pls.cv_results_['std_test_score'])
+      yield gen.Task(_async_gridsearch, X, axes, variables, comps, folds)
       fig_data.manager.canvas.draw()
       fig_data.last_plot = 'pls_crossval'
       return
@@ -223,7 +219,7 @@ class RegressionModelHandler(MultiDatasetHandler):
     fig_data.last_plot = 'pls_preds'
 
     res = dict(stats=stats, info=fig_data.pred_model.info_html())
-    return self.write(json_encode(res))
+    self.write(json_encode(res))
 
   def _collect_spectra(self, all_ds_views):
     '''collect vector-format data from all datasets'''
@@ -257,6 +253,27 @@ class RegressionModelHandler(MultiDatasetHandler):
         yy.append(y)
       variables[key] = (np.concatenate(yy), name)
     return variables
+
+
+def _async_gridsearch(X, axes, variables, comps, folds, callback=None):
+  '''Wrap GridSearchCV calls in a Thread to allow the server to be responsive
+  while grid searching.'''
+  n_jobs = min(5, len(comps))
+  grid = dict(n_components=comps)
+
+  def helper():
+    for i, key in enumerate(sorted(variables)):
+      pls = GridSearchCV(PLSRegression(scale=False), grid, cv=folds,
+                         scoring='neg_mean_squared_error',
+                         return_train_score=False, n_jobs=n_jobs)
+      pls.fit(X, variables[key][0])
+      axes[i].errorbar(comps, -pls.cv_results_['mean_test_score'],
+                       yerr=pls.cv_results_['std_test_score'])
+    callback()
+
+  t = Thread(target=helper)
+  t.daemon = True
+  t.start()
 
 
 def _plot_actual_vs_predicted(preds, stats, fig, variables):
