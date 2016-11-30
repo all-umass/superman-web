@@ -196,7 +196,7 @@ def _get_filter_js(m, full_key):
     for k, mm in m.comps.items():
       ijs, cjs = _get_filter_js(mm, full_key + '-' + k)
       init_parts.append(ijs)
-      collect_parts.append('%s: %s' % (k, cjs))
+      collect_parts.append('"%s": %s' % (k, cjs))
     collect_js = '{' + ','.join(collect_parts) + '}'
     return '\n'.join(init_parts), collect_js
   # only chosen selects remain (Lookup/PrimaryKey/Tag)
