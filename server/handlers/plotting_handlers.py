@@ -9,6 +9,8 @@ from matplotlib import rcParams
 from matplotlib.collections import LineCollection
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Patch
+from threading import Thread
+from tornado import gen
 from tornado.escape import json_encode
 from six.moves import xrange
 
@@ -101,6 +103,7 @@ class FilterPlotHandler(MultiDatasetHandler):
       self.write('\n')
     self.finish()
 
+  @gen.coroutine
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
@@ -109,7 +112,8 @@ class FilterPlotHandler(MultiDatasetHandler):
 
     all_ds_views, num_spectra = self.prepare_ds_views(fig_data)
     if all_ds_views is None:
-      return self.write('{}')
+      self.write('{}')
+      return
 
     # parse plot information from request arguments
     xaxis = self._get_axis_info('x')
@@ -127,7 +131,8 @@ class FilterPlotHandler(MultiDatasetHandler):
       if plot_data is None:
         logging.error('Invalid axis combo: %s vs %s', xaxis, yaxis)
         self.set_status(400)  # bad request
-        return self.write('Bad axis type combination.')
+        self.write('Bad axis type combination.')
+        return
       fig_data.explorer_xaxis = xaxis
       fig_data.explorer_yaxis = yaxis
       fig_data.explorer_data = plot_data
@@ -147,20 +152,15 @@ class FilterPlotHandler(MultiDatasetHandler):
     if bool(int(self.get_argument('clear'))):
       fig.clf(keep_observers=True)
 
-    # generate and decorate the plot
-    ax = fig.gca()
-    artist = _add_plot(fig, ax, plot_data, color_data, **plot_kwargs)
-    _decorate_plot(fig, ax, artist, plot_data, color_data,
-                   bool(int(self.get_argument('legend'))),
-                   plot_kwargs['cmap'])
+    # generate, decorate, and draw the plot
+    do_legend = bool(int(self.get_argument('legend')))
+    ax = yield gen.Task(_async_draw_plot, fig_data, plot_data, color_data,
+                        plot_kwargs, do_legend)
 
-    # draw it, then return the axis limits
-    fig_data.manager.canvas.draw()
-    fig_data.last_plot = 'filterplot'
-
+    # return the axis limits
     xmin,xmax = ax.get_xlim()
     ymin,ymax = ax.get_ylim()
-    return self.write(json_encode([xmin,xmax,ymin,ymax]))
+    self.write(json_encode([xmin,xmax,ymin,ymax]))
 
   def _get_axis_info(self, ax_char):
     atype = self.get_argument(ax_char + 'axis')
@@ -191,6 +191,24 @@ class FilterPlotHandler(MultiDatasetHandler):
     else:
       raise ValueError('Invalid color type: %s' % ctype)
     return AxisInfo(type=ctype, argument=argument)
+
+
+def _async_draw_plot(fig_data, plot_data, color_data, plot_kwargs, do_legend,
+                     callback=None):
+  fig = fig_data.figure
+
+  def helper():
+    ax = fig.gca()
+    artist = _add_plot(fig, ax, plot_data, color_data, **plot_kwargs)
+    _decorate_plot(fig, ax, artist, plot_data, color_data,
+                   do_legend, plot_kwargs['cmap'])
+    fig_data.manager.canvas.draw()
+    fig_data.last_plot = 'filterplot'
+    callback(ax)
+
+  t = Thread(target=helper)
+  t.daemon = True
+  t.start()
 
 
 def _get_plot_data(all_ds_views, xaxis, yaxis):
