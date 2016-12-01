@@ -298,6 +298,7 @@ function _run_model(btn, ds_info, do_train) {
   var wait = $('.wait', btn).show();
   $.post('/_run_model', post_data, function(data){
     wait.hide();
+    if (!do_train) return;
     $('.needs_model').attr('disabled', false);
     var stats = data.stats;
     var tbody = $('#model_error>tbody').empty();

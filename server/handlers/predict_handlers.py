@@ -132,8 +132,12 @@ class RegressionModelHandler(MultiDatasetHandler):
       names.append(ax.get_title())
       scat = ax.collections[0]
       actual, pred = scat.get_offsets().T
-      actuals.append(actual)
       preds.append(pred)
+      # HACK: if there are 6 lines on the plot, it's a boxplot, and thus
+      # there are no actual values to report. Instead, they're random jitter.
+      if len(ax.lines) == 6:
+        actual.fill(np.nan)
+      actuals.append(actual)
 
     fname = os.path.basename(self.request.path)
     self.set_header('Content-Type', 'text/plain')
@@ -172,11 +176,11 @@ class RegressionModelHandler(MultiDatasetHandler):
       self.set_status(400)
       return
 
-    variables = self._collect_variables(all_ds_views)
     pls_kind = self.get_argument('pls_kind')
     do_train = self.get_argument('do_train', None)
     if do_train is None:
       # run cross validation
+      variables = self._collect_variables(all_ds_views)
       folds = int(self.get_argument('cv_folds'))
       comps = np.arange(int(self.get_argument('cv_min_comps')),
                         int(self.get_argument('cv_max_comps')) + 1)
@@ -189,37 +193,41 @@ class RegressionModelHandler(MultiDatasetHandler):
         variables = dict(combined=(Y, None))
 
       # run the cross-val and plot scores for each n_components
-      fig_data.figure.clf(keep_observers=True)
-      axes = _axes_grid(fig_data.figure, len(variables),
-                        '# components', 'MSE')
-      yield gen.Task(_async_gridsearch, X, axes, variables, comps, folds)
-      fig_data.manager.canvas.draw()
-      fig_data.last_plot = 'pls_crossval'
+      yield gen.Task(_async_gridsearch, fig_data, X, variables, comps, folds)
       return
 
     if bool(int(do_train)):
       # train on all the data
+      variables = self._collect_variables(all_ds_views)
       cls = PLS1 if pls_kind == 'pls1' else PLS2
       model = cls(int(self.get_argument('pls_comps')), ds_kind, wave)
       logging.info('Training %s on %d inputs, predicting %d vars',
                    model, X.shape[0], len(variables))
       model.train(X, variables)
       fig_data.pred_model = model
+      plot_fn = _plot_actual_vs_predicted
     else:
+      # use existing model
       model = fig_data.pred_model
       if model.ds_kind != ds_kind:
         logging.warning('Mismatching model kind. Expected %r, got %r', ds_kind,
                         model.ds_kind)
+      # use the model's variables, with None instead of actual values
+      variables = {key: (None, name) for key, name in
+                   zip(model.var_keys, model.var_names)}
+      plot_fn = _plot_predictions
 
     # get predictions for each variable
     preds, stats = model.predict(X, variables)
 
-    _plot_actual_vs_predicted(preds, stats, fig_data.figure, variables)
+    # plot
+    plot_fn(preds, stats, fig_data.figure, variables)
     fig_data.manager.canvas.draw()
     fig_data.last_plot = 'pls_preds'
 
     res = dict(stats=stats, info=fig_data.pred_model.info_html())
-    self.write(json_encode(res))
+    # NaN isn't valid JSON, but json_encode doesn't catch it. :'(
+    self.write(json_encode(res).replace('NaN', 'null'))
 
   def _collect_spectra(self, all_ds_views):
     '''collect vector-format data from all datasets'''
@@ -244,7 +252,9 @@ class RegressionModelHandler(MultiDatasetHandler):
     return ds_kind, wave, np.vstack(X)
 
   def _collect_variables(self, all_ds_views):
-    '''collect variables to predict from all datasets'''
+    '''Collect variables to predict from all loaded datasets.
+    Returns a dict of {key: (array, display_name)}
+    '''
     variables = {}
     for key in self.get_arguments('pred_meta[]'):
       yy, name = [], None
@@ -255,13 +265,15 @@ class RegressionModelHandler(MultiDatasetHandler):
     return variables
 
 
-def _async_gridsearch(X, axes, variables, comps, folds, callback=None):
+def _async_gridsearch(fig_data, X, variables, comps, folds, callback=None):
   '''Wrap GridSearchCV calls in a Thread to allow the server to be responsive
   while grid searching.'''
   n_jobs = min(5, len(comps))
   grid = dict(n_components=comps)
 
   def helper():
+    fig_data.figure.clf(keep_observers=True)
+    axes = _axes_grid(fig_data.figure, len(variables), '# components', 'MSE')
     for i, key in enumerate(sorted(variables)):
       pls = GridSearchCV(PLSRegression(scale=False), grid, cv=folds,
                          scoring='neg_mean_squared_error',
@@ -269,6 +281,8 @@ def _async_gridsearch(X, axes, variables, comps, folds, callback=None):
       pls.fit(X, variables[key][0])
       axes[i].errorbar(comps, -pls.cv_results_['mean_test_score'],
                        yerr=pls.cv_results_['std_test_score'])
+    fig_data.manager.canvas.draw()
+    fig_data.last_plot = 'pls_crossval'
     callback()
 
   t = Thread(target=helper)
@@ -283,12 +297,12 @@ def _plot_actual_vs_predicted(preds, stats, fig, variables):
     ax = axes[i]
     y, name = variables[key]
     p = preds[key].ravel()
+    ax.set_title(name)
     ax.scatter(y, p)
     xlims = ax.get_xlim()
     ylims = ax.get_ylim()
     ax.errorbar(y, p, yerr=stats[i]['rmse'], fmt='none', ecolor='k',
                 elinewidth=1, capsize=0, alpha=0.5, zorder=0)
-    ax.set_title(name)
     # plot best fit line
     xylims = [np.min([xlims, ylims]), np.max([xlims, ylims])]
     best_fit = np.poly1d(np.polyfit(y, p, 1))(xylims)
@@ -296,6 +310,19 @@ def _plot_actual_vs_predicted(preds, stats, fig, variables):
     ax.set_aspect('equal')
     ax.set_xlim(xylims)
     ax.set_ylim(xylims)
+
+
+def _plot_predictions(preds, unused_stats, fig, variables):
+  fig.clf(keep_observers=True)
+  axes = _axes_grid(fig, len(preds), '', 'Predicted')
+  for i, key in enumerate(sorted(preds)):
+    ax = axes[i]
+    ax.set_title(variables[key][1])
+    y = preds[key].ravel()
+    ax.boxplot(y, showfliers=False)
+    # overlay jitter plot
+    x = np.ones_like(y) + np.random.normal(scale=0.025, size=len(y))
+    ax.scatter(x, y, alpha=0.9)
 
 
 def _axes_grid(fig, n, xlabel, ylabel):
@@ -332,9 +359,12 @@ class _PLS(object):
     for key, p in self._predict(X, variables):
       y, name = variables[key]
       preds[key] = p
-      stats.append(dict(r2=r2_score(y, p),
-                        rmse=np.sqrt(mean_squared_error(y, p)),
-                        name=name, key=key))
+      if y is not None and np.isfinite(y).all():
+        stats.append(dict(r2=r2_score(y, p),
+                          rmse=np.sqrt(mean_squared_error(y, p)),
+                          name=name, key=key))
+      else:
+        stats.append(dict(name=name, key=key, r2=np.nan, rmse=np.nan))
     stats.sort(key=lambda s: s['key'])
     return preds, stats
 
