@@ -95,7 +95,7 @@ class ModelIOHandler(BaseHandler):
 
     # stash the loaded model
     fig_data.pred_model = model
-    return self.write(json_encode(dict(info=model.info())))
+    return self.write(json_encode(dict(info=model.info_html())))
 
 
 class RegressionModelHandler(MultiDatasetHandler):

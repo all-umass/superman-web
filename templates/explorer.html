@@ -286,7 +286,7 @@ function _run_model(btn, ds_info, do_train) {
   add_baseline_args($('#blr_options'), post_data);
 
   var msg = $('#target_meta').nextAll('.err_msg');
-  if (pred_vars.length == 0) {
+  if (pred_vars.length == 0 && do_train) {
     msg.show('highlight');
     var box = $('#target_meta').closest('.box');
     box.css('animation', 'flash 1s');
