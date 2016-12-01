@@ -171,6 +171,7 @@ function add_baseline_args(ctx, post_data, method) {
   post_data['blr_method'] = method;
   post_data['blr_segmented'] = table.find('.blr_segmented').is(':checked');
   post_data['blr_inverted'] = table.find('.blr_inverted').is(':checked');
+  post_data['blr_flip'] = table.find('.blr_flip').is(':checked');
   post_data['blr_lb'] = table.find('.blr_lb').val();
   post_data['blr_ub'] = table.find('.blr_ub').val();
   post_data['blr_step'] = table.find('.blr_step').val();

@@ -57,6 +57,7 @@ class BaseHandler(tornado.web.RequestHandler):
     method = self.get_argument('blr_method', '').lower()
     segmented_str = self.get_argument('blr_segmented', 'false')
     inverted_str = self.get_argument('blr_inverted', 'false')
+    flip_str = self.get_argument('blr_flip', 'false')
 
     if method and method not in BL_CLASSES:
       raise ValueError('Invalid blr method: %r' % method)
@@ -64,9 +65,12 @@ class BaseHandler(tornado.web.RequestHandler):
       raise ValueError('Invalid blr segmented flag: %r' % segmented_str)
     if inverted_str not in ('true', 'false'):
       raise ValueError('Invalid blr inverted flag: %r' % inverted_str)
+    if inverted_str not in ('true', 'false'):
+      raise ValueError('Invalid blr flip flag: %r' % flip_str)
 
     segmented = segmented_str == 'true'
     inverted = inverted_str == 'true'
+    flip = flip_str == 'true'
     lb = float(self.get_argument('blr_lb', '') or '-inf')
     ub = float(self.get_argument('blr_ub', '') or 'inf')
     step = float(self.get_argument('blr_step', '') or 0)
@@ -83,7 +87,7 @@ class BaseHandler(tornado.web.RequestHandler):
     trans = dict(
         chan_mask=bool(int(self.get_argument('chan_mask', 0))),
         pp=self.get_argument('pp', ''), blr_obj=bl_obj, blr_inverted=inverted,
-        blr_segmented=segmented, crop=(lb, ub, step), **extra_kwargs)
+        blr_segmented=segmented, flip=flip, crop=(lb, ub, step), **extra_kwargs)
 
     if return_blr_params:
       return trans, params
@@ -114,7 +118,7 @@ class MultiDatasetHandler(BaseHandler):
                     for ds in all_ds]
 
     # check to see if anything changed since the last view we had
-    view_keys = ['chan_mask', 'pp', 'blr_method', 'blr_segmented',
+    view_keys = ['chan_mask', 'pp', 'blr_method', 'blr_segmented', 'blr_flip',
                  'blr_inverted', 'blr_lb', 'blr_ub', 'blr_step']
     for k in sorted(blr_params):
       view_keys.append('blr_' + k)
