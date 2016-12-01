@@ -41,7 +41,7 @@ tr:last-child button { width: 100% }
 .ds_filters .filter > * { text-align: left; }
 .ds_filters .filter > .chosen-container { min-width: 100%; }
 .ds_filters .filter .slider {
-  margin: 0.1em 0 0.5em 0;
+  margin: 0.1em auto 0.5em auto;
   height: 36px;
   width: 350px;
   border-radius: 0px;
