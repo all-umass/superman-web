@@ -176,11 +176,11 @@ class RegressionModelHandler(MultiDatasetHandler):
       self.set_status(400)
       return
 
+    variables = self._collect_variables(all_ds_views)
     pls_kind = self.get_argument('pls_kind')
     do_train = self.get_argument('do_train', None)
     if do_train is None:
       # run cross validation
-      variables = self._collect_variables(all_ds_views)
       folds = int(self.get_argument('cv_folds'))
       comps = np.arange(int(self.get_argument('cv_min_comps')),
                         int(self.get_argument('cv_max_comps')) + 1)
@@ -198,14 +198,12 @@ class RegressionModelHandler(MultiDatasetHandler):
 
     if bool(int(do_train)):
       # train on all the data
-      variables = self._collect_variables(all_ds_views)
       cls = PLS1 if pls_kind == 'pls1' else PLS2
       model = cls(int(self.get_argument('pls_comps')), ds_kind, wave)
       logging.info('Training %s on %d inputs, predicting %d vars',
                    model, X.shape[0], len(variables))
       model.train(X, variables)
       fig_data.pred_model = model
-      plot_fn = _plot_actual_vs_predicted
     else:
       # use existing model
       model = fig_data.pred_model
@@ -213,15 +211,19 @@ class RegressionModelHandler(MultiDatasetHandler):
         logging.warning('Mismatching model kind. Expected %r, got %r', ds_kind,
                         model.ds_kind)
       # use the model's variables, with None instead of actual values
-      variables = {key: (None, name) for key, name in
-                   zip(model.var_keys, model.var_names)}
-      plot_fn = _plot_predictions
+      dummy_vars = {key: (None, name) for key, name in
+                    zip(model.var_keys, model.var_names)}
+      # use the actual variables if we have them
+      for key in model.var_keys:
+        if key in variables:
+          dummy_vars[key] = variables[key]
+      variables = dummy_vars
 
     # get predictions for each variable
     preds, stats = model.predict(X, variables)
 
     # plot
-    plot_fn(preds, stats, fig_data.figure, variables)
+    _plot_actual_vs_predicted(preds, stats, fig_data.figure, variables)
     fig_data.manager.canvas.draw()
     fig_data.last_plot = 'pls_preds'
 
@@ -298,31 +300,26 @@ def _plot_actual_vs_predicted(preds, stats, fig, variables):
     y, name = variables[key]
     p = preds[key].ravel()
     ax.set_title(name)
-    ax.scatter(y, p)
-    xlims = ax.get_xlim()
-    ylims = ax.get_ylim()
-    ax.errorbar(y, p, yerr=stats[i]['rmse'], fmt='none', ecolor='k',
-                elinewidth=1, capsize=0, alpha=0.5, zorder=0)
-    # plot best fit line
-    xylims = [np.min([xlims, ylims]), np.max([xlims, ylims])]
-    best_fit = np.poly1d(np.polyfit(y, p, 1))(xylims)
-    ax.plot(xylims, best_fit, 'k--', alpha=0.75, zorder=-1)
-    ax.set_aspect('equal')
-    ax.set_xlim(xylims)
-    ax.set_ylim(xylims)
-
-
-def _plot_predictions(preds, unused_stats, fig, variables):
-  fig.clf(keep_observers=True)
-  axes = _axes_grid(fig, len(preds), '', 'Predicted')
-  for i, key in enumerate(sorted(preds)):
-    ax = axes[i]
-    ax.set_title(variables[key][1])
-    y = preds[key].ravel()
-    ax.boxplot(y, showfliers=False)
-    # overlay jitter plot
-    x = np.ones_like(y) + np.random.normal(scale=0.025, size=len(y))
-    ax.scatter(x, y, alpha=0.9)
+    if y is not None and np.isfinite(y).all():
+      # actual values exist, so plot them
+      ax.scatter(y, p)
+      xlims = ax.get_xlim()
+      ylims = ax.get_ylim()
+      ax.errorbar(y, p, yerr=stats[i]['rmse'], fmt='none', ecolor='k',
+                  elinewidth=1, capsize=0, alpha=0.5, zorder=0)
+      # plot best fit line
+      xylims = [np.min([xlims, ylims]), np.max([xlims, ylims])]
+      best_fit = np.poly1d(np.polyfit(y, p, 1))(xylims)
+      ax.plot(xylims, best_fit, 'k--', alpha=0.75, zorder=-1)
+      ax.set_aspect('equal')
+      ax.set_xlim(xylims)
+      ax.set_ylim(xylims)
+    else:
+      # no actual values exist, so only plot the predictions
+      ax.boxplot(p, showfliers=False)
+      # overlay jitter plot
+      x = np.ones_like(p) + np.random.normal(scale=0.025, size=len(p))
+      ax.scatter(x, p, alpha=0.9)
 
 
 def _axes_grid(fig, n, xlabel, ylabel):
