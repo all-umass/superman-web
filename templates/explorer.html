@@ -268,6 +268,7 @@ function _upload_model(btn, file_input, ds_kind) {
       file_input.value = '';  // reset the input
       $('.needs_model').attr('disabled', false);
       $('#model_info').html(JSON.parse(data).info);
+      $('#model_error>tbody').empty();
     }
   });
 }
