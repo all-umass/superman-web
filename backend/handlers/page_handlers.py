@@ -96,8 +96,9 @@ class DataExplorerPage(Subpage):
   def get(self):
     ds_tree = defaultdict(dict)
     for ds in self.all_datasets():
-      ds_tree[ds.kind][ds.name] = hash(ds)
-    self.render(datasets=ds_tree, logged_in=(self.current_user is not None),
+      is_traj = ds.num_dimensions() is None
+      ds_tree[ds.kind][ds.name] = (hash(ds), is_traj)
+    self.render(ds_tree=ds_tree, logged_in=(self.current_user is not None),
                 ds_kind=self.get_argument('ds_kind', ''),
                 ds_name=self.get_argument('ds_name', ''), **blr_kwargs)
 

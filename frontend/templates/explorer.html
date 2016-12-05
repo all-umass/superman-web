@@ -380,16 +380,17 @@ $(document).ready(function(){
 </div>
 <div>
 <ul id="ds_kind_choices">
-{% for kind in sorted(datasets) %}
+{% for kind in sorted(ds_tree) %}
   <li {% if kind == ds_kind %}class='active'{% end %}
       onclick='click_ds_kind(this);'>{{kind}}</li>
 {% end %}
 </ul>
-{% for kind, k_dict in datasets.items() %}
+{% for kind, k_dict in ds_tree.items() %}
   <fieldset class="ds_select {{kind}}{% if kind == ds_kind %} active{% end %}">
-    {% for name, cbid in sorted(k_dict.items()) %}
+    {% for name, (cbid, is_traj) in sorted(k_dict.items()) %}
       <input type="checkbox" id="{{cbid}}" value="{{name}},{{kind}}">
-      <label for="{{cbid}}">{{name}}</label>
+      <label for="{{cbid}}">{{name}}{% if is_traj %}<sup>&dagger;</sup>{% end %}
+      </label>
     {% end %}
     <button onclick='load_ds_filters()'>Load Dataset(s)</button>
   </fieldset>
