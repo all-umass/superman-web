@@ -50,7 +50,14 @@ function do_filtered_plot() {
   post_data['fignum'] = fig.id;
 
   var cbs = make_post_callbacks('#plot_button>.dots');
-  $.post('/_filterplot', post_data, cbs['success'], 'json').fail(cbs['fail']);
+  $.ajax({
+    url: '/_filterplot',
+    method: 'POST',
+    data: post_data,
+    dataType: 'json',
+    success: cbs['success'],
+    error: cbs['fail'],
+  });
 }
 
 function download_spectrum_data() {

@@ -106,13 +106,18 @@ function collect_ds_info() {
 }
 function load_ds_filters() {
   var ds_info = collect_ds_info();
+  // clear any existing filters
   var container = $('#ds_filters_container').empty();
+  // deselect any selected datasets in other ds_kinds
+  $('.ds_select:not(.active) > input:checked').click();
+  // load a filter box for each dataset
   var num_ds = ds_info.name.length;
   for (var i = 0; i < num_ds; i++) {
     $('<div><img src="/loading_bar.gif"></div>')
       .appendTo(container)
       .load('/_dataset_filterer', {name:ds_info.name[i],kind:ds_info.kind[i]});
   }
+  // load/unload tool sections below
   var plot_options = $('#ds_plotting_container');
   var comp_options = $('#ds_compositions_container');
   var pred_options = $('#ds_prediction_container');

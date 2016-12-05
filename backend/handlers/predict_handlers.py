@@ -158,14 +158,6 @@ class RegressionModelHandler(MultiDatasetHandler):
         self.write('%s,' % key + ','.join('%g' % x for x in row) + '\n')
     self.finish()
 
-  def write_error(self, status, msg, *log_args):
-    if not log_args:
-      logging.error(msg)
-    else:
-      logging.error(*log_args)
-    self.set_status(status)
-    self.finish("Error: " + msg)
-
   @gen.coroutine
   def post(self):
     fig_data = self.get_fig_data()

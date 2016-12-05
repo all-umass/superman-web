@@ -53,6 +53,14 @@ class BaseHandler(tornado.web.RequestHandler):
                          zip(self.get_arguments(kind_arg),
                              self.get_arguments(name_arg))])
 
+  def write_error(self, status, msg, *log_args):
+    if not log_args:
+      logging.error(msg)
+    else:
+      logging.error(*log_args)
+    self.set_status(status)
+    self.finish("Error: " + msg)
+
   def ds_view_kwargs(self, return_blr_params=False, **extra_kwargs):
     method = self.get_argument('blr_method', '').lower()
     segmented_str = self.get_argument('blr_segmented', 'false')

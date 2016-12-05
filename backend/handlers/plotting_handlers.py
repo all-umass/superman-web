@@ -107,11 +107,12 @@ class FilterPlotHandler(MultiDatasetHandler):
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
-      self.set_status(403)
+      self.write_error(403, "Broken connection to server.")
       return
 
     all_ds_views, num_spectra = self.prepare_ds_views(fig_data)
     if all_ds_views is None:
+      # not an error, just nothing to do
       self.write('{}')
       return
 
@@ -127,11 +128,9 @@ class FilterPlotHandler(MultiDatasetHandler):
 
     # get the plot data (trajs or scatter points), possibly cached
     if xaxis != fig_data.explorer_xaxis or yaxis != fig_data.explorer_yaxis:
-      plot_data = _get_plot_data(all_ds_views, xaxis, yaxis)
+      plot_data = self._get_plot_data(all_ds_views, xaxis, yaxis)
       if plot_data is None:
-        logging.error('Invalid axis combo: %s vs %s', xaxis, yaxis)
-        self.set_status(400)  # bad request
-        self.write('Bad axis type combination.')
+        # self.write_error has already been called by _get_plot_data
         return
       fig_data.explorer_xaxis = xaxis
       fig_data.explorer_yaxis = yaxis
@@ -192,6 +191,32 @@ class FilterPlotHandler(MultiDatasetHandler):
       raise ValueError('Invalid color type: %s' % ctype)
     return AxisInfo(type=ctype, argument=argument)
 
+  def _get_plot_data(self, all_ds_views, xaxis, yaxis):
+    logging.info('Getting new plot data: %s, %s', xaxis, yaxis)
+    if xaxis.type == 'default' and yaxis.type == 'default':
+      trajs, xlabels = [], set()
+      for dv in all_ds_views:
+        xlabels.add(dv.ds.x_axis_units())
+        try:
+          tt = dv.get_trajectories()
+        except ValueError as e:
+          self.write_error(400, e.message)
+          return None
+        else:
+          trajs.extend(tt)
+      return PlotData(scatter=False, trajs=trajs, xlabel=' & '.join(xlabels),
+                      ylabel='Intensity', xticks=None, yticks=None)
+    # scatter
+    xdata, xlabel, xticks = _get_axis_data(all_ds_views, xaxis)
+    ydata, ylabel, yticks = _get_axis_data(all_ds_views, yaxis)
+    if xdata is None or ydata is None:
+      self.write_error(400, 'Bad axis type combination.',
+                       'Invalid axis combo: %s vs %s', xaxis, yaxis)
+      return None
+    trajs = [np.column_stack((xdata, ydata))]
+    return PlotData(scatter=True, trajs=trajs, xlabel=xlabel, ylabel=ylabel,
+                    xticks=xticks, yticks=yticks)
+
 
 def _async_draw_plot(fig_data, plot_data, color_data, plot_kwargs, do_legend,
                      callback=None):
@@ -209,24 +234,6 @@ def _async_draw_plot(fig_data, plot_data, color_data, plot_kwargs, do_legend,
   t = Thread(target=helper)
   t.daemon = True
   t.start()
-
-
-def _get_plot_data(all_ds_views, xaxis, yaxis):
-  logging.info('Getting new plot data: %s, %s', xaxis, yaxis)
-  if xaxis.type == 'default' and yaxis.type == 'default':
-    trajs, xlabels = [], set()
-    for dv in all_ds_views:
-      trajs.extend(dv.get_trajectories())
-      xlabels.add(dv.ds.x_axis_units())
-    return PlotData(trajs=trajs, xlabel=' & '.join(xlabels), ylabel='Intensity',
-                    xticks=None, yticks=None, scatter=False)
-  # scatter
-  xdata, xlabel, xticks = _get_axis_data(all_ds_views, xaxis)
-  ydata, ylabel, yticks = _get_axis_data(all_ds_views, yaxis)
-  if xdata is None or ydata is None:
-    return None
-  return PlotData(trajs=[np.column_stack((xdata, ydata))], xlabel=xlabel,
-                  ylabel=ylabel, xticks=xticks, yticks=yticks, scatter=True)
 
 
 def _get_color_data(all_ds_views, caxis):

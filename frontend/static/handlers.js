@@ -22,7 +22,7 @@ function make_post_callbacks(msg_selector) {
     },
     fail: function(jqXHR, textStatus, errorThrown) {
       var msg = $(msg_selector);
-      var out = msg.text() + " " + textStatus + ". " + errorThrown;
+      var out = msg.text() + " " + textStatus + ": " + jqXHR.responseText;
       msg.text(out);  // no delay, keep the error message up
     }
   };
