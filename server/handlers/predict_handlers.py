@@ -158,22 +158,29 @@ class RegressionModelHandler(MultiDatasetHandler):
         self.write('%s,' % key + ','.join('%g' % x for x in row) + '\n')
     self.finish()
 
+  def write_error(self, status, msg, *log_args):
+    if not log_args:
+      logging.error(msg)
+    else:
+      logging.error(*log_args)
+    self.set_status(status)
+    self.finish("Error: " + msg)
+
   @gen.coroutine
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
-      self.set_status(403)
+      self.write_error(403, "Broken connection to server.")
       return
 
     all_ds_views, _ = self.prepare_ds_views(fig_data, nan_gap=None)
     if all_ds_views is None:
-      logging.error("Failed to look up dataset(s)")
-      self.set_status(404)
+      self.write_error(404, "Failed to look up dataset(s).")
       return
 
     ds_kind, wave, X = self._collect_spectra(all_ds_views)
     if X is None:
-      self.set_status(400)
+      # self.write_error has already been called in _collect_spectra
       return
 
     variables = self._collect_variables(all_ds_views)
@@ -238,17 +245,19 @@ class RegressionModelHandler(MultiDatasetHandler):
       try:
         w, x = dv.get_vector_data()
       except ValueError as e:
-        logging.error("Failed to get vector data from %s: %s", dv.ds, e.message)
+        self.write_error(400, e.message, "Couldn't get vector data from %s: %s",
+                         dv.ds, e.message)
         return ds_kind, wave, None
       if wave is None:
         wave = w
         ds_kind = dv.ds.kind
       else:
         if wave.shape != w.shape or not np.allclose(wave, w):
-          logging.error("Mismatching wavelength data in %s", dv.ds)
+          self.write_error(400, "Mismatching wavelength data in %s." % dv.ds)
           return ds_kind, wave, None
         if ds_kind != dv.ds.kind:
-          logging.error("Mismatching ds_kind: %s not in %s", dv.ds, ds_kind)
+          self.write_error(400, "Mismatching dataset types.",
+                           "Mismatching ds_kind: %s not in %s", dv.ds, ds_kind)
           return ds_kind, wave, None
       X.append(x)
     return ds_kind, wave, np.vstack(X)

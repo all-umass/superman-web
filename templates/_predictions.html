@@ -27,7 +27,7 @@
   <button disabled class="needs_filter" onclick="run_crossval(this);">
     Select<span class="wait">ing</span> model<span class="wait">...</span>
   </button>
-  <span class="err_msg"></span>
+  <div class="err_msg"></div>
 </td></tr>
 </table>
 
@@ -43,7 +43,7 @@
 <tr><td colspan=2>
   <button disabled class="needs_filter" onclick="make_model(this);">
   Train/Upload model<span class="wait">...</span></button>
-  <span class="err_msg"></span>
+  <div class="err_msg"></div>
 </td></tr></table>
 
 <div class="flow" style="text-align: left;">
@@ -57,7 +57,7 @@
 <button disabled class="needs_model" onclick="run_preds(this);">
 Run<span class="wait">ning</span> predictions<span class="wait">...</span>
 </button>
-<span class="err_msg"></span>
+<div class="err_msg"></div>
 <br>
 <button disabled class="needs_model" onclick="predict_download(this);">
 Download</button><select style="vertical-align: baseline;">
