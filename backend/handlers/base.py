@@ -53,7 +53,7 @@ class BaseHandler(tornado.web.RequestHandler):
                          zip(self.get_arguments(kind_arg),
                              self.get_arguments(name_arg))])
 
-  def write_error(self, status, msg, *log_args):
+  def visible_error(self, status, msg, *log_args):
     if not log_args:
       logging.error(msg)
     else:

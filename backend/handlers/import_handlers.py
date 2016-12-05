@@ -24,16 +24,16 @@ class DatasetImportHandler(BaseHandler):
       resample = None
 
     if ds_kind not in DATASETS:
-      return self.write_error(400, 'Invalid dataset kind.',
-                              'Invalid ds_kind: %r', ds_kind)
+      return self.visible_error(400, 'Invalid dataset kind.',
+                                'Invalid ds_kind: %r', ds_kind)
 
     if ds_name in DATASETS[ds_kind]:
-      return self.write_error(403, 'Dataset already exists.',
-                              'ds import would clobber existing: %s [%s]',
-                              ds_name, ds_kind)
+      return self.visible_error(403, 'Dataset already exists.',
+                                'ds import would clobber existing: %s [%s]',
+                                ds_name, ds_kind)
 
     if not self.request.files or 'spectra' not in self.request.files:
-      return self.write_error(400, 'No spectrum data uploaded.')
+      return self.visible_error(400, 'No spectrum data uploaded.')
 
     meta_kwargs, meta_pkeys = self._load_metadata_csv()
     if meta_kwargs is None:
@@ -74,8 +74,8 @@ class DatasetImportHandler(BaseHandler):
         # TODO: ensure each traj has wavelengths in increasing order
         traj_data[fname] = parse_spectrum(sub_fh)
       except Exception as e:
-        self.write_error(415, 'Unable to parse spectrum file: %s' % fname,
-                         'bad spectrum subfile (%s): %s', fname, e)
+        self.visible_error(415, 'Unable to parse spectrum file: %s' % fname,
+                           'bad spectrum subfile (%s): %s', fname, e)
         return False
 
     num_meta = len(meta_pkeys)
@@ -84,13 +84,13 @@ class DatasetImportHandler(BaseHandler):
     if num_meta == 0:
       meta_pkeys = traj_data.keys()
     elif num_meta != num_traj:
-      self.write_error(415, 'Failed: %d metadata entries for %d spectra' % (
+      self.visible_error(415, 'Failed: %d metadata entries for %d spectra' % (
           num_meta, num_traj))
       return False
     else:
       for pkey in meta_pkeys:
         if pkey not in traj_data:
-          self.write_error(415, 'Failed: %r not in spectra.' % pkey)
+          self.visible_error(415, 'Failed: %r not in spectra.' % pkey)
           return False
 
     if resample is None:
@@ -128,8 +128,8 @@ class DatasetImportHandler(BaseHandler):
       wave = data[0]
       spectra = data[1:]
     except Exception as e:
-      self.write_error(415, 'Unable to parse spectrum data CSV.',
-                       'bad spectra file: %s', e)
+      self.visible_error(415, 'Unable to parse spectrum data CSV.',
+                         'bad spectra file: %s', e)
       return False
 
     # cut out empty rows (where wave is NaN)
@@ -139,18 +139,18 @@ class DatasetImportHandler(BaseHandler):
       spectra = spectra[:, mask]
 
     if ds_kind == 'LIBS' and wave.shape != (6144,):
-      self.write_error(415, 'Wrong number of channels for LIBS data.')
+      self.visible_error(415, 'Wrong number of channels for LIBS data.')
       return False
 
     if len(meta_pkeys) > 0 and not np.array_equal(meta_pkeys, pkey):
       if len(meta_pkeys) != len(pkey):
-        self.write_error(415, 'Spectrum and metadata names mismatch.',
-                         'wrong number of meta_pkeys for vector data')
+        self.visible_error(415, 'Spectrum and metadata names mismatch.',
+                           'wrong number of meta_pkeys for vector data')
         return False
       meta_order = np.argsort(meta_pkeys)
       data_order = np.argsort(pkey)
       if not np.array_equal(meta_pkeys[meta_order], pkey[data_order]):
-        self.write_error(415, 'Spectrum and metadata names mismatch.')
+        self.visible_error(415, 'Spectrum and metadata names mismatch.')
         return False
       # convert data to meta order
       order = np.zeros_like(data_order)
@@ -161,7 +161,7 @@ class DatasetImportHandler(BaseHandler):
     try:
       pkey = PrimaryKeyMetadata(pkey)
     except AssertionError:  # XXX: convert this to a real error
-      self.write_error(415, 'Primary keys not unique.')
+      self.visible_error(415, 'Primary keys not unique.')
       return False
 
     # make sure wave is in increasing order
@@ -209,8 +209,8 @@ class DatasetImportHandler(BaseHandler):
       meta = np.genfromtxt(fh, dtype=None, delimiter=',', names=True)
       meta_pkeys = np.array(meta[meta.dtype.names[0]])
     except Exception as e:
-      self.write_error(415, 'Unable to parse metadata CSV.',
-                       'bad metadata file: %s', e)
+      self.visible_error(415, 'Unable to parse metadata CSV.',
+                         'bad metadata file: %s', e)
       return None, None
 
     # get the actual meta names (dtype names are mangled)

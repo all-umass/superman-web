@@ -107,7 +107,7 @@ class FilterPlotHandler(MultiDatasetHandler):
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
-      self.write_error(403, "Broken connection to server.")
+      self.visible_error(403, "Broken connection to server.")
       return
 
     all_ds_views, num_spectra = self.prepare_ds_views(fig_data)
@@ -130,7 +130,7 @@ class FilterPlotHandler(MultiDatasetHandler):
     if xaxis != fig_data.explorer_xaxis or yaxis != fig_data.explorer_yaxis:
       plot_data = self._get_plot_data(all_ds_views, xaxis, yaxis)
       if plot_data is None:
-        # self.write_error has already been called by _get_plot_data
+        # self.visible_error has already been called by _get_plot_data
         return
       fig_data.explorer_xaxis = xaxis
       fig_data.explorer_yaxis = yaxis
@@ -200,7 +200,7 @@ class FilterPlotHandler(MultiDatasetHandler):
         try:
           tt = dv.get_trajectories()
         except ValueError as e:
-          self.write_error(400, e.message)
+          self.visible_error(400, e.message)
           return None
         else:
           trajs.extend(tt)
@@ -210,8 +210,8 @@ class FilterPlotHandler(MultiDatasetHandler):
     xdata, xlabel, xticks = _get_axis_data(all_ds_views, xaxis)
     ydata, ylabel, yticks = _get_axis_data(all_ds_views, yaxis)
     if xdata is None or ydata is None:
-      self.write_error(400, 'Bad axis type combination.',
-                       'Invalid axis combo: %s vs %s', xaxis, yaxis)
+      self.visible_error(400, 'Bad axis type combination.',
+                         'Invalid axis combo: %s vs %s', xaxis, yaxis)
       return None
     trajs = [np.column_stack((xdata, ydata))]
     return PlotData(scatter=True, trajs=trajs, xlabel=xlabel, ylabel=ylabel,
