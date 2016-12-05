@@ -4,10 +4,10 @@ import unittest
 from mock import Mock
 from numpy.testing import assert_array_equal
 
-from server import MatplotlibServer, BaseHandler
-from server.handlers.baseline_handlers import BaselineHandler
-from server.handlers.handlers import SelectHandler
-from server.web_datasets import (
+from backend import MatplotlibServer, BaseHandler
+from backend.handlers.baseline_handlers import BaselineHandler
+from backend.handlers.handlers import SelectHandler
+from backend.web_datasets import (
     DATASETS, WebTrajDataset, WebVectorDataset,
     LookupMetadata, NumericMetadata, BooleanMetadata, PrimaryKeyMetadata,
     CompositionMetadata

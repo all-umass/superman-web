@@ -1,8 +1,8 @@
 import unittest
 from mock import Mock
 
-from server import MatplotlibServer
-from server.handlers.import_handlers import DatasetImportHandler
+from backend import MatplotlibServer
+from backend.handlers.import_handlers import DatasetImportHandler
 
 
 class TestDatasetImportRoutes(unittest.TestCase):

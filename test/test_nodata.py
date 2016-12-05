@@ -2,15 +2,15 @@ import os.path
 import unittest
 from mock import Mock
 
-from server import MatplotlibServer
-from server.handlers.page_handlers import (
+from backend import MatplotlibServer
+from backend.handlers.page_handlers import (
     MainPage, LoginPage, DatasetsPage, DataExplorerPage, BaselinePage,
     SearcherPage, PeakFitPage, DatasetImportPage)
 
 
 class TestNoDataPages(unittest.TestCase):
   def setUp(self):
-    tpl = os.path.join(os.path.dirname(__file__), '..', 'templates')
+    tpl = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'templates')
     self.app = MatplotlibServer(cookie_secret='foobar', template_path=tpl)
 
   def test_main_page(self):

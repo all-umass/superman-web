@@ -7,10 +7,10 @@ import tornado.web
 import yaml
 from argparse import ArgumentParser
 
-from server import MatplotlibServer, all_routes, BaseHandler
-from server.web_datasets import (
+from backend import MatplotlibServer, all_routes, BaseHandler
+from backend.web_datasets import (
     DATASETS, WebLIBSDataset, WebVectorDataset, WebTrajDataset)
-import server.web_datasets
+import backend.web_datasets
 import dataset_loaders
 
 
@@ -48,10 +48,10 @@ def main():
   logging.info('Starting server...')
   routes = all_routes + [
       (r'/(\w+\.(?:png|gif|css|js|ico))', tornado.web.StaticFileHandler,
-       dict(path=os.path.join(webserver_dir, 'static')))]
+       dict(path=os.path.join(webserver_dir, 'frontend', 'static')))]
   server = MatplotlibServer(
       *routes,
-      template_path=os.path.join(webserver_dir, 'templates'),
+      template_path=os.path.join(webserver_dir, 'frontend', 'templates'),
       login_url=r'/login',
       cookie_secret="sdfjnwp9483nzjafagq582bqd")
   server.run_forever(args.port)
@@ -83,7 +83,7 @@ def load_datasets(config_fh, public_only=False):
         loader_fn = getattr(dataset_loaders, info['loader'])
       else:
         # construct a loader from the meta_mapping and the default template
-        meta_mapping = [(k, getattr(server.web_datasets, cls), mname)
+        meta_mapping = [(k, getattr(backend.web_datasets, cls), mname)
                         for k, cls, mname in info.get('metadata', [])]
         if info.get('vector', False):
           loader_fn = dataset_loaders._generic_vector_loader(meta_mapping)
