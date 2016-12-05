@@ -121,9 +121,12 @@ class PeakHandler(BaseHandler):
       ax.plot(peak_x, peak_y, 'k-', linewidth=2, alpha=0.75)
 
     # Finish plotting
-    xpad = (peak_x[-1] - peak_x[0]) / 3.
-    ax.set_xlim((max(xlim[0], peak_x[0] - xpad),
-                 min(xlim[1], peak_x[-1] + xpad)))
+    if len(peak_x) > 0:
+      xpad = (peak_x[-1] - peak_x[0]) / 3.
+      ax.set_xlim((max(xlim[0], peak_x[0] - xpad),
+                   min(xlim[1], peak_x[-1] + xpad)))
+    else:
+      ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     fig_data.manager.canvas.draw()
 
@@ -134,6 +137,8 @@ class PeakHandler(BaseHandler):
 def _manual_peak_area(spectrum, bounds, base_type='region'):
   s, t = np.searchsorted(spectrum[:,0], bounds)
   x, y = spectrum[s:t].T
+  if len(x) == 0:
+    return x, y, 0, dict()
   if t <= s:
     base, area = 0, 0
   else:

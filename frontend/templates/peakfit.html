@@ -35,11 +35,14 @@ function do_batch_download() {
   window.open(url, '_blank');
 }
 function fmt_number(x) {
+  if (x === undefined) {
+    return 'N/A';
+  }
   var s = x.toFixed(2);
   if (s === '0.00') {
     s = x.toExponential(2);
   }
-  return s
+  return s;
 }
 function do_peakfit(alg) {
   var post_data = collect_peakfit_args(alg);
