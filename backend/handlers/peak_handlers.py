@@ -134,6 +134,8 @@ class PeakHandler(BaseHandler):
 def _manual_peak_area(spectrum, bounds, base_type='region'):
   s, t = np.searchsorted(spectrum[:,0], bounds)
   x, y = spectrum[s:t].T
+  if len(x) == 0:
+    return x, y, 0, dict()
   if t <= s:
     base, area = 0, 0
   else:
