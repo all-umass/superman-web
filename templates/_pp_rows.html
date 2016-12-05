@@ -7,7 +7,8 @@
 <button onclick="add_pp_step(this,'normalize','cum');">cumulative</button>
 <button onclick="add_pp_step(this,'normalize','norm3');" class="libs_only">norm3</button>
 <span class="fake_button" onclick="add_pp_step(this,'normalize','band','loc');">
-band @<input type="number" value=500 name="loc"></span>
+band @<input type="number" value=500 name="loc"
+       onclick="event.stopPropagation()"></span>
 </td></tr>
 <!-- squashing -->
 <tr class="uline">
