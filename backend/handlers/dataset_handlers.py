@@ -42,7 +42,7 @@ class DatasetFiltererHandler(BaseHandler):
       return self.write('<span>No metadata to filter on</span>')
 
     html_parts, init_js, collect_js = ds.filter_ui()
-    return self.render('_filters_table.html', ds=ds, html_parts=html_parts,
+    return self.render('_dataset_filters.html', ds=ds, html_parts=html_parts,
                        init_js=init_js, collect_js=collect_js)
 
 
@@ -56,7 +56,7 @@ class DatasetPlotOptionsHandler(BaseHandler):
     if len(all_ds) > 1:
       # Allow coloring by dataset origin in multi-ds case
       meta_names.append(('_ds', 'Dataset'))
-    return self.render('_plot_options_table.html', is_libs=is_libs,
+    return self.render('_filterplots.html', is_libs=is_libs,
                        metadata_names=meta_names, cmaps=cmaps,
                        default_cmap=rcParams['image.cmap'],
                        default_lw=rcParams['lines.linewidth'])

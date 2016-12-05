@@ -66,7 +66,6 @@
 #fit_info td:last-child { text-align: right; }
 #fit_info th { padding-top: 0.5em; }
 
-{% if logged_in %}
 /* Prediction stuff */
 @keyframes flash { 50% { background-color: pink; } }
 .err_msg { display: none; color: red; text-align: center; }
@@ -77,7 +76,6 @@
 #model_error td { padding: 0 0.5em; text-align: right; }
 #model_error td:first-child { text-align: left; }
 #ds_prediction_container input[type="number"] { width: 3em; }
-{% end %}
 
 /* Hacks to disable the float: left from .ds_table */
 .nofloat_ds_table { display: inline-block; vertical-align: top; float: none; }
@@ -144,221 +142,11 @@ function load_ds_filters() {
     window.history.pushState('', '', 'explorer');
   }
 }
-function _value() {
-  return this.value;
-}
-function changed(kind, val) {
-  $('td.'+val).hide();
-  $('td.'+val+'.'+kind).show();
-}
-function child_vals(selector){
-  return "[" + $(selector).children().map(function(i,x){
-    return x.value;
-  }).filter(function(i,x){
-    return x;
-  }).toArray() + "]";
-}
-function collect_plot_options() {
-  var opts = {
-    xaxis: $("#xaxis").val(),
-    yaxis: $("#yaxis").val(),
-    color: $("#color").val(),
-    x_metadata: $("td.x.metadata").children().val(),
-    x_line_ratio: child_vals("td.x.line_ratio"),
-    x_computed: $("td.x.computed").children().val(),
-    y_metadata: $("td.y.metadata").children().val(),
-    y_line_ratio: child_vals("td.y.line_ratio"),
-    y_computed: $("td.y.computed").children().val(),
-    fixed_color: $("td.color.default").children().val(),
-    color_by: $("td.color.metadata").children().val(),
-    color_line_ratio: child_vals("td.color.line_ratio"),
-    color_computed: $("td.color.computed").children().val(),
-    alpha: $("#plt_alpha").val(),
-    clear: +$("#plt_clear").is(":checked"),
-    legend: +$("#plt_legend").is(":checked"),
-    line_width: $("#plt_lw").val(),
-    cmap: $("#plt_cmap").val(),
-    chan_mask: +$("#chan_mask").is(":checked"),
-    pp: collect_pp_args($('#pp_options')),
-  };
-  return add_baseline_args($('#blr_options'), opts);
-}
-function do_filtered_plot() {
-  $('#plot_button>.dots').text("ting...").fadeIn();
-  var post_data = collect_plot_options();
-  var ds_info = collect_ds_info();
-  post_data['ds_kind'] = ds_info.kind;
-  post_data['ds_name'] = ds_info.name;
-  post_data['fignum'] = fig.id;
 
-  var cbs = make_post_callbacks('#plot_button>.dots');
-  $.post('/_filterplot', post_data, cbs['success'], 'json').fail(cbs['fail']);
-}
-function plot_compositions() {
-  var xc = $('#x_comp_options option:selected').map(_value).toArray();
-  var yc = $('#y_comp_options option:selected').map(_value).toArray();
-  if (xc.length + yc.length == 0) {
-    alert('Please select at least one composition to plot.');
-    return;
-  }
-  var ds_info = collect_ds_info();
-  var post_data = {
-    x_comps: xc.join('+'),
-    y_comps: yc.join('+'),
-    color_by: $('#color_by > option:selected').val(),
-    do_fit: +$('#do_fit').is(':checked'),
-    use_mols: +$('#use_mols').is(':checked'),
-    fignum: fig.id,
-    ds_kind: ds_info.kind[0],
-    ds_name: ds_info.name[0],
-  };
-  $.post('/_plot_compositions', post_data, function(data, status) {
-    if (status !== 'success') return;
-    $('#fit_info td:last-child span').empty()
-    update_zoom_ctrl(data['zoom']);
-    delete data['zoom'];
-    for (key in data) {
-      $('#fit_' + key).text(data[key].toFixed(3));
-    }
-  }, 'json');
-}
-{% if logged_in %}
-function run_preds(btn) {
-  _run_model(btn, collect_ds_info(), false);
-}
-function run_crossval(btn) {
-  _run_model(btn, collect_ds_info(), null);
-}
-function make_model(btn) {
-  var ds_info = collect_ds_info();
-  var file_input = $('#modelfile')[0];
-  if (file_input.files.length > 0) {
-    _upload_model(btn, file_input, ds_info.kind[0]);
-  } else {
-    _run_model(btn, ds_info, true);
-  }
-}
-function _upload_model(btn, file_input, ds_kind) {
-  var f = file_input.files[0];
-  var err_span = $(btn).next('.err_msg');
-  if (f.size > 5000000) {
-    err_span.text('File too big (max 5 MB)').show();
-    // flash the file input's enclosing <td>
-    var td = $(file_input).parent().css('animation', 'flash 1s');
-    setTimeout(function() { td.css('animation', ''); }, 1000);
-    return
-  }
-  var post_data = new FormData();
-  post_data.append('fignum', fig.id);
-  post_data.append('modelfile', f);
-  post_data.append('ds_kind', ds_kind);
-  var wait = $('.wait', btn).show();
-  $.ajax({
-    url: '/_load_model',
-    data: post_data,
-    processData: false,
-    contentType: false,
-    type: 'POST',
-    error: function(jqXHR, textStatus, errorThrown) {
-      wait.hide();
-      file_input.value = '';  // reset the input
-      err_span.text(jqXHR.responseText).show();
-    },
-    success: function(data) {
-      wait.hide();
-      err_span.hide();
-      file_input.value = '';  // reset the input
-      $('.needs_model').attr('disabled', false);
-      $('#model_info').html(JSON.parse(data).info);
-      $('#model_error>tbody').empty();
-    }
-  });
-}
-function _run_model(btn, ds_info, do_train) {
-  var pred_vars = $('#target_meta option:selected').map(_value).toArray();
-  var post_data = {
-      ds_name: ds_info.name,
-      ds_kind: ds_info.kind,
-      fignum: fig.id,
-      pp: collect_pp_args($('#pp_options')),
-      pls_comps: +$('#pls_comps').val(),
-      pls_kind: $('#pls_kind').val(),
-      pred_meta: pred_vars,
-      cv_folds: +$('#cv_folds').val(),
-      cv_min_comps: +$('#cv_min_comps').val(),
-      cv_max_comps: +$('#cv_max_comps').val(),
-  };
-  add_baseline_args($('#blr_options'), post_data);
-  if (do_train !== null) {
-    post_data['do_train'] = +do_train;
-  }
+{% include '_filterplots.js' %}
+{% include '_compositions.js' %}
+{% if logged_in %}{% include '_predictions.js' %}{% end %}
 
-  var msg = $('#target_meta').nextAll('.err_msg');
-  if (pred_vars.length == 0 && do_train) {
-    msg.show('highlight');
-    var box = $('#target_meta').closest('.box');
-    box.css('animation', 'flash 1s');
-    setTimeout(function() { box.css('animation', ''); }, 1000);
-    return;
-  } else {
-    msg.hide();
-  }
-  var wait = $('.wait', btn).show();
-  var err_span = $(btn).next('.err_msg');
-  $.ajax({
-    type: 'POST',
-    url: '/_run_model',
-    data: post_data,
-    dataType: 'json',
-    success: function(data){
-      wait.hide();
-      err_span.hide();
-      if (!do_train) return;
-      $('.needs_model').attr('disabled', false);
-      var stats = data.stats;
-      var tbody = $('#model_error>tbody').empty();
-      for (var i=0; i<stats.length; i++) {
-        var v = stats[i];
-        tbody.append('<tr><td>'+v.name+'</td><td>' + v.r2.toPrecision(3) +
-                     '</td><td>' + v.rmse.toPrecision(4) + '</td></tr>');
-      }
-      $('#model_info').html(data.info);
-    },
-    error: function(jqXHR, textStatus, errorThrown) {
-      wait.hide();
-      err_span.text(jqXHR.responseText).show();
-    }
-  });
-}
-function predict_download(btn) {
-  var dl_type = $(btn).next('select').val();
-  var dl_url = '/'+fig.id+'/pls_';
-  if (dl_type === 'preds') {
-    var ds_info = collect_ds_info();
-    dl_url += 'predictions.csv?' + $.param({ds_name: ds_info.name,
-                                            ds_kind: ds_info.kind});
-  } else if (dl_type === 'pkl') {
-    dl_url += 'model.pkl';
-  } else {
-    dl_url += 'model.csv';
-  }
-  window.open(dl_url, '_blank');
-}
-{% end %}
-function download_spectrum_data() {
-  var ds_info = collect_ds_info();
-  var args = {
-    ds_name: ds_info.name,
-    ds_kind: ds_info.kind,
-    meta_keys: $('#dl_metadata option:selected').map(_value).toArray(),
-  };
-  window.open('/'+fig.id+'/spectra.csv?' + $.param(args), '_blank');
-}
-function download_composition_data() {
-  var ds_info = collect_ds_info();
-  var args = { ds_name: ds_info.name[0], ds_kind: ds_info.kind[0] };
-  window.open('/'+fig.id+'/compositions.csv?' + $.param(args), '_blank');
-}
 $(document).ready(function(){
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
   {% if ds_kind and ds_name %}
