@@ -69,14 +69,13 @@
 {% if logged_in %}
 /* Prediction stuff */
 @keyframes flash { 50% { background-color: pink; } }
-.err_msg { display: none; color: red; }
+.err_msg { display: none; color: red; text-align: center; }
 .wait { display: none; }
 #model_error { padding: 0.25em 1em; margin: 0.25em auto; text-align: center; }
 #model_error thead { border-bottom: 1px solid black; font-weight: bold; }
 #model_error th { padding: 0 0.5em; }
 #model_error td { padding: 0 0.5em; text-align: right; }
 #model_error td:first-child { text-align: left; }
-#load_model_failed { display: none; text-align: center; color: red; }
 #ds_prediction_container input[type="number"] { width: 3em; }
 {% end %}
 
@@ -225,8 +224,10 @@ function plot_compositions() {
 }
 {% if logged_in %}
 function run_preds(btn) {
-  var ds_info = collect_ds_info();
-  _run_model(btn, ds_info, false);
+  _run_model(btn, collect_ds_info(), false);
+}
+function run_crossval(btn) {
+  _run_model(btn, collect_ds_info(), null);
 }
 function make_model(btn) {
   var ds_info = collect_ds_info();
@@ -239,8 +240,9 @@ function make_model(btn) {
 }
 function _upload_model(btn, file_input, ds_kind) {
   var f = file_input.files[0];
+  var err_span = $(btn).next('.err_msg');
   if (f.size > 5000000) {
-    $('#load_model_failed').text('File too big (max 5 MB)').show();
+    err_span.text('File too big (max 5 MB)').show();
     // flash the file input's enclosing <td>
     var td = $(file_input).parent().css('animation', 'flash 1s');
     setTimeout(function() { td.css('animation', ''); }, 1000);
@@ -260,11 +262,11 @@ function _upload_model(btn, file_input, ds_kind) {
     error: function(jqXHR, textStatus, errorThrown) {
       wait.hide();
       file_input.value = '';  // reset the input
-      $('#load_model_failed').text(jqXHR.responseText).show();
+      err_span.text(jqXHR.responseText).show();
     },
     success: function(data) {
       wait.hide();
-      $('#load_model_failed').hide();
+      err_span.hide();
       file_input.value = '';  // reset the input
       $('.needs_model').attr('disabled', false);
       $('#model_info').html(JSON.parse(data).info);
@@ -278,13 +280,18 @@ function _run_model(btn, ds_info, do_train) {
       ds_name: ds_info.name,
       ds_kind: ds_info.kind,
       fignum: fig.id,
-      do_train: +do_train,
       pp: collect_pp_args($('#pp_options')),
       pls_comps: +$('#pls_comps').val(),
       pls_kind: $('#pls_kind').val(),
       pred_meta: pred_vars,
+      cv_folds: +$('#cv_folds').val(),
+      cv_min_comps: +$('#cv_min_comps').val(),
+      cv_max_comps: +$('#cv_max_comps').val(),
   };
   add_baseline_args($('#blr_options'), post_data);
+  if (do_train !== null) {
+    post_data['do_train'] = +do_train;
+  }
 
   var msg = $('#target_meta').nextAll('.err_msg');
   if (pred_vars.length == 0 && do_train) {
@@ -297,48 +304,31 @@ function _run_model(btn, ds_info, do_train) {
     msg.hide();
   }
   var wait = $('.wait', btn).show();
-  $.post('/_run_model', post_data, function(data){
-    wait.hide();
-    if (!do_train) return;
-    $('.needs_model').attr('disabled', false);
-    var stats = data.stats;
-    var tbody = $('#model_error>tbody').empty();
-    for (var i=0; i<stats.length; i++) {
-      var v = stats[i];
-      tbody.append('<tr><td>'+v.name+'</td><td>' + v.r2.toPrecision(3) +
-                   '</td><td>' + v.rmse.toPrecision(4) + '</td></tr>');
+  var err_span = $(btn).next('.err_msg');
+  $.ajax({
+    type: 'POST',
+    url: '/_run_model',
+    data: post_data,
+    dataType: 'json',
+    success: function(data){
+      wait.hide();
+      err_span.hide();
+      if (!do_train) return;
+      $('.needs_model').attr('disabled', false);
+      var stats = data.stats;
+      var tbody = $('#model_error>tbody').empty();
+      for (var i=0; i<stats.length; i++) {
+        var v = stats[i];
+        tbody.append('<tr><td>'+v.name+'</td><td>' + v.r2.toPrecision(3) +
+                     '</td><td>' + v.rmse.toPrecision(4) + '</td></tr>');
+      }
+      $('#model_info').html(data.info);
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      wait.hide();
+      err_span.text(jqXHR.responseText).show();
     }
-    $('#model_info').html(data.info);
-  }, 'json');
-}
-function run_crossval(btn) {
-  var ds_info = collect_ds_info();
-  var pred_vars = $('#target_meta option:selected').map(_value).toArray();
-  var post_data = {
-      ds_name: ds_info.name,
-      ds_kind: ds_info.kind,
-      fignum: fig.id,
-      pp: collect_pp_args($('#pp_options')),
-      pls_kind: $('#pls_kind').val(),
-      pred_meta: pred_vars,
-      cv_folds: +$('#cv_folds').val(),
-      cv_min_comps: +$('#cv_min_comps').val(),
-      cv_max_comps: +$('#cv_max_comps').val(),
-  };
-  add_baseline_args($('#blr_options'), post_data);
-
-  var msg = $('#target_meta').nextAll('.err_msg');
-  if (pred_vars.length == 0) {
-    msg.show('highlight');
-    var box = $('#target_meta').closest('.box');
-    box.css('animation', 'flash 1s');
-    setTimeout(function() { box.css('animation', ''); }, 1000);
-    return;
-  } else {
-    msg.hide();
-  }
-  var wait = $('.wait', btn).show();
-  $.post('/_run_model', post_data, function(){wait.hide();});
+  });
 }
 function predict_download(btn) {
   var dl_type = $(btn).next('select').val();
