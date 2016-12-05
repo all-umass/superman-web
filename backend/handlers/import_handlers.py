@@ -17,6 +17,7 @@ class DatasetImportHandler(BaseHandler):
   def post(self):
     ds_name = self.get_argument('ds_name')
     ds_kind = self.get_argument('ds_kind')
+    description = self.get_argument('desc')
 
     resample = (self.get_argument('lb', ''), self.get_argument('ub', ''),
                 self.get_argument('step', ''))
@@ -45,12 +46,12 @@ class DatasetImportHandler(BaseHandler):
       # interpret this as a ZIP of csv files
       fh.seek(0)
       success = self._traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys,
-                              resample)
+                              resample, description)
     else:
       # this is one single csv file with all spectra in it
       fh.seek(0)
       success = self._vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys,
-                                resample)
+                                resample, description)
 
     if success:
       self.write('/explorer?ds_kind=%s&ds_name=%s' % (
@@ -65,7 +66,8 @@ class DatasetImportHandler(BaseHandler):
     self.finish(user_msg)
     return False
 
-  def _traj_ds(self, fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample):
+  def _traj_ds(self, fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
+               description):
     zf = ZipFile(fh)
     traj_data = {}
     for subfile in zf.infolist():
@@ -100,7 +102,8 @@ class DatasetImportHandler(BaseHandler):
           return self._raise_error(415, 'Failed: %r not in spectra.' % pkey)
 
     if resample is None:
-      _load = _make_loader_function(meta_pkeys, traj_data, **meta_kwargs)
+      _load = _make_loader_function(description, meta_pkeys, traj_data,
+                                    **meta_kwargs)
       WebTrajDataset(ds_name, ds_kind, _load)
     else:
       lb, ub, step = map(_maybe_float, resample)
@@ -119,12 +122,14 @@ class DatasetImportHandler(BaseHandler):
         spectra[i] = np.interp(wave, traj[:,0], traj[:,1])
       pkey = PrimaryKeyMetadata(meta_pkeys)
 
-      _load = _make_loader_function(wave, spectra, pkey=pkey, **meta_kwargs)
+      _load = _make_loader_function(description, wave, spectra, pkey=pkey,
+                                    **meta_kwargs)
       WebVectorDataset(ds_name, ds_kind, _load)
 
     return True
 
-  def _vector_ds(self, fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample):
+  def _vector_ds(self, fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
+                 description):
     try:
       pkey = np.array(next(fh).strip().split(',')[1:])
       data = np.genfromtxt(fh, dtype=np.float32, delimiter=',', unpack=True)
@@ -188,7 +193,8 @@ class DatasetImportHandler(BaseHandler):
         wave = wave[lb_idx:ub_idx]
 
     # async loading machinery automatically registers us with DATASETS
-    _load = _make_loader_function(wave, spectra, pkey=pkey, **meta_kwargs)
+    _load = _make_loader_function(description, wave, spectra, pkey=pkey,
+                                  **meta_kwargs)
     if ds_kind == 'LIBS':
       WebLIBSDataset(ds_name, _load)
     else:
@@ -235,12 +241,12 @@ def _maybe_float(x, default=None):
     return default
 
 
-def _make_loader_function(*args, **kwargs):
+def _make_loader_function(desc, *args, **kwargs):
   def _load(ds):
     ds.set_data(*args, **kwargs)
     ds.is_public = False
     ds.user_added = True
-    ds.description = 'Added using the Dataset Import tool.'
+    ds.description = desc
     return True
   return _load
 
