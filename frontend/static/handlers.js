@@ -2,7 +2,8 @@
 //  fig: figure number for the page's figure
 //  ds_name: name of the selected dataset ('RRUFF', 'IRUG', etc.)
 //  ds_kind: kind of the selected dataset ('Raman', 'LIBS', 'FTIR')
-var fig, ds_name, ds_kind;
+//  upload_cbs: generic-ish callback functions {success: fn, fail: fn}
+var fig, ds_name, ds_kind, upload_cbs;
 
 function update_zoom_ctrl(data) {
   $('#zoom_control input[name=xmin]').val(data[0]);
@@ -11,6 +12,7 @@ function update_zoom_ctrl(data) {
   $('#zoom_control input[name=ymax]').val(data[3]);
   $('.needs_plot').attr('disabled', false);
 }
+
 function make_post_callbacks(msg_selector) {
   return {
     success: function(data, status) {
@@ -27,7 +29,9 @@ function make_post_callbacks(msg_selector) {
     }
   };
 }
-var upload_cbs = make_post_callbacks('#upload_messages');
+
+upload_cbs = make_post_callbacks('#upload_messages');
+
 function do_upload(elt) {
   if (elt.files.length != 1) {
     $('#upload_messages').text("Choose a file first!").fadeIn();
