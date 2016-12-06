@@ -123,14 +123,14 @@ class PeakHandler(BaseHandler):
     # Finish plotting
     if len(peak_x) > 0:
       xpad = (peak_x[-1] - peak_x[0]) / 3.
-      ax.set_xlim((max(xlim[0], peak_x[0] - xpad),
-                   min(xlim[1], peak_x[-1] + xpad)))
-    else:
-      ax.set_xlim(xlim)
+      xlim = (max(xlim[0], peak_x[0] - xpad),
+              min(xlim[1], peak_x[-1] + xpad))
+    ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     fig_data.manager.canvas.draw()
 
     # write the peak data as a response
+    peak_data['axis_limits'] = [xlim[0], xlim[1], ylim[0], ylim[1]]
     return self.write(json_encode(peak_data))
 
 

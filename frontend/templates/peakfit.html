@@ -3,18 +3,51 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
 <script type="text/javascript">
-function new_get_dataset(info) {
-  old_get_dataset(info);
+// XXX hacks! Overwrites the generic get_dataset to add peakfit-specific logic.
+get_dataset = function(info) {
   if (info == '') return;
   var parts = info.split(',');
-  var post_data = {name: parts[0], kind: parts[1]};
-  $('#ds_filter_container').load('/_dataset_filterer', post_data, function(){
-    ds_name = parts[0];
-    ds_kind = parts[1];
+  ds_name = parts[0];
+  ds_kind = parts[1];
+  var post_data = {
+    name: ds_name, kind: ds_kind, fignum: fig.id
+  };
+  function do_select(name, idx) {
+    $('#upload_messages').text("Selecting...").fadeIn();
+    var data = {
+      name: name, idx: idx, ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id
+    };
+    $.ajax({
+      url: '/_select', method: 'POST', data: data, dataType: 'json',
+      error: upload_cbs['fail'],
+      success: function(data, status) {
+        upload_cbs['success'](data, status);
+        autofill_peakfit_params();
+      }
+    });
+  }
+  $('#spinner').show();
+  $('#selector').load('/_dataset_selector', post_data, function(){
+    $('#spinner').hide();
+    // If we have a numeric spinner
+    $("#selector input").change(function(evt){
+      do_select(undefined, evt.target.value)
+    });
+    // If we have a chosen <select> dropdown
+    $("#selector .chosen-select").chosen({search_contains: true}).change(
+    function(evt){
+      if (evt.target.value.length > 0) {
+        do_select(evt.target.value, undefined);
+      }
+    }).next().css('width', '+=15');
+    // toggle .libs_only elements
+    $('.libs_only').toggle(ds_kind === 'LIBS');
   });
+  // also load the ds filters
+  $('#ds_filter_container').load('/_dataset_filterer', {
+    name: ds_name, kind: ds_kind});
 }
-old_get_dataset = get_dataset;
-get_dataset = new_get_dataset;
+
 function collect_peakfit_args(alg) {
   var bounds = $('input[name=peakrange]').map(
       function(i,e){return +e.value;}).toArray();
@@ -70,7 +103,16 @@ function do_peakfit(alg) {
     $('#fit_center').text(center);
     $('#fit_fwhm').text(fwhm);
     $('#fit_result').show();
+    if ('axis_limits' in data) {
+      update_zoom_ctrl(data['axis_limits']);
+    }
   }, 'json');
+}
+function autofill_peakfit_params() {
+  var bounds = $('input[name=peakrange]');
+  bounds[0].value = $('#zoom_control input[name=xmin]').val();
+  bounds[1].value = $('#zoom_control input[name=xmax]').val();
+  $('#peakloc').val(bounds[0].value/2.0 + bounds[1].value/2.0);
 }
 $(document).ready(function(){
   $('#blr_pp_steps').toggle();
@@ -88,12 +130,7 @@ $(document).ready(function(){
   pp_watcher.observe(table.find('.pp_staging')[0],
                      {childList: true, subtree: true});
   // Also set peakfit params when manual zooming.
-  $('#zoom_control button').click(function(){
-    var bounds = $('input[name=peakrange]');
-    bounds[0].value = $('#zoom_control input[name=xmin]').val();
-    bounds[1].value = $('#zoom_control input[name=xmax]').val();
-    $('#peakloc').val(bounds[0].value/2.0 + bounds[1].value/2.0);
-  });
+  $('#zoom_control button').click(autofill_peakfit_params);
 });
 </script>
 <style type="text/css">
