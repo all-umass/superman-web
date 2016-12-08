@@ -52,7 +52,7 @@ function do_filtered_plot() {
   var cbs = make_post_callbacks('#plot_button>.dots');
   $.ajax({
     url: '/_filterplot',
-    method: 'POST',
+    type: 'POST',
     data: post_data,
     dataType: 'json',
     success: cbs['success'],

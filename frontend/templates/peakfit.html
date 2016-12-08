@@ -18,7 +18,7 @@ get_dataset = function(info) {
       name: name, idx: idx, ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id
     };
     $.ajax({
-      url: '/_select', method: 'POST', data: data, dataType: 'json',
+      url: '/_select', type: 'POST', data: data, dataType: 'json',
       error: upload_cbs['fail'],
       success: function(data, status) {
         upload_cbs['success'](data, status);
