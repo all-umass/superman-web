@@ -278,6 +278,7 @@ def load_mhc_raman(ds, data_dir, meta_file):
   ds.set_data(pkey, hdf5['/spectra'],
               vial=LookupMetadata(meta['vial_name'], 'Vial Name'),
               Instrument=LookupMetadata(meta['instrument']),
+              Project=LookupMetadata(meta['project'])
               )
   return True
 
