@@ -1,4 +1,4 @@
-function plot_compositions() {
+function plot_compositions(btn) {
   var xc = $('#x_comp_options option:selected').map(_value).toArray();
   var yc = $('#y_comp_options option:selected').map(_value).toArray();
   if (xc.length + yc.length == 0) {
@@ -16,15 +16,28 @@ function plot_compositions() {
     ds_kind: ds_info.kind[0],
     ds_name: ds_info.name[0],
   };
-  $.post('/_plot_compositions', post_data, function(data, status) {
-    if (status !== 'success') return;
-    $('#fit_info td:last-child span').empty()
-    update_zoom_ctrl(data['zoom']);
-    delete data['zoom'];
-    for (key in data) {
-      $('#fit_' + key).text(data[key].toFixed(3));
+  var wait = $('.wait', btn).show();
+  var err_span = $(btn).next('.err_msg');
+  $.ajax({
+    url: '/_plot_compositions',
+    type: 'POST',
+    data: post_data,
+    dataType: 'json',
+    success: function(data) {
+      wait.hide();
+      err_span.hide();
+      $('#fit_info td:last-child span').empty();
+      update_zoom_ctrl(data['zoom']);
+      delete data['zoom'];
+      for (key in data) {
+        $('#fit_' + key).text(data[key].toFixed(3));
+      }
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      wait.hide();
+      err_span.text(jqXHR.responseText).show();
     }
-  }, 'json');
+  });
 }
 
 function download_composition_data() {

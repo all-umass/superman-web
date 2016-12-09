@@ -36,8 +36,10 @@
 
 <!-- plot button -->
 <tr id='last_row'><td colspan=2>
-  <button class="needs_filter" onclick="plot_compositions();"
-   disabled>Plot compositions</button>
+  <button class="needs_filter" onclick="plot_compositions(this);" disabled>
+    Plot<span class="wait">ting</span> compositions<span class="wait">...</span>
+  </button>
+  <div class="err_msg"></div>
 </td></tr>
 </table>
 

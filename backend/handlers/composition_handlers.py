@@ -66,10 +66,13 @@ class CompositionPlotHandler(BaseHandler):
 
   def post(self):
     fig_data = self.get_fig_data()
+    if fig_data is None:
+      return self.visible_error(403, 'Broken connection to server.')
+
     ds = self.get_dataset(self.get_argument('ds_kind'),
                           self.get_argument('ds_name'))
-    if fig_data is None or ds is None:
-      return
+    if ds is None:
+      return self.visible_error(404, 'Failed to look up dataset.')
 
     do_fit = bool(int(self.get_argument('do_fit')))
     use_mols = bool(int(self.get_argument('use_mols')))
@@ -89,6 +92,11 @@ class CompositionPlotHandler(BaseHandler):
                                          use_mols, do_sum)
     y_data, y_labels = comps_with_labels(ds, mask, y_keys, use_group_name,
                                          use_mols, do_sum)
+    # error handling
+    if x_data is None:
+      return self.visible_error(403, x_labels)
+    if y_data is None:
+      return self.visible_error(403, y_labels)
 
     if do_fit:
       # handle NaNs
@@ -212,7 +220,8 @@ def comps_with_labels(ds, mask, comp_keys, use_group_name=True, use_mols=True,
     m2 = m1.comps[k2]
     name = m2.display_name(k2)
     if use_mols:
-      # TODO: handle case where name not in MOL_DATA
+      if name not in MOL_DATA:
+        return None, 'Mol conversion unavailable for ' + name
       factor, name = MOL_DATA[name]
     else:
       factor = 1
