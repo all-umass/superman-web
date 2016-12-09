@@ -50,11 +50,11 @@
 }
 
 .plot_options {
-  display: inline-block;
-  margin: 0 1em 0.5em 1em;
-  vertical-align: top;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
 }
-.plot_options > div { padding-bottom: 1em; }
+.plot_options > div { padding: 0.5em; }
 
 .aligned_table td { text-align: left; }
 .aligned_table td:first-child { text-align: right; }
@@ -167,7 +167,7 @@ $(document).ready(function(){
 <div id="easter_egg" onclick="$('body,.horiz_section').toggleClass('darby');"></div>
 
 <div class="horiz_section">
-<div class='section_heading'>Select
+<div class='section_heading'>Select Data
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'ul,div');"></button>
 </div>
@@ -193,7 +193,7 @@ $(document).ready(function(){
 </div>
 
 <div class="horiz_section">
-<div class='section_heading'>Transform
+<div class='section_heading'>Transform Data
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'table');"></button>
 </div>
@@ -206,6 +206,32 @@ $(document).ready(function(){
   {% include '_pp_rows.html' %}
 </table>
 </div>
+
+<div class="horiz_section">
+<div class='section_heading'>Adjust Plot Options
+<button class="collapse up_chevron"
+  onclick="toggle_collapse(this, 'div');"></button>
+</div>
+
+<div class='plot_options'>
+<div>Line/Marker Size (<span id="lw_val">{{default_lw}}</span>)<br>
+<input id="plt_lw" type="range" min=1 max=20 value={{default_lw}} step=0.5
+       onchange="$('#lw_val').text((+this.value).toFixed(2));"
+       oninput="$('#lw_val').text((+this.value).toFixed(2));"></div>
+<div>Opacity (<span id="alpha_val">1.00</span>)<br>
+<input id="plt_alpha" type="range" min=0 max=1 value=1 step=0.05
+       onchange="$('#alpha_val').text((+this.value).toFixed(2));"
+       oninput="$('#alpha_val').text((+this.value).toFixed(2));"></div>
+<div>Colormap<a
+  href="http://matplotlib.org/examples/color/colormaps_reference.html"
+  class="small">[?]</a>: <select id="plt_cmap">
+  <option value="_auto" selected>auto</option>
+{% for cmap in cmaps %}
+  <option value="{{cmap}}">{{cmap}}</option>
+{% end %}
+</select></div>
+<div><label>Show legend:<input id="plt_legend" type="checkbox" checked></label>
+</div></div></div>
 
 <div class="horiz_section">
 <div class='section_heading'>Plot Spectra

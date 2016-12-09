@@ -130,6 +130,17 @@ class CompositionPlotHandler(BaseHandler):
     fig_data.figure.clf(keep_observers=True)
     ax = fig_data.figure.gca()
 
+    # setup plot options
+    if bool(int(self.get_argument('legend'))):
+      legend_loc = 'best'
+    else:
+      legend_loc = (2, 2)  # move legend off the figure entirely
+    cmap = self.get_argument('cmap')
+    scatter_kwargs = dict(
+        alpha=float(self.get_argument('alpha')),
+        cmap=(cmap if cmap != '_auto' else None),
+        s=20*float(self.get_argument('line_width')))
+
     # set plot title (if needed)
     if not use_group_name:
       key, _ = (x_keys if x_keys else y_keys)[0]
@@ -141,11 +152,11 @@ class CompositionPlotHandler(BaseHandler):
       color_meta = ds.metadata.get(color_key, None)
       if color_meta is not None:
         colors = color_meta.get_array(mask)
-        sc = ax.scatter(x_data, y_data, c=colors)
+        sc = ax.scatter(x_data, y_data, c=colors, **scatter_kwargs)
         cbar = fig_data.figure.colorbar(sc)
         cbar.set_label(color_meta.display_name(color_key))
       else:
-        ax.scatter(x_data, y_data)
+        ax.scatter(x_data, y_data, **scatter_kwargs)
       suffix = ' (moles)' if use_mols else ''
       ax.set_xlabel(' + '.join(x_labels) + suffix)
       ax.set_ylabel(' + '.join(y_labels) + suffix)
@@ -153,12 +164,12 @@ class CompositionPlotHandler(BaseHandler):
       # histogram along x
       ax.hist(x_data, bins='auto', orientation='vertical', label=x_labels)
       fig_data.hist_data = x_data
-      ax.legend()
+      ax.legend(loc=legend_loc)
     else:
       # histogram along y
       ax.hist(y_data, bins='auto', orientation='horizontal', label=y_labels)
       fig_data.hist_data = y_data
-      ax.legend()
+      ax.legend(loc=legend_loc)
 
     # get the plot bounds
     ax.autoscale_view()

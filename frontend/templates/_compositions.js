@@ -1,5 +1,4 @@
 function plot_compositions(btn) {
-  var wait = $('.wait', btn).show();
   var err_span = $(btn).next('.err_msg');
 
   var xc = $('#x_comp_options option:selected').map(_value).toArray();
@@ -9,6 +8,10 @@ function plot_compositions(btn) {
     return;
   }
   var ds_info = collect_ds_info();
+  if (ds_info.name.length > 1) {
+    err_span.text('Too many datasets selected.').show();
+    return;
+  }
   var post_data = {
     x_comps: xc.join('+'),
     y_comps: yc.join('+'),
@@ -19,6 +22,9 @@ function plot_compositions(btn) {
     ds_kind: ds_info.kind[0],
     ds_name: ds_info.name[0],
   };
+  add_plot_args(post_data);
+
+  var wait = $('.wait', btn).show();
   $.ajax({
     url: '/_plot_compositions',
     type: 'POST',

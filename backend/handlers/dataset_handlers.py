@@ -1,15 +1,9 @@
 from __future__ import absolute_import
 import logging
 import tornado.web
-from matplotlib import cm, rcParams
 
 from .base import BaseHandler
 from ..web_datasets import DATASETS, CompositionMetadata, NumericMetadata
-
-bad_cmaps = set(('gist_gray', 'gist_yarg', 'binary'))
-cmaps = sorted(
-    [m for m in cm.cmap_d if not m.endswith('_r') and m not in bad_cmaps],
-    key=lambda x: x.lower())
 
 
 class RefreshHandler(BaseHandler):
@@ -57,9 +51,7 @@ class DatasetPlotOptionsHandler(BaseHandler):
       # Allow coloring by dataset origin in multi-ds case
       meta_names.append(('_ds', 'Dataset'))
     return self.render('_filterplots.html', is_libs=is_libs,
-                       metadata_names=meta_names, cmaps=cmaps,
-                       default_cmap=rcParams['image.cmap'],
-                       default_lw=rcParams['lines.linewidth'])
+                       metadata_names=meta_names)
 
 
 class DatasetCompositionOptionsHandler(BaseHandler):

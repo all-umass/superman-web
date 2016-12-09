@@ -96,31 +96,8 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
 
 <tr><td colspan=3>
   <button id="plot_button" class="needs_filter"
-          onclick="do_filtered_plot();" disabled>
-  Plot<span class='dots'></span></button>
+          onclick="do_filtered_plot(this);" disabled>
+  Plot<span class='wait'>ting...</span></button>
+  <div class="err_msg"></div>
 </td></tr>
 </table>
-
-<div class='plot_options'>
-<div>Line Width (<span id="lw_val">{{default_lw}}</span>)<br>
-<input id="plt_lw" type="range" min=1 max=20 value={{default_lw}} step=0.5
-       onchange="$('#lw_val').text((+this.value).toFixed(2));"
-       oninput="$('#lw_val').text((+this.value).toFixed(2));"></div>
-
-<div>Opacity (<span id="alpha_val">1.00</span>)<br>
-<input id="plt_alpha" type="range" min=0 max=1 value=1 step=0.05
-       onchange="$('#alpha_val').text((+this.value).toFixed(2));"
-       oninput="$('#alpha_val').text((+this.value).toFixed(2));"></div>
-
-<div>Colormap<a
-  href="http://matplotlib.org/examples/color/colormaps_reference.html"
-  class="small">[?]</a>: <select id="plt_cmap">
-  <option value="_auto" selected>auto</option>
-{% for cmap in cmaps %}
-  <option value="{{cmap}}">{{cmap}}</option>
-{% end %}
-</select></div>
-
-<label>Clear plot:<input id="plt_clear" type="checkbox" checked></label>
-<label>Show legend:<input id="plt_legend" type="checkbox" checked></label>
-</div>

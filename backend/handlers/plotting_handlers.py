@@ -147,9 +147,7 @@ class FilterPlotHandler(MultiDatasetHandler):
       color_data = fig_data.explorer_color
 
     # prepare the figure
-    fig = fig_data.figure
-    if bool(int(self.get_argument('clear'))):
-      fig.clf(keep_observers=True)
+    fig_data.figure.clf(keep_observers=True)
 
     # generate, decorate, and draw the plot
     do_legend = bool(int(self.get_argument('legend')))

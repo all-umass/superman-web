@@ -15,8 +15,9 @@ function child_vals(selector){
   }).toArray() + "]";
 }
 
-function collect_plot_options() {
-  var opts = {
+function do_filtered_plot(btn) {
+  var ds_info = collect_ds_info();
+  var post_data = {
     xaxis: $("#xaxis").val(),
     yaxis: $("#yaxis").val(),
     color: $("#color").val(),
@@ -30,33 +31,31 @@ function collect_plot_options() {
     color_by: $("td.color.metadata").children().val(),
     color_line_ratio: child_vals("td.color.line_ratio"),
     color_computed: $("td.color.computed").children().val(),
-    alpha: $("#plt_alpha").val(),
-    clear: +$("#plt_clear").is(":checked"),
-    legend: +$("#plt_legend").is(":checked"),
-    line_width: $("#plt_lw").val(),
-    cmap: $("#plt_cmap").val(),
     chan_mask: +$("#chan_mask").is(":checked"),
     pp: collect_pp_args($('#pp_options')),
+    ds_kind: ds_info.kind,
+    ds_name: ds_info.name,
+    fignum: fig.id,
   };
-  return add_baseline_args($('#blr_options'), opts);
-}
+  add_plot_args(post_data);
+  add_baseline_args($('#blr_options'), post_data);
 
-function do_filtered_plot() {
-  $('#plot_button>.dots').text("ting...").fadeIn();
-  var post_data = collect_plot_options();
-  var ds_info = collect_ds_info();
-  post_data['ds_kind'] = ds_info.kind;
-  post_data['ds_name'] = ds_info.name;
-  post_data['fignum'] = fig.id;
-
-  var cbs = make_post_callbacks('#plot_button>.dots');
+  var err_span = $(btn).next('.err_msg');
+  var wait = $('.wait', btn).show();
   $.ajax({
     url: '/_filterplot',
     type: 'POST',
     data: post_data,
     dataType: 'json',
-    success: cbs['success'],
-    error: cbs['fail'],
+    success: function(data) {
+      wait.hide();
+      err_span.hide();
+      update_zoom_ctrl(data);
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      wait.hide();
+      err_span.text(jqXHR.responseText).show();
+    }
   });
 }
 

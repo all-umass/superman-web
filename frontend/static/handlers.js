@@ -188,3 +188,10 @@ function add_baseline_args(ctx, post_data, method) {
   }
   return post_data;
 }
+function add_plot_args(post_data) {
+  post_data['alpha'] = $("#plt_alpha").val();
+  post_data['legend'] = +$("#plt_legend").is(":checked");
+  post_data['line_width'] = $("#plt_lw").val();
+  post_data['cmap'] = $("#plt_cmap").val();
+  return post_data;
+}
