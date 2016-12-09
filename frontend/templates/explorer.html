@@ -60,9 +60,16 @@
 .aligned_table td:first-child { text-align: right; }
 
 /* Composition stuff */
+.flex-column { display: inline-flex; flex-direction: column; }
+.flex-row { display: inline-flex; flex-flow: row wrap; }
+#ds_compositions_container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
 #fit_info { display: inline-block; vertical-align: top; }
 #fit_info caption { border-bottom: 1px solid black; font-weight: bold; }
-#fit_info td:first-child { border-right: 1px solid black; font-weight: bold; }
+#fit_info td:first-child { border-right: 1px solid black; }
 #fit_info td:last-child { text-align: right; }
 #fit_info th { padding-top: 0.5em; }
 

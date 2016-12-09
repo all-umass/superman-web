@@ -1,47 +1,39 @@
-<table class='ds_table nofloat_ds_table aligned_table'
-       style="table-layout: fixed;">
+<div class="flex-column" style="padding-right: 1em;">
+<div class="flex-row" style="padding-bottom: 0.5em;">
 
-<!-- x axis options -->
-<tr><td class="vcenter bold">X axis</td><td>
+<div class="flex-column">
+<label>X axis
 <select id='x_comp_options' multiple data-placeholder='select composition(s)'>
 {% for key, name in comp_pairs %}
   <option value="{{key}}">{{name}}</option>
 {% end %}
-</select>
-</td></tr>
-
-<!-- y axis options -->
-<tr><td class="vcenter bold">Y axis</td><td>
+</select></label>
+<label>Y axis
 <select id='y_comp_options' multiple data-placeholder='select composition(s)'>
 {% for key, name in comp_pairs %}
   <option value="{{key}}">{{name}}</option>
 {% end %}
-</select>
-</td></tr>
+</select></label>
+</div>
 
-<!-- color options -->
-<tr><td class="bold">Color by</td>
-<td><select id="color_by">
+<div class="flex-column" style="padding-left: 1em; text-align: left;">
+<label>Color by
+<select id="color_by">
   <option value="">None</option>
 {% for key, name in num_pairs %}
   <option value="{{key}}">{{name}}</option>
 {% end %}
-</select></td></tr>
-
-<!-- misc options -->
-<tr><td colspan=2 style="text-align: center;">
+</select></label>
 <label>Linear fit:<input type="checkbox" id="do_fit" checked></label>
 <label>Convert to mols:<input type="checkbox" id="use_mols" checked></label>
-</td></tr>
+</div>
 
-<!-- plot button -->
-<tr id='last_row'><td colspan=2>
-  <button class="needs_filter" onclick="plot_compositions(this);" disabled>
-    Plot<span class="wait">ting</span> compositions<span class="wait">...</span>
-  </button>
-  <div class="err_msg"></div>
-</td></tr>
-</table>
+</div>
+<button class="needs_filter" onclick="plot_compositions(this);" disabled>
+  Plot<span class="wait">ting</span> compositions<span class="wait">...</span>
+</button>
+<div class="err_msg"></div>
+</div>
 
 <table id="fit_info">
 <caption>Linear fit parameters</caption>
