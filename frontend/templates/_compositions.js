@@ -1,8 +1,11 @@
 function plot_compositions(btn) {
+  var wait = $('.wait', btn).show();
+  var err_span = $(btn).next('.err_msg');
+
   var xc = $('#x_comp_options option:selected').map(_value).toArray();
   var yc = $('#y_comp_options option:selected').map(_value).toArray();
   if (xc.length + yc.length == 0) {
-    alert('Please select at least one composition to plot.');
+    err_span.text('Please select at least one composition to plot.').show();
     return;
   }
   var ds_info = collect_ds_info();
@@ -16,8 +19,6 @@ function plot_compositions(btn) {
     ds_kind: ds_info.kind[0],
     ds_name: ds_info.name[0],
   };
-  var wait = $('.wait', btn).show();
-  var err_span = $(btn).next('.err_msg');
   $.ajax({
     url: '/_plot_compositions',
     type: 'POST',
