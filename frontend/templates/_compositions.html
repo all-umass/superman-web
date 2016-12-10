@@ -1,7 +1,7 @@
 <div class="flex-column" style="padding-right: 1em;">
-<div class="flex-row" style="padding-bottom: 0.5em;">
+<div class="flex-row">
 
-<div class="flex-column">
+<div class="flex-column col-spaced">
 <label>X axis
 <select id='x_comp_options' multiple data-placeholder='select composition(s)'>
 {% for key, name in comp_pairs %}
@@ -16,7 +16,7 @@
 </select></label>
 </div>
 
-<div class="flex-column" style="padding-left: 1em; text-align: left;">
+<div class="flex-column col-spaced" style="padding-left: 1em; text-align: left;">
 <label>Color by
 <select id="color_by">
   <option value="">None</option>
