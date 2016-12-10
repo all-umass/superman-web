@@ -6,10 +6,10 @@
 var fig, ds_name, ds_kind, upload_cbs;
 
 function update_zoom_ctrl(data) {
-  $('#zoom_control input[name=xmin]').val(data[0]);
-  $('#zoom_control input[name=xmax]').val(data[1]);
-  $('#zoom_control input[name=ymin]').val(data[2]);
-  $('#zoom_control input[name=ymax]').val(data[3]);
+  $('#zoom_control input[name=xmin]').val(data[0].toPrecision(6));
+  $('#zoom_control input[name=xmax]').val(data[1].toPrecision(6));
+  $('#zoom_control input[name=ymin]').val(data[2].toPrecision(6));
+  $('#zoom_control input[name=ymax]').val(data[3].toPrecision(6));
   $('.needs_plot').attr('disabled', false);
 }
 
