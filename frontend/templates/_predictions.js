@@ -100,6 +100,31 @@ function _run_model(btn, ds_info, do_train) {
     }
   });
 }
+function plot_coefs(btn) {
+  var ds_info = collect_ds_info();
+  var post_data = {
+      ds_name: ds_info.name,
+      ds_kind: ds_info.kind,
+      fignum: fig.id,
+      pp: collect_pp_args($('#pp_options')),
+  };
+  add_baseline_args($('#blr_options'), post_data);
+  var wait = $('.wait', btn).show();
+  var err_span = $(btn).next('.err_msg');
+  $.ajax({
+    type: 'POST',
+    url: '/_plot_model_coefs',
+    data: post_data,
+    success: function(){
+      wait.hide();
+      err_span.hide();
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      wait.hide();
+      err_span.text(jqXHR.responseText).show();
+    }
+  });
+}
 function predict_download(btn) {
   var dl_type = $(btn).next('select').val();
   var dl_url = '/'+fig.id+'/pls_';

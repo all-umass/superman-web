@@ -98,7 +98,35 @@ class ModelIOHandler(BaseHandler):
     return self.write(json_encode(dict(info=model.info_html())))
 
 
-class RegressionModelHandler(MultiDatasetHandler):
+class MultiVectorDatasetHandler(MultiDatasetHandler):
+  def collect_spectra(self, all_ds_views):
+    '''collect vector-format data from all datasets'''
+    ds_kind, wave, X = None, None, []
+    for dv in all_ds_views:
+      try:
+        w, x = dv.get_vector_data()
+      except ValueError as e:
+        self.visible_error(400, e.message,
+                           "Couldn't get vector data from %s: %s", dv.ds,
+                           e.message)
+        return ds_kind, wave, None
+      if wave is None:
+        wave = w
+        ds_kind = dv.ds.kind
+      else:
+        if wave.shape != w.shape or not np.allclose(wave, w):
+          self.visible_error(400, "Mismatching wavelength data in %s." % dv.ds)
+          return ds_kind, wave, None
+        if ds_kind != dv.ds.kind:
+          self.visible_error(400, "Mismatching dataset types.",
+                             "Mismatching ds_kind: %s not in %s",
+                             dv.ds, ds_kind)
+          return ds_kind, wave, None
+      X.append(x)
+    return ds_kind, wave, np.vstack(X)
+
+
+class RegressionModelHandler(MultiVectorDatasetHandler):
   def get(self, fignum):
     '''Download predictions as CSV.'''
     fig_data = self.get_fig_data(int(fignum))
@@ -170,9 +198,9 @@ class RegressionModelHandler(MultiDatasetHandler):
       self.visible_error(404, "Failed to look up dataset(s).")
       return
 
-    ds_kind, wave, X = self._collect_spectra(all_ds_views)
+    ds_kind, wave, X = self.collect_spectra(all_ds_views)
     if X is None:
-      # self.visible_error has already been called in _collect_spectra
+      # self.visible_error has already been called in collect_spectra
       return
 
     variables = self._collect_variables(all_ds_views)
@@ -233,32 +261,6 @@ class RegressionModelHandler(MultiDatasetHandler):
     # NaN isn't valid JSON, but json_encode doesn't catch it. :'(
     self.write(json_encode(res).replace('NaN', 'null'))
 
-  def _collect_spectra(self, all_ds_views):
-    '''collect vector-format data from all datasets'''
-    ds_kind, wave, X = None, None, []
-    for dv in all_ds_views:
-      try:
-        w, x = dv.get_vector_data()
-      except ValueError as e:
-        self.visible_error(400, e.message,
-                           "Couldn't get vector data from %s: %s", dv.ds,
-                           e.message)
-        return ds_kind, wave, None
-      if wave is None:
-        wave = w
-        ds_kind = dv.ds.kind
-      else:
-        if wave.shape != w.shape or not np.allclose(wave, w):
-          self.visible_error(400, "Mismatching wavelength data in %s." % dv.ds)
-          return ds_kind, wave, None
-        if ds_kind != dv.ds.kind:
-          self.visible_error(400, "Mismatching dataset types.",
-                             "Mismatching ds_kind: %s not in %s",
-                             dv.ds, ds_kind)
-          return ds_kind, wave, None
-      X.append(x)
-    return ds_kind, wave, np.vstack(X)
-
   def _collect_variables(self, all_ds_views):
     '''Collect variables to predict from all loaded datasets.
     Returns a dict of {key: (array, display_name)}
@@ -271,6 +273,42 @@ class RegressionModelHandler(MultiDatasetHandler):
         yy.append(y)
       variables[key] = (np.concatenate(yy), name)
     return variables
+
+
+class ModelPlottingHandler(MultiVectorDatasetHandler):
+  def post(self):
+    fig_data = self.get_fig_data()
+    if fig_data is None:
+      self.visible_error(403, "Broken connection to server.")
+      return
+
+    all_ds_views, _ = self.prepare_ds_views(fig_data, nan_gap=None)
+    if all_ds_views is None:
+      self.visible_error(404, "Failed to look up dataset(s).")
+      return
+
+    ds_kind, wave, X = self.collect_spectra(all_ds_views)
+    if X is None:
+      # self.visible_error has already been called in collect_spectra
+      return
+
+    model = fig_data.pred_model
+    if isinstance(model, PLS2):
+      all_coefs = model.clf.coef_.T
+    else:
+      all_coefs = [model.models[key].coef_.ravel() for key in model.var_keys]
+
+    # Do the plot
+    fig_data.figure.clf(keep_observers=True)
+    ax1 = fig_data.figure.gca()
+    # TODO: pull in alpha, linewidth, do_legend, etc from generic plot options
+    ax1.plot(wave, X.T, 'k-', alpha=0.75)
+    ax2 = ax1.twinx()
+    for name, coef in zip(model.var_names, all_coefs):
+      ax2.scatter(wave, coef, label=name)
+    ax2.legend()
+    fig_data.manager.canvas.draw()
+    fig_data.last_plot = 'pls_coefs'
 
 
 def _async_gridsearch(fig_data, X, variables, comps, folds, callback=None):
@@ -422,4 +460,5 @@ routes = [
     (r'/([0-9]+)/pls_predictions\.csv', RegressionModelHandler),
     (r'/_load_model', ModelIOHandler),
     (r'/([0-9]+)/pls_model\.(\w+)', ModelIOHandler),
+    (r'/_plot_model_coefs', ModelPlottingHandler),
 ]
