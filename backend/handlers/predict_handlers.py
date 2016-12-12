@@ -179,6 +179,9 @@ class RegressionModelHandler(MultiDatasetHandler):
     pls_kind = self.get_argument('pls_kind')
     do_train = self.get_argument('do_train', None)
     if do_train is None:
+      if len(variables) == 0:
+        self.visible_error(400, "No variables to predict.")
+        return
       # run cross validation
       folds = int(self.get_argument('cv_folds'))
       comps = np.arange(int(self.get_argument('cv_min_comps')),
