@@ -69,18 +69,12 @@ function _run_model(btn, ds_info, do_train) {
     post_data['do_train'] = +do_train;
   }
 
-  var msg = $(btn).next('.err_msg');
-  if (pred_vars.length == 0 && do_train) {
-    msg.show('highlight');
-    var box = target_meta.closest('.box');
-    box.css('animation', 'flash 1s');
-    setTimeout(function() { box.css('animation', ''); }, 1000);
+  var err_span = $(btn).next('.err_msg');
+  if (pred_vars.length == 0 && do_train !== false) {
+    err_span.text('Error: No variables selected.');
     return;
-  } else {
-    msg.hide();
   }
   var wait = $('.wait', btn).show();
-  var err_span = $(btn).next('.err_msg');
   $.ajax({
     type: 'POST',
     url: '/_run_model',
