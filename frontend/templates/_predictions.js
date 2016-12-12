@@ -69,7 +69,7 @@ function _run_model(btn, ds_info, do_train) {
     post_data['do_train'] = +do_train;
   }
 
-  var err_span = $(btn).next('.err_msg');
+  var err_span = $(btn).parents('table,div').first().find('.err_msg');
   if (pred_vars.length == 0 && do_train !== false) {
     err_span.text('Error: No variables selected.');
     return;

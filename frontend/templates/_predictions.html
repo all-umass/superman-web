@@ -15,8 +15,8 @@
 <table class="ds_table nofloat_ds_table aligned_table">
 <tr><td class="bold">PLS components</td><td>
   {# TODO: convert this to a double-handled slider #}
-  <input type="number" id="cv_min_comps" value=6 min=1 max=100> -
-  <input type="number" id="cv_max_comps" value=15 min=1 max=100>
+  <input type="number" id="cv_min_comps" value=2 min=1 max=100> -
+  <input type="number" id="cv_max_comps" value=10 min=1 max=100>
 </td></tr>
 <tr><td class="bold">Cross validation</td><td>
   {# TODO: add other CV strategy (stratified?) #}
@@ -31,19 +31,21 @@
 </table>
 
 <table class="ds_table nofloat_ds_table aligned_table">
-<tr><td class="bold">Train</td><td>
+<tr><td>
+  <button disabled class="needs_filter" onclick="make_model(this);">
+  Train<span class="wait">ing...</span></button>
+</td><td>
   <label><input type="number" id="pls_comps" value=6 min=1 max=100>
   components</label>
 </td></tr>
-<tr><td class="bold">Upload</td><td>
-  <input type="file" id="modelfile" />
-  <span class="err_msg"></span>
-</td></tr>
-<tr><td colspan=2>
+<tr><td>
   <button disabled class="needs_filter" onclick="make_model(this);">
-  Train/Upload model<span class="wait">...</span></button>
-  <div class="err_msg"></div>
-</td></tr></table>
+  Upload<span class="wait">ing...</span></button>
+</td><td>
+  <input type="file" id="modelfile" />
+</td></tr>
+<tr><td colspan=2 class="err_msg"></td>
+</tr></table>
 
 <div class="flow" style="text-align: left;">
 {# info: ds_kind, (ds_name), vars, uni/multivariate, n_comps #}
