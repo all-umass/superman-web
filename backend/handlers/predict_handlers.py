@@ -301,12 +301,13 @@ class ModelPlottingHandler(MultiVectorDatasetHandler):
     # Do the plot
     fig_data.figure.clf(keep_observers=True)
     ax1 = fig_data.figure.gca()
-    # TODO: pull in alpha, linewidth, do_legend, etc from generic plot options
-    ax1.plot(wave, X.T, 'k-', alpha=0.75)
+    ax1.plot(wave, X.T, 'k-', alpha=float(self.get_argument('alpha')), lw=1)
     ax2 = ax1.twinx()
+    size = 20 * float(self.get_argument('line_width'))
     for name, coef in zip(model.var_names, all_coefs):
-      ax2.scatter(wave, coef, label=name)
-    ax2.legend()
+      ax2.scatter(wave, coef, label=name, s=size)
+    if bool(int(self.get_argument('legend'))):
+      ax2.legend()
     fig_data.manager.canvas.draw()
     fig_data.last_plot = 'pls_coefs'
 

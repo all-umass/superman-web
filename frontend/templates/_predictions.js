@@ -109,6 +109,7 @@ function plot_coefs(btn) {
       pp: collect_pp_args($('#pp_options')),
   };
   add_baseline_args($('#blr_options'), post_data);
+  add_plot_args(post_data);
   var wait = $('.wait', btn).show();
   var err_span = $(btn).next('.err_msg');
   $.ajax({
