@@ -91,7 +91,8 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
 </table>
 
 <div class="flex-column">
-<select id='dl_metadata' data-placeholder='metadata' multiple>
+<b>Download plot data</b>
+<select id='dl_metadata' data-placeholder='with metadata' multiple>
 {% for key,name in metadata_names %}
   {% if key != '_ds' %}
     <option value="{{key}}">{{name}}</option>
@@ -99,8 +100,6 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
 {% end %}
 </select>
 <button class="needs_plot" disabled onclick="download_spectrum_data()"
-        style="width:100%">
-  Download <span class='num'></span> spectra
-</button>
+        style="width:100%">Download</button>
 </div>
 </div>

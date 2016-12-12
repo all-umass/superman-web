@@ -121,19 +121,21 @@ function load_ds_filters() {
   var pred_options = $('#ds_prediction_container');
   if (num_ds > 0) {
     plot_options.load('/_dataset_plot_options', ds_info, function() {
-      $('#dl_metadata').chosen({search_contains: true});
+      $('#dl_metadata').css('width', '+=15').chosen({search_contains: true});
     });
     comp_options.load('/_dataset_comp_options', ds_info, function() {
       // if no comps are loaded, hide the "Plot Compositions" section
       if ($('#x_comp_options option').length === 0) {
         $('#ds_compositions_container').prev().children('.up_chevron').click();
       } else {
-        $('#x_comp_options,#y_comp_options').chosen();
+        $('#x_comp_options,#y_comp_options').css('width', '+=15')
+                                            .chosen({search_contains: true});
       }
     });
     {% if logged_in %}
     pred_options.load('/_dataset_pred_options', ds_info, function() {
-      $('.target_meta', pred_options).chosen({search_contains: true});
+      $('.target_meta', pred_options).css('width', '+=15')
+                                     .chosen({search_contains: true});
     });
     {% end %}
     var kind = ds_info.kind[0];
