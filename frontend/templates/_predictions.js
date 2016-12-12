@@ -4,24 +4,30 @@ function run_preds(btn) {
 function run_crossval(btn) {
   _run_model(btn, collect_ds_info(), null);
 }
-function make_model(btn) {
-  var ds_info = collect_ds_info();
-  var file_input = $('#modelfile')[0];
-  if (file_input.files.length > 0) {
-    _upload_model(btn, file_input, ds_info.kind[0]);
-  } else {
-    _run_model(btn, ds_info, true);
-  }
+function train_model(btn) {
+  _run_model(btn, collect_ds_info(), true);
 }
-function _upload_model(btn, file_input, ds_kind) {
-  var f = file_input.files[0];
-  var err_span = $(btn).next('.err_msg');
-  if (f.size > 5000000) {
-    err_span.text('File too big (max 5 MB)').show();
-    // flash the file input's enclosing <td>
+function upload_model(btn) {
+  var ds_info = collect_ds_info(),
+      ds_kind = ds_info.kind[0],
+      file_input = $('#modelfile')[0],
+      err_span = $(btn).closest('table').find('.err_msg').empty(),
+      do_flash = false;
+  if (file_input.files.length != 1) {
+    err_span.text('No file selected');
+    do_flash = true;
+  } else {
+    var f = file_input.files[0];
+    if (f.size > 5000000) {
+      err_span.text('File too big (max 5 MB)');
+      do_flash = true;
+    }
+  }
+  if (do_flash) {
+    // flash the file input's enclosing <td> and return
     var td = $(file_input).parent().css('animation', 'flash 1s');
     setTimeout(function() { td.css('animation', ''); }, 1000);
-    return
+    return;
   }
   var post_data = new FormData();
   post_data.append('fignum', fig.id);
@@ -37,11 +43,10 @@ function _upload_model(btn, file_input, ds_kind) {
     error: function(jqXHR, textStatus, errorThrown) {
       wait.hide();
       file_input.value = '';  // reset the input
-      err_span.text(jqXHR.responseText).show();
+      err_span.text(jqXHR.responseText);
     },
     success: function(data) {
       wait.hide();
-      err_span.hide();
       file_input.value = '';  // reset the input
       $('.needs_model').attr('disabled', false);
       $('#model_info').html(JSON.parse(data).info);
@@ -69,9 +74,9 @@ function _run_model(btn, ds_info, do_train) {
     post_data['do_train'] = +do_train;
   }
 
-  var err_span = $(btn).parents('table,div').first().find('.err_msg');
+  var err_span = $(btn).parents('table,div').first().find('.err_msg').empty();
   if (pred_vars.length == 0 && do_train !== false) {
-    err_span.text('Error: No variables selected.');
+    err_span.text('No variables selected.');
     return;
   }
   var wait = $('.wait', btn).show();
@@ -82,7 +87,6 @@ function _run_model(btn, ds_info, do_train) {
     dataType: 'json',
     success: function(data){
       wait.hide();
-      err_span.hide();
       if (!do_train) return;
       $('.needs_model').attr('disabled', false);
       var stats = data.stats;
@@ -96,7 +100,7 @@ function _run_model(btn, ds_info, do_train) {
     },
     error: function(jqXHR, textStatus, errorThrown) {
       wait.hide();
-      err_span.text(jqXHR.responseText).show();
+      err_span.text(jqXHR.responseText);
     }
   });
 }
@@ -111,18 +115,17 @@ function plot_coefs(btn) {
   add_baseline_args($('#blr_options'), post_data);
   add_plot_args(post_data);
   var wait = $('.wait', btn).show();
-  var err_span = $(btn).next('.err_msg');
+  var err_span = $(btn).next('.err_msg').empty();
   $.ajax({
     type: 'POST',
     url: '/_plot_model_coefs',
     data: post_data,
     success: function(){
       wait.hide();
-      err_span.hide();
     },
     error: function(jqXHR, textStatus, errorThrown) {
       wait.hide();
-      err_span.text(jqXHR.responseText).show();
+      err_span.text(jqXHR.responseText);
     }
   });
 }

@@ -56,8 +56,14 @@
 
 #generic_plot_options > div { padding: 0.5em 1em; }
 
-.aligned_table td { text-align: left; }
-.aligned_table td:first-child { text-align: right; }
+.aligned_table>tbody td {
+  text-align: left;
+  padding-bottom: 0.5em;
+  padding-right: 0.5em;
+  vertical-align: middle;
+}
+.aligned_table>tbody td:first-child { text-align: right; }
+.aligned_table>tbody td:last-child { padding-right: 0; }
 
 /* Composition stuff */
 #fit_info { display: inline-block; vertical-align: top; }
@@ -74,6 +80,7 @@
 #model_error td { padding: 0 0.5em; text-align: right; }
 #model_error td:first-child { text-align: left; }
 #ds_prediction_container input[type="number"] { width: 3em; }
+#ds_prediction_container > table { display: block; }
 
 /* Hacks to disable the float: left from .ds_table */
 .nofloat_ds_table { display: inline-block; vertical-align: top; float: none; }
@@ -141,7 +148,11 @@ function load_ds_filters() {
     // clas_options.load('/_dataset_classify_options', ds_info);
     {% end %}
     var kind = ds_info.kind[0];
-    window.history.pushState(kind, '', 'explorer?ds_kind=' + kind);
+    var fragment = 'explorer?ds_kind=' + kind;
+    if (ds_info.name.length == 1) {
+      fragment += '&ds_name=' + encodeURIComponent(ds_info.name[0]);
+    }
+    window.history.pushState(kind, '', fragment);
   } else {
     plot_options.empty();
     comp_options.empty();
@@ -258,7 +269,7 @@ $(document).ready(function(){
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'div');"></button>
 </div>
-<div id="ds_prediction_container"></div>
+<div id="ds_prediction_container" class="section_body"></div>
 </div>
 
 {# TODO: add this section when it's ready

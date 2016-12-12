@@ -1,4 +1,4 @@
-<table class="ds_table nofloat_ds_table aligned_table">
+<table class="aligned_table" style="padding-right: 2em;">
 <tr><td class="bold">Predict</td><td>
 <select class="target_meta" data-placeholder="select variable(s)" multiple>
 {% for key, name in meta_pairs %}
@@ -12,7 +12,7 @@
 </select></td></tr>
 </table>
 
-<table class="ds_table nofloat_ds_table aligned_table">
+<table class="aligned_table" style="padding-right: 2em;">
 <tr><td class="bold">PLS components</td><td>
   {# TODO: convert this to a double-handled slider #}
   <input type="number" id="cv_min_comps" value=2 min=1 max=100> -
@@ -30,24 +30,25 @@
 </td></tr>
 </table>
 
-<table class="ds_table nofloat_ds_table aligned_table">
+<table class="aligned_table"><tbody>
 <tr><td>
-  <button disabled class="needs_filter" onclick="make_model(this);">
+  <button disabled class="needs_filter" onclick="train_model(this);">
   Train<span class="wait">ing...</span></button>
 </td><td>
   <label><input type="number" id="pls_comps" value=6 min=1 max=100>
   components</label>
 </td></tr>
 <tr><td>
-  <button disabled class="needs_filter" onclick="make_model(this);">
+  <button disabled class="needs_filter" onclick="upload_model(this);">
   Upload<span class="wait">ing...</span></button>
 </td><td>
   <input type="file" id="modelfile" />
-</td></tr>
-<tr><td colspan=2 class="err_msg"></td>
-</tr></table>
+</td></tr></tbody>
+<tfoot>
+<tr><td colspan=2 class="err_msg"></td></tr>
+</tfoot></table>
 
-<div class="flow" style="text-align: left;">
+<div style="text-align: left;">
 {# info: ds_kind, (ds_name), vars, uni/multivariate, n_comps #}
 <span>Current Model: <span id="model_info">None</span></span>
 <table id="model_error">
@@ -62,9 +63,9 @@ Run<span class="wait">ning</span> predictions<span class="wait">...</span>
 Plot<span class="wait">ting</span> coefficients<span class="wait">...</span>
 </button>
 <div class="err_msg"></div>
-<br>
 <button disabled class="needs_model" onclick="predict_download(this);">
-Download</button><select style="vertical-align: baseline;">
+Download</button>
+<select style="vertical-align: baseline;">
   <option value="preds">predictions</option>
   <option value="pkl">model (binary file)</option>
   <option value="csv">coefficients (text file)</option>

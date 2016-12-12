@@ -19,7 +19,7 @@ tr:last-child button { width: 100% }
   margin: 0.25em;
 }
 .wait { display: none; }
-.err_msg { display: none; color: red; text-align: center; }
+.err_msg { color: red; text-align: center; }
 .flex-column { display: inline-flex; flex-direction: column; }
 .flex-row { display: inline-flex; flex-flow: row wrap; }
 .col-spaced > * { padding-bottom: 0.5em; }
