@@ -3,7 +3,10 @@ import logging
 import tornado.web
 
 from .base import BaseHandler
-from ..web_datasets import DATASETS, CompositionMetadata, NumericMetadata
+from ..web_datasets import (
+    DATASETS, CompositionMetadata, NumericMetadata, LookupMetadata,
+    BooleanMetadata
+)
 
 
 class RefreshHandler(BaseHandler):
@@ -81,6 +84,17 @@ class DatasetPredictionOptionsHandler(BaseHandler):
     return self.render('_predictions.html', meta_pairs=pairs)
 
 
+class DatasetClassificationOptionsHandler(BaseHandler):
+  def post(self):
+    all_ds = self.request_many_ds('kind[]', 'name[]')
+    logging.info('Generating prediction options HTML for: %s', map(str,all_ds))
+
+    pairs = [set(ds.metadata_names((LookupMetadata, BooleanMetadata)))
+             for ds in all_ds]
+    pairs = sorted(set.intersection(*pairs))
+    return self.render('_classifications.html', meta_pairs=pairs)
+
+
 class DatasetRemovalHandler(BaseHandler):
   def post(self):
     ds = self.request_one_ds('kind', 'name')
@@ -97,6 +111,7 @@ routes = [
     (r'/_dataset_plot_options', DatasetPlotOptionsHandler),
     (r'/_dataset_comp_options', DatasetCompositionOptionsHandler),
     (r'/_dataset_pred_options', DatasetPredictionOptionsHandler),
+    (r'/_dataset_classify_options', DatasetClassificationOptionsHandler),
     (r'/_dataset_remover', DatasetRemovalHandler),
     (r'/refresh', RefreshHandler),
 ]

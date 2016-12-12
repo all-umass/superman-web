@@ -119,6 +119,7 @@ function load_ds_filters() {
   var plot_options = $('#ds_plotting_container');
   var comp_options = $('#ds_compositions_container');
   var pred_options = $('#ds_prediction_container');
+  // var clas_options = $('#ds_classification_container');
   if (num_ds > 0) {
     plot_options.load('/_dataset_plot_options', ds_info, function() {
       $('#dl_metadata').css('width', '+=15').chosen({search_contains: true});
@@ -126,7 +127,7 @@ function load_ds_filters() {
     comp_options.load('/_dataset_comp_options', ds_info, function() {
       // if no comps are loaded, hide the "Plot Compositions" section
       if ($('#x_comp_options option').length === 0) {
-        $('#ds_compositions_container').prev().children('.up_chevron').click();
+        comp_options.prev().children('.up_chevron').click();
       } else {
         $('#x_comp_options,#y_comp_options').css('width', '+=15')
                                             .chosen({search_contains: true});
@@ -137,6 +138,7 @@ function load_ds_filters() {
       $('.target_meta', pred_options).css('width', '+=15')
                                      .chosen({search_contains: true});
     });
+    // clas_options.load('/_dataset_classify_options', ds_info);
     {% end %}
     var kind = ds_info.kind[0];
     window.history.pushState(kind, '', 'explorer?ds_kind=' + kind);
@@ -144,6 +146,7 @@ function load_ds_filters() {
     plot_options.empty();
     comp_options.empty();
     pred_options.empty();
+    // clas_options.empty();
     window.history.pushState('', '', 'explorer');
   }
 }
@@ -257,6 +260,16 @@ $(document).ready(function(){
 </div>
 <div id="ds_prediction_container"></div>
 </div>
+
+{# TODO: add this section when it's ready
+<div class="horiz_section">
+<div class='section_heading'>Classify Spectra
+<button class="collapse up_chevron"
+  onclick="toggle_collapse(this, 'div');"></button>
+</div>
+<div id="ds_classification_container" class="section_body"></div>
+</div>
+#}
 {% end %}
 
 <div class="horiz_section">

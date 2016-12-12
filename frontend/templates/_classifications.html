@@ -1,0 +1,12 @@
+<div class="flex-column col-spaced">
+<label>Classify
+<select class="target_meta" data-placeholder="select class label">
+{% for key, name in meta_pairs %}
+  <option value="{{key}}">{{name}}</option>
+{% end %}
+</select></label>
+<label>Classifier type
+<select id="classifier_type">
+  {# TODO #}
+</select></label>
+</div>
