@@ -103,13 +103,10 @@ tr:last-child button { width: 100% }
 #figure .mpl-message { padding-left: 1em; }
 
 #figure_controls {
-  display: inline-block;
+  display: inline-flex;
   padding-top: 1em;
-  clear: both;
-}
-#figure_controls > div {
-  display: inline-block;
-  padding-right: 2em;
+  width: 100%;
+  justify-content: space-around;
 }
 
 .pp_staging {
