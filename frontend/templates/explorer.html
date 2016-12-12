@@ -143,7 +143,7 @@ function load_ds_filters() {
     });
     {% if logged_in %}
     pred_options.load('/_dataset_pred_options', ds_info, function() {
-      $('#target_meta').chosen({search_contains: true});
+      $('.target_meta', pred_options).chosen({search_contains: true});
     });
     {% end %}
     var kind = ds_info.kind[0];

@@ -50,7 +50,8 @@ function _upload_model(btn, file_input, ds_kind) {
   });
 }
 function _run_model(btn, ds_info, do_train) {
-  var pred_vars = $('#target_meta option:selected').map(_value).toArray();
+  var target_meta = $('#ds_prediction_container .target_meta');
+  var pred_vars = $('option:selected', target_meta).map(_value).toArray();
   var post_data = {
       ds_name: ds_info.name,
       ds_kind: ds_info.kind,
@@ -68,10 +69,10 @@ function _run_model(btn, ds_info, do_train) {
     post_data['do_train'] = +do_train;
   }
 
-  var msg = $('#target_meta').nextAll('.err_msg');
+  var msg = $(btn).next('.err_msg');
   if (pred_vars.length == 0 && do_train) {
     msg.show('highlight');
-    var box = $('#target_meta').closest('.box');
+    var box = target_meta.closest('.box');
     box.css('animation', 'flash 1s');
     setTimeout(function() { box.css('animation', ''); }, 1000);
     return;
