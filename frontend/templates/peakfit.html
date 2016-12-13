@@ -53,9 +53,10 @@ function collect_peakfit_args(alg) {
       function(i,e){return +e.value;}).toArray();
   return {
     lb: bounds[0], ub: bounds[1], alg: alg,
-    basetype: $('input[name=basetype]:checked').val(),
-    xres: $('#xres').val(), fitloc: $('#peakloc').val(),
-    fitkind: $('input[name=peaktype]:checked').val(),
+    basetype: $('#basetype').val(),
+    xres: $('#xres').val(),
+    fitloc: $('#peakloc').val(),
+    fitkind: $('#peaktype').val(),
     locfixed: +($('label[for=locfixed]').attr('aria-pressed') == "true"),
     ds_kind: ds_kind, ds_name: ds_name
   };
@@ -137,9 +138,11 @@ $(document).ready(function(){
 #ds_selector_wrapper { padding-top: 1em; }
 #lhs { float: left; }
 #fig_wrapper { clear: none; float: left; padding: 0 2em; display: inline-block;}
-#fit_result { float: right; margin-right: 1em; }
+#fit_result { float: right; }
 #fit_result td { padding: 0.2em 1em; }
 #fit_result td:last-child { text-align: right; }
+#peakfit_params td.ralign { text-align: right; padding-right: 0; }
+#peakfit_params td:last-child { text-align: left; }
 label[for=locfixed]>span:after { content: "approx." }
 label[for=locfixed].ui-state-active>span:after { content: "fixed" }
 </style>
@@ -149,57 +152,59 @@ label[for=locfixed].ui-state-active>span:after { content: "fixed" }
 {% include '_dataset_selector.html' %}
 
 <div id='lhs'>
-<p>
+<div>
 (Optional) apply baseline correction / preprocessing:
 <button onclick="$('#blr_pp_steps').toggle()">show/hide table</button>
 <div id='blr_pp_steps'>
 {% include '_blr_pp_table.html' %}
 </div>
-</p>
+</div>
 
-<div id="peak_steps">
-<table class="pp_table">
+<table id="peakfit_params" class="pp_table">
+<thead>
 <tr class="uline"><th colspan=3>Peak Fitting Algorithms</th></tr>
+</thead>
+<tbody>
 <!-- manual peak -->
 <tr><td class="rline vcenter" rowspan=2>
 <button class="needs_plot" onclick="do_peakfit('manual');" disabled>Manual</button></td>
-<td colspan=2>Peak range:
+<td class="ralign">Peak range</td><td>
 <input type="text" name="peakrange" value="0.0" size=5> -
 <input type="text" name="peakrange" value="1000.0" size=5>
 </td></tr>
-<tr class="uline"><td colspan=2>Peak bottom:
-<label><input type="radio" name="basetype" value="endpoint" checked>min(endpoints)</label>
-<label><input type="radio" name="basetype" value="region">min(region)</label>
-</td></tr>
+<tr class="uline"><td class="ralign">Peak bottom</td><td>
+<select id="basetype">
+  <option value="endpoint">min(endpoints)</option>
+  <option value="region">min(region)</option>
+</select></td></tr>
 <!-- peak fitting -->
 <tr><td class="uline rline vcenter" rowspan=3>
-<button class="needs_plot" onclick="do_peakfit('fit');" disabled>Fit Peak</button></td>
-<td colspan=2>Peak location:
+<button class="needs_plot" onclick="do_peakfit('fit');" disabled>Automatic</button></td>
+<td class="ralign">Peak location</td><td>
 <input type="text" id="peakloc" value="500.0" size=5>
 <input type="checkbox" id="locfixed" /><label for="locfixed"></label>
 </td></tr>
-<tr><td colspan=2>x-axis resolution:
+<tr><td class="ralign">x-axis resolution</td><td>
 <input type="text" id="xres" value="1.0" size=5> (approx.)
 </td></tr>
-<tr class="uline"><td colspan=2>Peak type:
-<label><input type="radio" name="peaktype" value="lorentzian" checked>Lorentzian</label>
-<label><input type="radio" name="peaktype" value="gaussian">Gaussian</label>
-</td></tr>
-</table>
-</div>
-
-<table id='fit_result' style='display: none'>
-<tr class='uline'><th class='bold' colspan=2>Fitted Peak</th></tr>
-<tr><td class='rline'>Height</td><td id='fit_height'></td></tr>
-<tr><td class='rline'>Center</td><td id='fit_center'></td></tr>
-<tr><td class='rline'>FWHM</td><td id='fit_fwhm'></td></tr>
-<tr><td class='rline'>Area</td><td id='fit_area'></td></tr>
-</table>
+<tr class="uline"><td class="ralign">Peak type</td><td>
+<select id="peaktype">
+  <option value="lorentzian">Lorentzian</option>
+  <option value="gaussian">Gaussian</option>
+</select></td></tr>
+</tbody></table>
 
 </div>  <!-- lhs -->
 
 <div id="fig_wrapper">
 <div id="figure"></div>
+<table id='fit_result' style='display: none'>
+<tr class='uline'><th class='bold' colspan=2>Peak Parameters</th></tr>
+<tr><td class='rline'>Height</td><td id='fit_height'></td></tr>
+<tr><td class='rline'>Center</td><td id='fit_center'></td></tr>
+<tr><td class='rline'>FWHM</td><td id='fit_fwhm'></td></tr>
+<tr><td class='rline'>Area</td><td id='fit_area'></td></tr>
+</table>
 <br style="clear:both">
 {% include '_zoom_control.html' %}
 </div>
@@ -215,7 +220,7 @@ Download all peak data for the filtered subset using the settings above.
 <div>
 Algorithm type:
 <label><input type="radio" name="batch_algo" value="manual" checked>Manual</label>
-<label><input type="radio" name="batch_algo" value="fit">Fitted</label>
+<label><input type="radio" name="batch_algo" value="fit">Automatic</label>
 <br />
 <label>Include metadata: <input type="checkbox" id="batch_meta"></label>
 <br />
