@@ -12,7 +12,6 @@ from matplotlib.patches import Patch
 from threading import Thread
 from tornado import gen
 from tornado.escape import json_encode
-from six.moves import xrange
 
 from .base import MultiDatasetHandler
 
@@ -62,12 +61,8 @@ class FilterPlotHandler(MultiDatasetHandler):
     header = ['UID']
     line_names = []
     for ds, dv in zip(all_ds, all_ds_views):
-      if ds.pkey is None:
-        n = np.count_nonzero(dv.mask)
-        line_names.extend(['_line%d' % i for i in xrange(n)])
-      else:
-        names = ds.pkey.index2key(dv.mask)
-        line_names.extend(list(map(_sanitize_csv, names)))
+      pkeys = dv.get_primary_keys()
+      line_names.extend(map(_sanitize_csv, pkeys))
     meta_data = [line_names]
 
     # make a dataset column, if there are multiple datasets
@@ -126,6 +121,16 @@ class FilterPlotHandler(MultiDatasetHandler):
         lw=float(self.get_argument('line_width')),
     )
 
+    # get individual line/point labels (TODO: cache this)
+    if len(all_ds_views) == 1:
+      pkeys = all_ds_views[0].get_primary_keys()
+    else:
+      pkeys = []
+      for dv in all_ds_views:
+        dv_name = dv.ds.name
+        for k in dv.get_primary_keys():
+          pkeys.append('%s: %s' % (dv_name, k))
+
     # get the plot data (trajs or scatter points), possibly cached
     if xaxis != fig_data.explorer_xaxis or yaxis != fig_data.explorer_yaxis:
       plot_data = self._get_plot_data(all_ds_views, xaxis, yaxis)
@@ -152,8 +157,7 @@ class FilterPlotHandler(MultiDatasetHandler):
     # generate, decorate, and draw the plot
     do_legend = bool(int(self.get_argument('legend')))
     ax = yield gen.Task(_async_draw_plot, fig_data, plot_data, color_data,
-                        plot_kwargs, do_legend)
-
+                        plot_kwargs, do_legend, pkeys)
     # return the axis limits
     xmin,xmax = ax.get_xlim()
     ymin,ymax = ax.get_ylim()
@@ -217,12 +221,12 @@ class FilterPlotHandler(MultiDatasetHandler):
 
 
 def _async_draw_plot(fig_data, plot_data, color_data, plot_kwargs, do_legend,
-                     callback=None):
+                     pkeys, callback=None):
   fig = fig_data.figure
 
   def helper():
     ax = fig.gca()
-    artist = _add_plot(fig, ax, plot_data, color_data, **plot_kwargs)
+    artist = _add_plot(fig, ax, plot_data, color_data, pkeys, **plot_kwargs)
     _decorate_plot(fig, ax, artist, plot_data, color_data,
                    do_legend, plot_kwargs['cmap'])
     fig_data.manager.canvas.draw()
@@ -242,7 +246,8 @@ def _get_color_data(all_ds_views, caxis):
                    is_categorical=(names is not None and label is not None))
 
 
-def _add_plot(fig, ax, plot_data, color_data, lw=1, cmap='_auto', alpha=1):
+def _add_plot(fig, ax, plot_data, color_data, pkeys, lw=1, cmap='_auto',
+              alpha=1.0):
   colors = color_data.color
   if cmap == '_auto':
     cmap = None
@@ -251,28 +256,44 @@ def _add_plot(fig, ax, plot_data, color_data, lw=1, cmap='_auto', alpha=1):
 
   if plot_data.scatter:
     data, = plot_data.trajs
-    return ax.scatter(*data.T, marker='o', c=colors, edgecolor='none',
-                      s=lw*20, cmap=cmap, alpha=alpha)
-  # trajectory plot
-  if hasattr(colors, 'dtype') and np.issubdtype(colors.dtype, np.number):
-    # delete lines with NaN colors
-    mask = np.isfinite(colors)
-    if mask.all():
-      trajs = plot_data.trajs
-    else:
-      trajs = [t for i,t in enumerate(plot_data.trajs) if mask[i]]
-      colors = colors[mask]
-    lc = LineCollection(trajs, linewidths=lw, cmap=cmap)
-    lc.set_array(colors)
+    artist = ax.scatter(*data.T, marker='o', c=colors, edgecolor='none',
+                        s=lw*20, cmap=cmap, alpha=alpha, picker=5)
   else:
-    lc = LineCollection(plot_data.trajs, linewidths=lw, cmap=cmap)
-    lc.set_color(colors)
-  ax.add_collection(lc, autolim=True)
-  lc.set_alpha(alpha)
-  ax.autoscale_view()
-  # Force ymin -> 0
-  ax.set_ylim((0, ax.get_ylim()[1]))
-  return lc
+    # trajectory plot
+    if hasattr(colors, 'dtype') and np.issubdtype(colors.dtype, np.number):
+      # delete lines with NaN colors
+      mask = np.isfinite(colors)
+      if mask.all():
+        trajs = plot_data.trajs
+      else:
+        trajs = [t for i,t in enumerate(plot_data.trajs) if mask[i]]
+        colors = colors[mask]
+      artist = LineCollection(trajs, linewidths=lw, cmap=cmap)
+      artist.set_array(colors)
+    else:
+      artist = LineCollection(plot_data.trajs, linewidths=lw, cmap=cmap)
+      artist.set_color(colors)
+    artist.set_alpha(alpha)
+    artist.set_picker(True)
+    artist.set_pickradius(5)
+    ax.add_collection(artist, autolim=True)
+    ax.autoscale_view()
+    # Force ymin -> 0
+    ax.set_ylim((0, ax.get_ylim()[1]))
+
+  def on_pick(event):
+    if event.artist is not artist:
+      return
+    label = pkeys[event.ind[0]]
+    ax.set_title(label)
+    fig.canvas.draw_idle()
+
+  # XXX: hack, make this more official
+  if hasattr(fig, '_superman_cb'):
+    fig.canvas.mpl_disconnect(fig._superman_cb[0])
+  cb_id = fig.canvas.mpl_connect('pick_event', on_pick)
+  fig._superman_cb = (cb_id, on_pick)
+  return artist
 
 
 def _decorate_plot(fig, ax, artist, plot_data, color_data, legend, cmap):
