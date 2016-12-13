@@ -245,7 +245,7 @@ def load_mhc_libs(ds, data_dir, master_file):
       if np.nanmin(vals) < np.nanmax(vals):
         elem = key.lstrip('e_').replace('*', '')
         compositions[elem] = NumericMetadata(vals, display_name=elem)
-  date = np.array(pd.to_datetime(meta['Date']), dtype=np.datetime64)
+  # date = np.array(pd.to_datetime(meta['Date']), dtype=np.datetime64)
   ds.set_data(bands, hdf5['/spectra'],
               Composition=CompositionMetadata(compositions),
               samples=LookupMetadata(meta['Sample'], 'Sample Name'),
@@ -255,7 +255,8 @@ def load_mhc_libs(ds, data_dir, master_file):
               targets=LookupMetadata(meta['Target'], 'Target Name'),
               powers=LookupMetadata(meta['LaserAttenuation'], 'Laser Power'),
               projects=TagMetadata(projects, 'Project'),
-              date=NumericMetadata(date, 'Acquisition Time'),
+              # TODO: make a DateTimeMetadata to handle this
+              # date=NumericMetadata(date, 'Acquisition Time'),
               # NOTE: These have only one unique value for now.
               # atmospheres=LookupMetadata(meta['Atmosphere'], 'Atmosphere'),
               # dists=LookupMetadata(meta['DistToTarget'],'Distance to Target')
