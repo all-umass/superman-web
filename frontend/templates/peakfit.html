@@ -130,7 +130,7 @@ $(document).ready(function(){
   pp_watcher.observe(table.find('.pp_staging')[0],
                      {childList: true, subtree: true});
   // Also set peakfit params when manual zooming.
-  $('#zoom_control button').click(autofill_peakfit_params);
+  $('#zoom_control input[type=submit]').click(autofill_peakfit_params);
 });
 </script>
 <style type="text/css">
