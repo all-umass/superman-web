@@ -15,10 +15,11 @@
 .section_body {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-around;
 }
 
-#ds_kind_choices { list-style-type: none; display: block; }
+#ds_select_container { display: flex; flex-direction: column; }
+#ds_kind_choices { list-style-type: none; }
 #ds_kind_choices > li {
   display: inline-block;
   padding: 5px 1em;
@@ -36,24 +37,27 @@
 }
 #ds_kind_choices > li.active:hover { background-color: #ee1c26; }
 
-.ds_select { display: none; cursor: default; margin-top: 0.25em; }
-.ds_select.active { display: inline-block; }
+.ds_select {
+  display: none;
+  cursor: default;
+  margin: 0.25em auto;
+}
+.ds_select.active {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
 .ds_select > label {
-  display: inline-block;
   cursor: pointer;
   padding: 0.5em;
-  margin-bottom: 0.25em;
+  margin: 0 0.25em 0.25em 0.25em;
   background-color: #4992c4;
   font-weight: bold;
 }
 .ds_select > input { display: none; }
 .ds_select > input:checked + label { background-color: #e69b71; }
 
-#ds_filters_container > div {
-  display: inline-block;
-  margin: 0.25em;
-}
-
+#generic_plot_options { display: inline-flex; margin: 0 auto; }
 #generic_plot_options > div { padding: 0.5em 1em; }
 
 .aligned_table>tbody td {
@@ -185,7 +189,7 @@ $(document).ready(function(){
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'ul,div');"></button>
 </div>
-<div>
+<div id="ds_select_container">
 <ul id="ds_kind_choices">
 {% for kind in sorted(ds_tree) %}
   <li {% if kind == ds_kind %}class='active'{% end %}
@@ -193,16 +197,16 @@ $(document).ready(function(){
 {% end %}
 </ul>
 {% for kind, k_dict in ds_tree.items() %}
-  <fieldset class="ds_select {{kind}}{% if kind == ds_kind %} active{% end %}">
+  <div class="ds_select {{kind}}{% if kind == ds_kind %} active{% end %}">
     {% for name, (cbid, is_traj) in sorted(k_dict.items()) %}
       <input type="checkbox" id="{{cbid}}" value="{{name}},{{kind}}">
       <label for="{{cbid}}">{{name}}{% if is_traj %}<sup>&dagger;</sup>{% end %}
       </label>
     {% end %}
     <button onclick='load_ds_filters()'>Load Dataset(s)</button>
-  </fieldset>
+  </div>
 {% end %}
-<div id='ds_filters_container'></div>
+<div id='ds_filters_container' class='section_body'></div>
 </div>
 </div>
 
@@ -252,7 +256,7 @@ $(document).ready(function(){
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'div');"></button>
 </div>
-<div id="ds_plotting_container"></div>
+<div id="ds_plotting_container" class="section_body"></div>
 </div>
 
 <div class="horiz_section">

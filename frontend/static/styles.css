@@ -10,19 +10,15 @@ body { padding: 1.5em; }
 tr:last-child button { width: 100% }
 #selector { display: inline-flex; padding-right: 1em; min-width: 5em; }
 .flow { display: inline-block; vertical-align: top; }
-.box {
-  border: 1px solid black;
-  border-radius: 1em;
-  display: inline-block;
-  vertical-align: top;
-  background-color: lightgray;
-  margin: 0.25em;
-}
 .wait { display: none; }
 .err_msg { color: red; text-align: center; }
 .flex-column { display: inline-flex; flex-direction: column; }
-.flex-row { display: inline-flex; flex-flow: row wrap; }
 .col-spaced > * { padding-bottom: 0.5em; }
+.flex-row {
+  display: inline-flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+}
 
 .ds_filters {
   border: 2px groove;
