@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import os
 import scipy.integrate
-from superman.peaks.bump_fit import fit_single_peak
+from superman.peaks.bump_fit import fit_single_peak, fit_composite_peak
 from tornado.escape import json_encode
 
 from .base import BaseHandler
@@ -50,7 +50,7 @@ class PeakHandler(BaseHandler):
 
       def peak_stats(t):
         return fit_single_peak(t[:,0], t[:,1], loc, fit_kind=kind,
-                               log_fn=logging.info, band_resolution=xres,
+                               log_fn=id, band_resolution=xres,
                                loc_fixed=loc_fixed)[-1]
 
     mask = fig_data.filter_mask[ds]
@@ -79,7 +79,7 @@ class PeakHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
-      return
+      return self.visible_error(403, 'Broken connection to server.')
     spectrum = fig_data.get_trajectory()
 
     # set up for plotted overlay(s)
@@ -119,6 +119,25 @@ class PeakHandler(BaseHandler):
 
       # show the fitted peak
       ax.plot(peak_x, peak_y, 'k-', linewidth=2, alpha=0.75)
+    elif alg == 'composite':
+      num_peaks = int(self.get_argument('numpeaks'))
+      kinds = self.get_arguments('fitkind[]')
+      loc = float(self.get_argument('fitloc'))
+      xres = float(self.get_argument('xres'))
+      bands, ints = spectrum.T
+      peak_mask, peak_ys, peak_data = fit_composite_peak(
+          bands, ints, loc, num_peaks=num_peaks, fit_kinds=kinds,
+          log_fn=logging.info, band_resolution=xres)
+      peak_x = bands[peak_mask]
+
+      # show the fitted feature
+      ax.plot(peak_x, peak_ys[0], 'k-', linewidth=2, alpha=0.75)
+      # show the component peaks
+      for y in peak_ys[1:]:
+        ax.plot(peak_x, y, 'k--', linewidth=1, alpha=0.75)
+    else:
+      self.visible_error(403, 'Algorithm %s is not supported' % alg)
+      return
 
     # Finish plotting
     if len(peak_x) > 0:
