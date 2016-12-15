@@ -122,11 +122,11 @@ class PeakHandler(BaseHandler):
     elif alg == 'composite':
       num_peaks = int(self.get_argument('numpeaks'))
       kinds = self.get_arguments('fitkind[]')
-      loc = float(self.get_argument('fitloc'))
+      locs = map(float, self.get_arguments('fitloc[]'))
       xres = float(self.get_argument('xres'))
       bands, ints = spectrum.T
       peak_mask, peak_ys, peak_data = fit_composite_peak(
-          bands, ints, loc, num_peaks=num_peaks, fit_kinds=kinds,
+          bands, ints, locs, num_peaks=num_peaks, fit_kinds=kinds,
           log_fn=logging.info, band_resolution=xres)
       peak_x = bands[peak_mask]
 

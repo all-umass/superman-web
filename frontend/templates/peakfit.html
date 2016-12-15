@@ -65,7 +65,7 @@ function collect_peakfit_args(alg) {
   } else {
     post_data['numpeaks'] = $('#numpeaks').val();
     post_data['xres'] = $('#xres2').val();
-    post_data['fitloc'] = $('#peakloc2').val();
+    post_data['fitloc'] = $('#peakloc2').val().split(',');
     post_data['fitkind'] = $('input[name=peaktypes]:checked').map(function(i,x){
       return x.value;
     }).toArray();
@@ -232,15 +232,15 @@ Automatic</button><br>(One peak)</td>
 <tr><td class="uline rline vcenter" rowspan=4>
 <button class="needs_plot" onclick="do_peakfit('composite');" disabled>
 Automatic</button><br>(Multiple peaks)</td>
-<td class="ralign">Feature location</td><td>
-<input type="text" id="peakloc2" value="500.0" size=5>
+<td class="ralign">Feature location(s)</td><td>
+<input type="text" id="peakloc2" value="500.0" size=10>
 </td>
 </tr>
 <tr><td class="ralign">x-axis resolution</td><td>
 <input type="text" id="xres2" value="1.0" size=5> (approx.)
 </td></tr>
 <tr><td class="ralign">Peak count</td><td>
-<input type="number" id="numpeaks" value=2 min=2 max=5 step=1 size=5>
+<input type="number" id="numpeaks" value=2 min=2 max=5 step=1>
 </td></tr>
 <tr class="uline"><td class="ralign">Peak types</td><td><label>
 <input type="checkbox" name="peaktypes" value="lorentzian" checked>Lorentzian
