@@ -4,6 +4,8 @@ import numpy as np
 import os
 import scipy.integrate
 from superman.peaks.bump_fit import fit_single_peak, fit_composite_peak
+from threading import Thread
+from tornado import gen
 from tornado.escape import json_encode
 
 from .base import BaseHandler
@@ -76,10 +78,12 @@ class PeakHandler(BaseHandler):
       self.write('\n')
     self.finish()
 
+  @gen.coroutine
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
-      return self.visible_error(403, 'Broken connection to server.')
+      self.visible_error(403, 'Broken connection to server.')
+      return
     spectrum = fig_data.get_trajectory()
 
     # set up for plotted overlay(s)
@@ -102,8 +106,8 @@ class PeakHandler(BaseHandler):
       lb = float(self.get_argument('lb'))
       ub = float(self.get_argument('ub'))
       bounds = sorted((lb,ub))
-      peak_x, peak_y, base, peak_data = _manual_peak_area(spectrum, bounds,
-                                                          base_type)
+      peak_x, peak_y, base, peak_data = yield gen.Task(
+          _async_peakfit, _manual_peak_area, spectrum, bounds, base_type)
       # show the area we integrated
       ax.fill_between(peak_x, base, peak_y, facecolor='gray', alpha=0.5)
     elif alg == 'fit':
@@ -112,8 +116,9 @@ class PeakHandler(BaseHandler):
       xres = float(self.get_argument('xres'))
       loc_fixed = bool(int(self.get_argument('locfixed')))
       bands, ints = spectrum.T
-      peak_mask, peak_y, peak_data = fit_single_peak(
-          bands, ints, loc, fit_kind=kind, log_fn=logging.info,
+      peak_mask, peak_y, peak_data = yield gen.Task(
+          _async_peakfit, fit_single_peak, bands, ints, loc,
+          fit_kind=kind, log_fn=logging.info,
           band_resolution=xres, loc_fixed=loc_fixed)
       peak_x = bands[peak_mask]
 
@@ -125,14 +130,14 @@ class PeakHandler(BaseHandler):
       locs = map(float, self.get_arguments('fitloc[]'))
       xres = float(self.get_argument('xres'))
       bands, ints = spectrum.T
-      peak_mask, peak_ys, peak_data = fit_composite_peak(
-          bands, ints, locs, num_peaks=num_peaks, fit_kinds=kinds,
+      peak_mask, peak_ys, peak_data = yield gen.Task(
+          _async_peakfit, fit_composite_peak, bands, ints, locs,
+          num_peaks=num_peaks, fit_kinds=kinds,
           log_fn=logging.info, band_resolution=xres)
       peak_x = bands[peak_mask]
 
-      # show the fitted feature
+      # show the fitted feature and component peaks
       ax.plot(peak_x, peak_ys[0], 'k-', linewidth=2, alpha=0.75)
-      # show the component peaks
       for y in peak_ys[1:]:
         ax.plot(peak_x, y, 'k--', linewidth=1, alpha=0.75)
     else:
@@ -150,7 +155,14 @@ class PeakHandler(BaseHandler):
 
     # write the peak data as a response
     peak_data['axis_limits'] = [xlim[0], xlim[1], ylim[0], ylim[1]]
-    return self.write(json_encode(peak_data))
+    self.write(json_encode(peak_data))
+
+
+def _async_peakfit(func, *args, **kwargs):
+  callback = kwargs.pop('callback')
+  t = Thread(target=lambda: callback(func(*args, **kwargs)))
+  t.daemon = True
+  t.start()
 
 
 def _manual_peak_area(spectrum, bounds, base_type='region'):
