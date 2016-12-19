@@ -22,6 +22,16 @@ __all__ = [
 # Global structure for all loaded datasets.
 DATASETS = dict(Raman={}, LIBS={}, FTIR={}, NIR={}, XAS={}, XRD={})
 
+# Ordering for filters of various metadata types.
+FILTER_ORDER = {
+    PrimaryKeyMetadata: 0,
+    LookupMetadata: 1,
+    BooleanMetadata: 2,
+    TagMetadata: 3,
+    NumericMetadata: 4,
+    CompositionMetadata: 999  # should always come last
+}
+
 
 class _ReloadableMixin(object):
   def init_load(self, loader_fn, loader_args):
@@ -60,22 +70,21 @@ class _ReloadableMixin(object):
     # get a unique string for this dataset
     ds_key = 'ds%d' % hash(str(self))
     # Get HTML+JS for filters
-    metas = sorted(self.metadata.items(), key=lambda t: (str(type(t[1])), t[0]))
+    metas = sorted(self.metadata.items(),
+                   key=lambda t: (FILTER_ORDER[type(t[1])], t[0]))
     if self.pkey is not None:
-      metas.append(('pkey', self.pkey))
+      metas.insert(0, ('pkey', self.pkey))
     # Collect all the fragments
-    init_js, collect_js, filter_htmls, comp_htmls = [], [], [], []
+    init_js, collect_js, filter_htmls = [], [], []
     for key, m in metas:
       full_key = ds_key + '_' + key
       ijs, cjs = _get_filter_js(m, full_key)
       init_js.append(ijs)
       collect_js.append((key, cjs))
       if isinstance(m, CompositionMetadata):
-        comp_htmls.extend(_get_composition_filter_html(m, key, full_key))
+        filter_htmls.extend(_get_composition_filter_html(m, key, full_key))
       else:
         filter_htmls.append(_get_filter_html(m, key, full_key))
-    # Make sure composition filters come last
-    filter_htmls.extend(comp_htmls)
     return filter_htmls, init_js, collect_js
 
   def metadata_names(self, allowed_baseclasses=(object,)):
