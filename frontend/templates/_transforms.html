@@ -4,17 +4,17 @@
   <th></th><th>min</th><th>max</th><th>step</th>
 </tr><tr style="display: none;">
   <td><button class="remove_row" onclick="del_resample_row(this)">&times;</button></td>
-  <td><input class="blr_lb" type="number" step="any"></td>
-  <td><input class="blr_ub" type="number" step="any"></td>
-  <td><input class="blr_step" type="number" step="any"></td>
+  <td><input type="number" step="any" class="blr_lb" placeholder="-&#x221e;"></td>
+  <td><input type="number" step="any" class="blr_ub" placeholder="&#x221e;"></td>
+  <td><input type="number" step="any" class="blr_step"></td>
 </tr></thead>
 <tbody><tr>
   <td><button class="remove_row" onclick="clear_resample_row(this)">&times;</button></td>
-  <td><input class="blr_lb" type="number" step="any"></td>
-  <td><input class="blr_ub" type="number" step="any"></td>
-  <td><input class="blr_step" type="number" step="any"></td>
+  <td><input type="number" step="any" class="blr_lb" placeholder="-&#x221e;"></td>
+  <td><input type="number" step="any" class="blr_ub" placeholder="&#x221e;"></td>
+  <td><input type="number" step="any" class="blr_step"></td>
 </tr></tbody>
-<tfoot><tr class="oline"><td colspan=4>
+<tfoot><tr><td colspan=4>
   <button onclick="add_resample_row(this);">Add row</button>
 </td></tr></tfoot></table>
 
@@ -50,8 +50,7 @@
 </tr>
 <!-- param labels row -->
 <tr><td class="vcenter">
-  <select class="blr_method" onchange="$(this).closest('table').find('td.param').hide();
-  if(this.value){$(this).closest('table').find('td.param.'+this.value).show();}">
+  <select class="blr_method" onchange="change_blr_method(this);">
     <option value="">none</option>
   {% for key, bl in bl_classes %}
     <option value="{{key}}">{{bl.__class__.__name__}}</option>

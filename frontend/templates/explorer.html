@@ -178,6 +178,13 @@ function add_resample_row(btn) {
 function del_resample_row(btn) {
   $(btn).closest('tr').remove();
 }
+function change_blr_method(option) {
+  var table = $(option).closest('table');
+  table.find('td.param').hide();
+  if (option.value) {
+    table.find('td.param.'+option.value).show();
+  }
+}
 
 {% include '_filterplots.js' %}
 {% include '_compositions.js' %}
