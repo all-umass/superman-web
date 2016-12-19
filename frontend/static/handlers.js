@@ -118,6 +118,7 @@ function do_baseline(ctx, method) {
   var msg = $('#baseline_messages');
   msg.text("Correcting baseline...").fadeIn();
   var post_data = add_baseline_args(ctx, {fignum: fig.id}, method);
+  add_resample_args(ctx, post_data);
   var cbs = make_post_callbacks('#baseline_messages');
   $.post('/_baseline', post_data, cbs['success']).fail(cbs['fail']);
 }
@@ -176,9 +177,6 @@ function add_baseline_args(ctx, post_data, method) {
   post_data['blr_segmented'] = table.find('.blr_segmented').is(':checked');
   post_data['blr_inverted'] = table.find('.blr_inverted').is(':checked');
   post_data['blr_flip'] = table.find('.blr_flip').is(':checked');
-  post_data['blr_lb'] = table.find('.blr_lb').val();
-  post_data['blr_ub'] = table.find('.blr_ub').val();
-  post_data['blr_step'] = table.find('.blr_step').val();
   if (method) {
     var idx = method.length + 1;
     table.find('td.param.'+method+'>span').each(function(i,e){
@@ -186,6 +184,16 @@ function add_baseline_args(ctx, post_data, method) {
       post_data['blr_' + param] = e.innerHTML;
     });
   }
+  return post_data;
+}
+function multi_val(jq_list) {
+  return jq_list.map(function(){ return this.value; }).toArray();
+}
+function add_resample_args(ctx, post_data) {
+  var table = $('tbody', ctx);
+  post_data['blr_lb'] = multi_val(table.find('.blr_lb'));
+  post_data['blr_ub'] = multi_val(table.find('.blr_ub'));
+  post_data['blr_step'] = multi_val(table.find('.blr_step'));
   return post_data;
 }
 function add_plot_args(post_data) {

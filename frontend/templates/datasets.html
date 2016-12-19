@@ -36,15 +36,6 @@ $(document).ready(function() {
 #datasets td.ds_title form {
   float: right;
 }
-#datasets td.ds_title form .remove_ds {
-  font-size: large;
-  vertical-align: top;
-  height: 1em;
-  width: 1em;
-  line-height: 0;
-  padding: 0;
-  margin: 0;
-}
 #datasets td.ds_title a {
   color: black;
 }
@@ -130,7 +121,7 @@ $(document).ready(function() {
       <form action='/_dataset_remover' method='POST'>
         <input type="hidden" name="name" value="{{d.name}}">
         <input type="hidden" name="kind" value="{{d.kind}}">
-        <button type="submit" class='remove_ds'>&times;</button>
+        <button type="submit" class='remove_row'>&times;</button>
       </form>
       {% end %}
     </td>

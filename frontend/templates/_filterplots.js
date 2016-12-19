@@ -38,6 +38,7 @@ function do_filtered_plot(btn) {
     fignum: fig.id,
   };
   add_plot_args(post_data);
+  add_resample_args($('#resample_options'), post_data);
   add_baseline_args($('#blr_options'), post_data);
 
   var err_span = $(btn).next('.err_msg');

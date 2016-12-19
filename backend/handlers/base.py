@@ -79,9 +79,14 @@ class BaseHandler(tornado.web.RequestHandler):
     segmented = segmented_str == 'true'
     inverted = inverted_str == 'true'
     flip = flip_str == 'true'
-    lb = float(self.get_argument('blr_lb', '') or '-inf')
-    ub = float(self.get_argument('blr_ub', '') or 'inf')
-    step = float(self.get_argument('blr_step', '') or 0)
+
+    lbs = filter(None, self.get_arguments('blr_lb[]'))
+    ubs = filter(None, self.get_arguments('blr_ub[]'))
+    steps = filter(None, self.get_arguments('blr_step[]'))
+    # TODO: use all the cropping information
+    lb = float(lbs[0] if lbs else '-inf')
+    ub = float(ubs[0] if ubs else 'inf')
+    step = float(steps[0]) if steps else 0
 
     # initialize the baseline correction object
     bl_obj = BL_CLASSES[method]() if method else NullBaseline()
@@ -126,11 +131,12 @@ class MultiDatasetHandler(BaseHandler):
                     for ds in all_ds]
 
     # check to see if anything changed since the last view we had
-    view_keys = ['chan_mask', 'pp', 'blr_method', 'blr_segmented', 'blr_flip',
-                 'blr_inverted', 'blr_lb', 'blr_ub', 'blr_step']
+    view_params = [self.get_argument('blr_method')]
     for k in sorted(blr_params):
-      view_keys.append('blr_' + k)
-    view_params = tuple(self.get_argument(k, '') for k in view_keys)
+      view_params.append(self.get_argument('blr_' + k, ''))
+    for k in ['chan_mask','pp','blr_inverted','blr_segmented','flip','crop']:
+      view_params.append(trans[k])
+    view_params = tuple(view_params)
     # if the view changed, invalidate the cache
     if view_params != fig_data.explorer_view_params:
       fig_data.clear_explorer_cache()

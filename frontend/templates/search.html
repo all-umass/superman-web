@@ -73,6 +73,7 @@ function do_search() {
     score_pct: $('#wsm_score_pct').text(),
     fignum: fig.id
   };
+  add_resample_args(target_table, post_data);
   add_baseline_args(target_table, post_data);
   // search
   $('#search_messages').text("Searching...").fadeIn();
@@ -92,6 +93,7 @@ function do_compare(names, target_name, target_kind) {
     pp: collect_pp_args(target_table),
     fignum: fig.id
   };
+  add_resample_args(target_table, post_data);
   add_baseline_args(target_table, post_data);
   $.post('/_compare', post_data);
 }

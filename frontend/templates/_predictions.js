@@ -69,6 +69,7 @@ function _run_model(btn, ds_info, do_train) {
       cv_min_comps: +$('#cv_min_comps').val(),
       cv_max_comps: +$('#cv_max_comps').val(),
   };
+  add_resample_args($('#resample_options'), post_data);
   add_baseline_args($('#blr_options'), post_data);
   if (do_train !== null) {
     post_data['do_train'] = +do_train;
@@ -112,6 +113,7 @@ function plot_coefs(btn) {
       fignum: fig.id,
       pp: collect_pp_args($('#pp_options')),
   };
+  add_resample_args($('#resample_options'), post_data);
   add_baseline_args($('#blr_options'), post_data);
   add_plot_args(post_data);
   var wait = $('.wait', btn).show();

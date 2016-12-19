@@ -71,6 +71,16 @@ tr:last-child button { width: 100% }
 .pp_table td { text-align: center; padding: 0 0.5em; }
 .pp_table input[type="number"] { width: 4em; }
 
+button.remove_row {
+  font-size: large;
+  vertical-align: top;
+  height: 1em;
+  width: 1em;
+  line-height: 0;
+  padding: 0;
+  margin: 0;
+}
+
 .fake_button {
   -moz-appearance: button;
   -ms-appearance: button;

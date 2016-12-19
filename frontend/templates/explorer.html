@@ -167,6 +167,17 @@ function load_ds_filters() {
     window.history.pushState('', '', 'explorer');
   }
 }
+function clear_resample_row(btn) {
+  $(btn).closest('tr').find('input').val('');
+}
+function add_resample_row(btn) {
+  var table = $(btn).closest('table')
+  table.find('thead>tr:last-child').clone().show()
+       .appendTo(table.find('tbody'));
+}
+function del_resample_row(btn) {
+  $(btn).closest('tr').remove();
+}
 
 {% include '_filterplots.js' %}
 {% include '_compositions.js' %}
@@ -217,14 +228,7 @@ $(document).ready(function(){
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'table');"></button>
 </div>
-<table class='ds_table nofloat_ds_table' id="blr_options">
-  <caption>Baseline Correction</caption>
-  {% include '_blr_rows.html' %}
-</table>
-<table class='ds_table nofloat_ds_table' id="pp_options">
-  <caption>Preprocessing</caption>
-  {% include '_pp_rows.html' %}
-</table>
+{% include '_transforms.html' %}
 </div>
 
 <div class="horiz_section">
