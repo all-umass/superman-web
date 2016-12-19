@@ -80,13 +80,12 @@ class BaseHandler(tornado.web.RequestHandler):
     inverted = inverted_str == 'true'
     flip = flip_str == 'true'
 
-    lbs = filter(None, self.get_arguments('blr_lb[]'))
-    ubs = filter(None, self.get_arguments('blr_ub[]'))
-    steps = filter(None, self.get_arguments('blr_step[]'))
-    # TODO: use all the cropping information
-    lb = float(lbs[0] if lbs else '-inf')
-    ub = float(ubs[0] if ubs else 'inf')
-    step = float(steps[0]) if steps else 0
+    # collect (lb,ub,step) tuples, so long as they're not all blank
+    crops = [(float(lb or '-inf'), float(ub or 'inf'), float(step or 0))
+             for lb, ub, step in zip(self.get_arguments('blr_lb[]'),
+                                     self.get_arguments('blr_ub[]'),
+                                     self.get_arguments('blr_step[]'))
+             if lb or ub or step]
 
     # initialize the baseline correction object
     bl_obj = BL_CLASSES[method]() if method else NullBaseline()
@@ -100,7 +99,7 @@ class BaseHandler(tornado.web.RequestHandler):
     trans = dict(
         chan_mask=bool(int(self.get_argument('chan_mask', 0))),
         pp=self.get_argument('pp', ''), blr_obj=bl_obj, blr_inverted=inverted,
-        blr_segmented=segmented, flip=flip, crop=(lb, ub, step), **extra_kwargs)
+        blr_segmented=segmented, flip=flip, crop=tuple(crops), **extra_kwargs)
 
     if return_blr_params:
       return trans, params
