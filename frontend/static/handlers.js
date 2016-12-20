@@ -191,9 +191,9 @@ function multi_val(jq_list) {
 }
 function add_resample_args(ctx, post_data) {
   var table = $('tbody', ctx);
-  post_data['blr_lb'] = multi_val(table.find('.blr_lb'));
-  post_data['blr_ub'] = multi_val(table.find('.blr_ub'));
-  post_data['blr_step'] = multi_val(table.find('.blr_step'));
+  post_data['crop_lb'] = multi_val(table.find('.crop_lb'));
+  post_data['crop_ub'] = multi_val(table.find('.crop_ub'));
+  post_data['crop_step'] = multi_val(table.find('.crop_step'));
   return post_data;
 }
 function add_plot_args(post_data) {

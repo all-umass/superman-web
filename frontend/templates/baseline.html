@@ -29,9 +29,10 @@ $(document).ready(function(){
 <label>Segmented: <input type="checkbox" class="blr_segmented"></label>
 <label>Inverted: <input type="checkbox" class="blr_inverted"></label>
 <label>Flip: <input type="checkbox" class="blr_flip"></label></td>
-<td>Bounds: <input class="blr_lb" type="number"> to
-<input class="blr_ub" type="number"></td>
-</tr>
+<td>Bounds:
+  <input class="crop_lb" type="number" step="any" placeholder="min"> to
+  <input class="crop_ub" type="number" step="any" placeholder="max">
+</td></tr>
 {% for key, bl in bl_classes %}
   <tr>
   <td class="rline uline vcenter" rowspan=2>

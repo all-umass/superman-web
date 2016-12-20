@@ -82,9 +82,9 @@ class BaseHandler(tornado.web.RequestHandler):
 
     # collect (lb,ub,step) tuples, so long as they're not all blank
     crops = [(float(lb or '-inf'), float(ub or 'inf'), float(step or 0))
-             for lb, ub, step in zip(self.get_arguments('blr_lb[]'),
-                                     self.get_arguments('blr_ub[]'),
-                                     self.get_arguments('blr_step[]'))
+             for lb, ub, step in zip(self.get_arguments('crop_lb[]'),
+                                     self.get_arguments('crop_ub[]'),
+                                     self.get_arguments('crop_step[]'))
              if lb or ub or step]
 
     # initialize the baseline correction object
