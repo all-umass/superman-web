@@ -83,9 +83,9 @@ class FilterPlotHandler(MultiDatasetHandler):
         self.write(','.join(row))
         self.write('\n')
     elif as_matrix:
-      self.write('wave,%s\n' % ','.join('%g' % x for x in bands))
-      for i, row in enumerate(ints):
-        self.write('%s,%s\n' % (pkeys[i], ','.join('%g' % y for y in row)))
+      self.write('wave,%s\n' % ','.join(pkeys))
+      for i, row in enumerate(ints.T):
+        self.write('%g,%s\n' % (bands[i], ','.join('%g' % y for y in row)))
     else:
       self.write('pkey,axis')
       for i, traj in enumerate(lines):
