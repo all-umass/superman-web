@@ -47,7 +47,7 @@ def main():
 
   logging.info('Starting server...')
   routes = all_routes + [
-      (r'/(\w+\.(?:png|gif|css|js|ico))', tornado.web.StaticFileHandler,
+      (r'/(\S+\.(?:png|gif|css|js|ico))', tornado.web.StaticFileHandler,
        dict(path=os.path.join(webserver_dir, 'frontend', 'static')))]
   server = MatplotlibServer(
       *routes,
