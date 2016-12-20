@@ -9,6 +9,7 @@ from matplotlib import rcParams
 from matplotlib.collections import LineCollection
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Patch
+from six.moves import xrange
 from threading import Thread
 from tornado import gen
 from tornado.escape import json_encode
@@ -36,7 +37,7 @@ PlotData = namedtuple('PlotData', ('trajs', 'xlabel', 'ylabel', 'xticks',
 
 
 class FilterPlotHandler(MultiDatasetHandler):
-  def get(self, fignum):
+  def get(self, fignum, download_type):
     '''Downloads plot data as text.'''
     fig_data = self.get_fig_data(int(fignum))
     if fig_data is None:
@@ -45,32 +46,86 @@ class FilterPlotHandler(MultiDatasetHandler):
     if fig_data.explorer_data is None or fig_data.last_plot != 'filterplot':
       self.write('No plotted data to download.')
       return
-
-    lines = fig_data.explorer_data.trajs
-    ax = fig_data.figure.gca()
-    xlabel = _sanitize_csv(ax.get_xlabel()) or 'x'
-    ylabel = _sanitize_csv(ax.get_ylabel()) or 'y'
-
     all_ds = self.request_many_ds()
     if not all_ds:
       self.write('No datasets selected.')
       return
     all_ds_views = [ds.view(mask=fig_data.filter_mask[ds]) for ds in all_ds]
 
-    # make the UID (line names) column
-    header = ['UID']
-    line_names = []
-    for ds, dv in zip(all_ds, all_ds_views):
-      pkeys = dv.get_primary_keys()
-      line_names.extend(map(_sanitize_csv, pkeys))
-    meta_data = [line_names]
+    pkeys = []
+    for dv in all_ds_views:
+      pkeys.extend(map(_sanitize_csv, dv.get_primary_keys()))
+
+    as_matrix = bool(int(self.get_argument('as_matrix', '0')))
+
+    if download_type == 'metadata':
+      meta_rows = self._prep_metadata(pkeys, all_ds_views)
+    elif download_type == 'spectra':
+      if as_matrix:
+        try:
+          bands, ints = self._prep_vector_spectra(fig_data)
+        except ValueError as e:
+          self.write(e.message)
+          return
+      else:
+        lines, xlabel, ylabel = self._prep_traj_spectra(fig_data)
+    else:
+      self.write('Unknown download_type: %s' % download_type)
+      return
+
+    # set up for writing the response file
+    fname = os.path.basename(self.request.path)
+    self.set_header('Content-Type', 'text/plain')
+    self.set_header('Content-Disposition', 'attachment; filename='+fname)
+
+    if download_type == 'metadata':
+      for row in meta_rows:
+        self.write(','.join(row))
+        self.write('\n')
+    elif as_matrix:
+      self.write('wave,%s\n' % ','.join('%g' % x for x in bands))
+      for i, row in enumerate(ints):
+        self.write('%s,%s\n' % (pkeys[i], ','.join('%g' % y for y in row)))
+    else:
+      self.write('pkey,axis')
+      for i, traj in enumerate(lines):
+        self.write('\n%s,%s,' % (pkeys[i], xlabel))
+        self.write(','.join('%g' % x for x in traj[:,0]))
+        self.write('\n,%s,' % ylabel)
+        self.write(','.join('%g' % y for y in traj[:,1]))
+      self.write('\n')
+    self.finish()
+
+  def _prep_traj_spectra(self, fig_data):
+    ax = fig_data.figure.gca()
+    xlabel = _sanitize_csv(ax.get_xlabel()) or 'x'
+    ylabel = _sanitize_csv(ax.get_ylabel()) or 'y'
+    return fig_data.explorer_data.trajs, xlabel, ylabel
+
+  def _prep_vector_spectra(self, fig_data):
+    # convert to vector shape
+    bands, ints = None, []
+    for traj in fig_data.explorer_data.trajs:
+      x, y = traj.T
+      if bands is None:
+        bands = x
+      else:
+        if x.shape != bands.shape or not np.allclose(x, bands):
+          raise ValueError('Mismatching wavelength data.')
+      ints.append(y)
+    ints = np.vstack(ints)
+    return bands, ints
+
+  def _prep_metadata(self, pkeys, all_ds_views):
+    header = ['pkey']
+    meta_columns = [pkeys]
 
     # make a dataset column, if there are multiple datasets
     if len(all_ds_views) > 1:
       header.append('Dataset')
-      ds_names = map(str, all_ds)
+      ds_names = [str(dv.ds) for dv in all_ds_views]
       counts = [np.count_nonzero(dv.mask) for dv in all_ds_views]
-      meta_data.append(np.repeat(ds_names, counts))
+      meta_columns.append(np.repeat(ds_names, counts))
 
     # collect the requested meta info
     for meta_key in self.get_arguments('meta_keys[]'):
@@ -79,24 +134,13 @@ class FilterPlotHandler(MultiDatasetHandler):
         x, label = dv.get_metadata(meta_key)
         data.append(x)
       header.append(label)
-      meta_data.append(np.concatenate(data))
+      meta_columns.append(np.concatenate(data))
 
-    # set up for writing the response file
-    fname = os.path.basename(self.request.path)
-    self.set_header('Content-Type', 'text/plain')
-    self.set_header('Content-Disposition',
-                    'attachment; filename='+fname)
-    # write the header line
-    self.write('%s,Axis\n' % ','.join(header))
-    # write each spectrum with associated metadata
-    for i, traj in enumerate(lines):
-      self.write(','.join(str(m[i]) for m in meta_data))
-      self.write(',%s,' % xlabel)
-      self.write(','.join('%g' % x for x in traj[:,0]))
-      self.write('\n%s%s,' % (',' * len(header), ylabel))
-      self.write(','.join('%g' % y for y in traj[:,1]))
-      self.write('\n')
-    self.finish()
+    # transpose into rows
+    rows = [header]
+    for i in xrange(len(pkeys)):
+      rows.append([str(col[i]) for col in meta_columns])
+    return rows
 
   @gen.coroutine
   def post(self):
@@ -415,5 +459,5 @@ def _compute_expr(all_ds_views, expr):
 
 routes = [
     (r'/_filterplot', FilterPlotHandler),
-    (r'/([0-9]+)/spectra\.csv', FilterPlotHandler),
+    (r'/([0-9]+)/(spectra|metadata)\.csv', FilterPlotHandler),
 ]

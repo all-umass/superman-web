@@ -66,6 +66,10 @@ function download_spectrum_data() {
     ds_name: ds_info.name,
     ds_kind: ds_info.kind,
     meta_keys: $('#dl_metadata option:selected').map(_value).toArray(),
+    as_matrix: +$('#dl_vector').is(':checked'),
   };
   window.open('/'+fig.id+'/spectra.csv?' + $.param(args), '_blank');
+  if (args['meta_keys'].length > 0 || args['ds_name'].length > 1) {
+    window.open('/'+fig.id+'/metadata.csv?' + $.param(args), '_blank')
+  }
 }

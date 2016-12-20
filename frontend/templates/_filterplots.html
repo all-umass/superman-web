@@ -90,6 +90,10 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
 
 <div class="flex-column">
 <b>Download plot data</b>
+<div>Format:
+  <label><input type="radio" name="dl_type" checked>trajectory</label>
+  <label><input type="radio" name="dl_type" id="dl_vector">matrix</label>
+</div>
 <select id='dl_metadata' data-placeholder='with metadata' multiple>
 {% for key,name in metadata_names %}
   {% if key != '_ds' %}
