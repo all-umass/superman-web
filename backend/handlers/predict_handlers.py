@@ -145,12 +145,8 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
     # collect primary keys for row labels
     all_pkeys = []
     for ds in all_ds:
-      mask = fig_data.filter_mask[ds]
-      if ds.pkey is None:
-        pkey, = np.where(mask)
-      else:
-        pkey = ds.pkey.keys[mask]
-      all_pkeys.extend(pkey)
+      dv = ds.view(mask=fig_data.filter_mask[ds])
+      all_pkeys.extend(dv.get_primary_keys())
 
     # get data from the scatterplots
     names, actuals, preds = [], [], []
