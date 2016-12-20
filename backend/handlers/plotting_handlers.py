@@ -149,12 +149,6 @@ class FilterPlotHandler(MultiDatasetHandler):
       self.visible_error(403, "Broken connection to server.")
       return
 
-    all_ds_views, num_spectra = self.prepare_ds_views(fig_data)
-    if all_ds_views is None:
-      # not an error, just nothing to do
-      self.write('{}')
-      return
-
     # parse plot information from request arguments
     xaxis = self._get_axis_info('x')
     yaxis = self._get_axis_info('y')
@@ -164,6 +158,24 @@ class FilterPlotHandler(MultiDatasetHandler):
         alpha=float(self.get_argument('alpha')),
         lw=float(self.get_argument('line_width')),
     )
+
+    all_ds_views, num_spectra = self.prepare_ds_views(fig_data)
+    if all_ds_views is None:
+      # not an error, just nothing to do
+      self.write('{}')
+      return
+
+    # check to see if anything changed since the last view we had
+    view_params = [(k, self.get_argument(k)) for k in self.request.arguments
+                   if k.startswith('blr_')]
+    trans = all_ds_views[0].transformations
+    for k in ['chan_mask', 'pp', 'crop']:
+      view_params.append((k, trans[k]))
+    view_params = tuple(sorted(view_params))
+    # if the view changed, invalidate the cache
+    if view_params != fig_data.explorer_view_params:
+      fig_data.clear_explorer_cache()
+      fig_data.explorer_view_params = view_params
 
     # get individual line/point labels (TODO: cache this)
     if len(all_ds_views) == 1:

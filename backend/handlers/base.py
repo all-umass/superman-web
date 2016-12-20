@@ -61,7 +61,7 @@ class BaseHandler(tornado.web.RequestHandler):
     self.set_status(status)
     self.finish("Error: " + msg)
 
-  def ds_view_kwargs(self, return_blr_params=False, **extra_kwargs):
+  def ds_view_kwargs(self, **extra_kwargs):
     method = self.get_argument('blr_method', '').lower()
     segmented_str = self.get_argument('blr_segmented', 'false')
     inverted_str = self.get_argument('blr_inverted', 'false')
@@ -96,14 +96,10 @@ class BaseHandler(tornado.web.RequestHandler):
         params[key] = param
         setattr(bl_obj, key, param)
 
-    trans = dict(
+    return dict(
         chan_mask=bool(int(self.get_argument('chan_mask', 0))),
         pp=self.get_argument('pp', ''), blr_obj=bl_obj, blr_inverted=inverted,
         blr_segmented=segmented, flip=flip, crop=tuple(crops), **extra_kwargs)
-
-    if return_blr_params:
-      return trans, params
-    return trans
 
 
 class MultiDatasetHandler(BaseHandler):
@@ -123,24 +119,10 @@ class MultiDatasetHandler(BaseHandler):
                       max_num_spectra)
       return None, num_spectra
 
-    # set up the dataset view object
-    trans, blr_params = self.ds_view_kwargs(return_blr_params=True,
-                                            **extra_view_kwargs)
+    # set up the dataset view objects
+    trans = self.ds_view_kwargs(**extra_view_kwargs)
     all_ds_views = [ds.view(mask=fig_data.filter_mask[ds], **trans)
                     for ds in all_ds]
-
-    # check to see if anything changed since the last view we had
-    view_params = [self.get_argument('blr_method')]
-    for k in sorted(blr_params):
-      view_params.append(self.get_argument('blr_' + k, ''))
-    for k in ['chan_mask','pp','blr_inverted','blr_segmented','flip','crop']:
-      view_params.append(trans[k])
-    view_params = tuple(view_params)
-    # if the view changed, invalidate the cache
-    if view_params != fig_data.explorer_view_params:
-      fig_data.clear_explorer_cache()
-      fig_data.explorer_view_params = view_params
-
     return all_ds_views, num_spectra
 
 
