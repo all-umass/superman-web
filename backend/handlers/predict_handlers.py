@@ -248,6 +248,16 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
         if key in variables:
           dummy_vars[key] = variables[key]
       variables = dummy_vars
+      # make sure we're using the same wavelengths
+      if wave.shape != model.wave.shape or not np.allclose(wave, model.wave):
+        if wave[-1] <= model.wave[0] or wave[0] >= model.wave[-1]:
+          self.visible_error(400, "Data to predict doesn't overlap "
+                                  "with training wavelengths.")
+          return
+        Xnew = np.empty((X.shape[0], model.wave.shape[0]), dtype=X.dtype)
+        for i, y in enumerate(X):
+          Xnew[i] = np.interp(model.wave, wave, y)
+        X = Xnew
 
     # get predictions for each variable
     preds, stats = model.predict(X, variables)
