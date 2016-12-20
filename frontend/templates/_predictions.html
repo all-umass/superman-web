@@ -50,11 +50,7 @@
 
 <div style="text-align: left;">
 {# info: ds_kind, (ds_name), vars, uni/multivariate, n_comps #}
-<span>Current Model: <span id="model_info">None</span></span>
-<table id="model_error">
-  <thead><tr><th>Variable</th><th>R²</th><th>RMSE</th></tr></thead>
-  <tbody></tbody>
-</table>
+<div>Current Model: <span id="model_info">None</span></div>
 
 <button disabled class="needs_model" onclick="run_preds(this);">
 Run<span class="wait">ning</span> predictions<span class="wait">...</span>
@@ -63,6 +59,12 @@ Run<span class="wait">ning</span> predictions<span class="wait">...</span>
 Plot<span class="wait">ting</span> coefficients<span class="wait">...</span>
 </button>
 <div class="err_msg"></div>
+
+<table id="model_error" style="display: none;">
+  <thead><tr><th>Variable</th><th>R²</th><th>RMSE</th></tr></thead>
+  <tbody></tbody>
+</table>
+
 <button disabled class="needs_model" onclick="predict_download(this);">
 Download</button>
 <select style="vertical-align: baseline;">

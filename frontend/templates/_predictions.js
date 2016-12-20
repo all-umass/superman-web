@@ -88,16 +88,21 @@ function _run_model(btn, ds_info, do_train) {
     dataType: 'json',
     success: function(data){
       wait.hide();
-      if (!do_train) return;
+      if (do_train === null) return;
       $('.needs_model').attr('disabled', false);
       var stats = data.stats;
       var tbody = $('#model_error>tbody').empty();
+      var show_table = false;
       for (var i=0; i<stats.length; i++) {
         var v = stats[i];
-        tbody.append('<tr><td>'+v.name+'</td><td>' + v.r2.toPrecision(3) +
-                     '</td><td>' + v.rmse.toPrecision(4) + '</td></tr>');
+        if (v.r2 !== null && v.rmse !== null) {
+          tbody.append('<tr><td>'+v.name+'</td><td>' + v.r2.toPrecision(3) +
+                       '</td><td>' + v.rmse.toPrecision(4) + '</td></tr>');
+          show_table = true;
+        }
       }
       $('#model_info').html(data.info);
+      $('#model_error').toggle(show_table);
     },
     error: function(jqXHR, textStatus, errorThrown) {
       wait.hide();
