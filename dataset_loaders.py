@@ -178,18 +178,6 @@ def load_usda(ds, filepath):
   return True
 
 
-def load_silicate_glass(ds, filepath, treatment):
-  data = _try_load(filepath, str(ds))
-  if data is None:
-    return False
-  meta = data['/meta']
-  ds.set_data(meta['pkey'], data['/spectra/' + treatment],
-              fe3=NumericMetadata(meta['fe3'], display_name='% Fe3+'),
-              fo2=NumericMetadata(meta['fO2_dQFM'], display_name='fO2 (dQFM)'),
-              Formula=LookupMetadata(meta['formula']))
-  return True
-
-
 def load_corn(ds, filepath):
   data = _try_load(filepath, str(ds))
   if data is None:
