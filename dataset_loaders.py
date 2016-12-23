@@ -264,10 +264,18 @@ def load_mhc_raman(ds, data_dir, meta_file):
     logging.warning(str(e))
     return None
   pkey = meta['spectrum_number']
+  def _utolower(array):
+    return [spec.lower() if spec is not None else None for spec in array]
   ds.set_data(pkey, hdf5['/spectra'],
               vial=LookupMetadata(meta['vial_name'], 'Vial Name'),
               Instrument=LookupMetadata(meta['instrument']),
-              Project=LookupMetadata(meta['project'])
+              Project=LookupMetadata(meta['project']),
+              ConfSpecies_A=LookupMetadata(_utolower(meta['conf_species_A'])),
+              ConfSpecies_B=LookupMetadata(_utolower(meta['conf_species_B'])),
+              ConfSpecies_C=LookupMetadata(_utolower(meta['conf_species_C'])),
+              Amount_A=NumericMetadata(meta['#_in_mix_A']),
+              Amount_B=NumericMetadata(meta['#_in_mix_B']),
+              Amount_C=NumericMetadata(meta['#_in_mix_C'])
               )
   return True
 
