@@ -232,6 +232,7 @@ XAS:
     file: /srv/nfs/common/spectra/misc/silicate_glass_cropped_noSA.hdf5
     metadata:
       - [pkey, PrimaryKeyMetadata, None]
+      - [sample, LookupMetadata, Sample Name]
       - [formula, LookupMetadata, Formula]
       - [fe3, NumericMetadata, '% Fe3+']
       - [fO2_dQFM, NumericMetadata, 'fO2 (dQFM)']
