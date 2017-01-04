@@ -67,6 +67,7 @@ function _run_model(btn, ds_info, do_train) {
       regress_kind: $('#regress_kind').val(),
       pred_meta: pred_vars,
       cv_folds: +$('#cv_folds').val(),
+      cv_stratify: $('#cv_stratify').val(),
       cv_min_comps: +$('#cv_min_comps').val(),
       cv_max_comps: +$('#cv_max_comps').val(),
   };

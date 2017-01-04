@@ -16,6 +16,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-around;
+  align-items: center;
 }
 
 #ds_select_container { display: flex; flex-direction: column; }
@@ -149,8 +150,10 @@ function load_ds_filters() {
     });
     {% if logged_in %}
     pred_options.load('/_dataset_pred_options', ds_info, function() {
-      $('.target_meta', pred_options).css('width', '+=15')
+      $('.target_meta', pred_options).css('width', '+=20')
                                      .chosen({search_contains: true});
+      $('#cv_stratify', pred_options).css('width', '+=25')
+                                     .chosen({allow_single_deselect: true});
     });
     // clas_options.load('/_dataset_classify_options', ds_info);
     {% end %}

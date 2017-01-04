@@ -77,11 +77,19 @@ class DatasetPredictionOptionsHandler(BaseHandler):
     all_ds = self.request_many_ds('kind[]', 'name[]')
     logging.info('Generating prediction options HTML for: %s', map(str,all_ds))
 
-    # TODO: exclude boolean metadata from this
-    pairs = [set(ds.metadata_names((NumericMetadata, CompositionMetadata)))
-             for ds in all_ds]
-    pairs = sorted(set.intersection(*pairs))
-    return self.render('_predictions.html', meta_pairs=pairs)
+    pred_pairs, strat_pairs = [], []
+    for ds in all_ds:
+      # TODO: exclude boolean metadata from this
+      pred_pairs.append(
+          set(ds.metadata_names((NumericMetadata, CompositionMetadata))))
+      strat_pairs.append(
+          set(ds.metadata_names((LookupMetadata, BooleanMetadata))))
+
+    # only use common metadata across all datasets
+    pred_pairs = sorted(set.intersection(*pred_pairs))
+    strat_pairs = sorted(set.intersection(*strat_pairs))
+    return self.render('_predictions.html', pred_pairs=pred_pairs,
+                       strat_pairs=strat_pairs)
 
 
 class DatasetClassificationOptionsHandler(BaseHandler):

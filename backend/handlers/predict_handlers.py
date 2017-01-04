@@ -9,7 +9,7 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.externals.joblib.numpy_pickle import (
     load as load_pickle, dump as dump_pickle)
 from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, KFold, GroupKFold
 from sklearn.linear_model import LassoLarsCV, LassoLars
 from tempfile import mkstemp
 from threading import Thread
@@ -204,23 +204,35 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
       # self.visible_error has already been called in collect_spectra
       return
 
-    variables = self._collect_variables(all_ds_views)
+    variables = _collect_variables(all_ds_views,
+                                   self.get_arguments('pred_meta[]'))
     regress_kind = self.get_argument('regress_kind')
     do_train = self.get_argument('do_train', None)
     if do_train is None:
       if len(variables) == 0:
         self.visible_error(400, "No variables to predict.")
         return
-      # run cross validation
+      # set up cross validation info
       folds = int(self.get_argument('cv_folds'))
+      stratify_meta = self.get_argument('cv_stratify', '')
+      cv_name = '%d-fold (%s) cross-val' % (folds, stratify_meta)
+      if stratify_meta:
+        tmp = _collect_variables(all_ds_views, (stratify_meta,))
+        vals, _ = tmp[stratify_meta]
+        _, stratify_labels = np.unique(vals, return_inverse=True)
+      else:
+        stratify_labels = None
+
+      # run the cross validation
       if regress_kind == 'lasso':
-        logging.info('Running %d-fold cross-val for Lasso alpha', folds)
+        logging.info('Running %s for Lasso alpha', cv_name)
         # run the cross-val and plot scores for each alpha
-        yield gen.Task(_async_gridsearch_lasso, fig_data, X, variables, folds)
+        yield gen.Task(_async_gridsearch_lasso, fig_data, X, variables, folds,
+                       stratify_labels)
       else:
         comps = np.arange(int(self.get_argument('cv_min_comps')),
                           int(self.get_argument('cv_max_comps')) + 1)
-        logging.info('Running %d-fold cross-val for PLS #comps [%d,%d]', folds,
+        logging.info('Running %s for PLS n_comps [%d,%d]', cv_name,
                      comps[0], comps[-1])
 
         # convert pls2 into pls1 format via hacks
@@ -229,8 +241,8 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
           variables = dict(combined=(Y, None))
 
         # run the cross-val and plot scores for each n_components
-        yield gen.Task(_async_gridsearch_pls, fig_data, X, variables,
-                       comps, folds)
+        yield gen.Task(_async_gridsearch_pls, fig_data, X, variables, comps,
+                       folds, stratify_labels)
       return
 
     if bool(int(do_train)):
@@ -281,19 +293,6 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
     # NaN isn't valid JSON, but json_encode doesn't catch it. :'(
     self.write(json_encode(res).replace('NaN', 'null'))
 
-  def _collect_variables(self, all_ds_views):
-    '''Collect variables to predict from all loaded datasets.
-    Returns a dict of {key: (array, display_name)}
-    '''
-    variables = {}
-    for key in self.get_arguments('pred_meta[]'):
-      yy, name = [], None
-      for dv in all_ds_views:
-        y, name = dv.get_metadata(key)
-        yy.append(y)
-      variables[key] = (np.concatenate(yy), name)
-    return variables
-
 
 class ModelPlottingHandler(MultiVectorDatasetHandler):
   def post(self):
@@ -331,20 +330,39 @@ class ModelPlottingHandler(MultiVectorDatasetHandler):
     fig_data.last_plot = 'regression_coefs'
 
 
-def _async_gridsearch_pls(fig_data, X, variables, comps, folds, callback=None):
+def _collect_variables(all_ds_views, meta_keys):
+  '''Collect metadata variables to predict from all loaded datasets.
+  Returns a dict of {key: (array, display_name)}
+  '''
+  variables = {}
+  for key in meta_keys:
+    yy, name = [], None
+    for dv in all_ds_views:
+      y, name = dv.get_metadata(key)
+      yy.append(y)
+    variables[key] = (np.concatenate(yy), name)
+  return variables
+
+
+def _async_gridsearch_pls(fig_data, X, variables, comps, num_folds, labels=None,
+                          callback=None):
   '''Wrap GridSearchCV calls in a Thread to allow the server to be responsive
   while grid searching.'''
   n_jobs = min(5, len(comps))
   grid = dict(n_components=comps)
+  if labels is None:
+    cv = KFold(n_splits=num_folds)
+  else:
+    cv = GroupKFold(n_splits=num_folds)
 
   def helper():
     fig_data.figure.clf(keep_observers=True)
     axes = _axes_grid(fig_data.figure, len(variables), '# components', 'MSE')
     for i, key in enumerate(sorted(variables)):
-      pls = GridSearchCV(PLSRegression(scale=False), grid, cv=folds,
+      pls = GridSearchCV(PLSRegression(scale=False), grid, cv=cv,
                          scoring='neg_mean_squared_error',
                          return_train_score=False, n_jobs=n_jobs)
-      pls.fit(X, variables[key][0])
+      pls.fit(X, y=variables[key][0], groups=labels)
       axes[i].set_title(variables[key][1])
       axes[i].errorbar(comps, -pls.cv_results_['mean_test_score'],
                        yerr=pls.cv_results_['std_test_score'],
@@ -358,16 +376,30 @@ def _async_gridsearch_pls(fig_data, X, variables, comps, folds, callback=None):
   t.start()
 
 
-def _async_gridsearch_lasso(fig_data, X, variables, folds, callback=None):
+class HackAroundSklearnCV(GroupKFold):
+  """LassoLarsCV doesn't pass along `groups`, so we have to hack it in here."""
+  def __init__(self, groups=None, **kwargs):
+    GroupKFold.__init__(self, **kwargs)
+    self.groups = groups
+
+  def split(self, X, y):
+    return GroupKFold.split(X, y=y, groups=self.groups)
+
+
+def _async_gridsearch_lasso(fig_data, X, variables, num_folds, labels=None,
+                            callback=None):
   '''Wrap LassoLarsCV calls in a Thread to allow the server to be responsive
   while grid searching.'''
+  if labels is None:
+    cv = KFold(n_splits=num_folds)
+  else:
+    cv = HackAroundSklearnCV(n_splits=num_folds, groups=labels)
 
   def helper():
     fig_data.figure.clf(keep_observers=True)
     axes = _axes_grid(fig_data.figure, len(variables), 'alpha', 'MSE')
     for i, key in enumerate(sorted(variables)):
-      lasso = LassoLarsCV(fit_intercept=False, max_iter=2000, cv=folds,
-                          n_jobs=5)
+      lasso = LassoLarsCV(fit_intercept=False, max_iter=2000, cv=cv, n_jobs=5)
       lasso.fit(X, variables[key][0])
       cv_mse = lasso.cv_mse_path_
       axes[i].set_title(variables[key][1])
