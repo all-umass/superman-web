@@ -5,16 +5,16 @@
   <option value="{{key}}">{{name}}</option>
 {% end %}
 </select></td></tr>
-<tr><td class="bold">PLS type</td><td>
-<select id="pls_kind">
-  <option value="pls1" selected>Univariate (PLS-1)</option>
-  <option value="pls2">Multivariate (PLS-2)</option>
+<tr><td class="bold">Model</td><td>
+<select id="regress_kind" onchange="change_regression_kind(this);">
+  <option value="pls1" selected>PLS-1 (Univariate)</option>
+  <option value="pls2">PLS-2 (Multivariate)</option>
+  <option value="lasso">Lasso (Multivariate)</option>
 </select></td></tr>
 </table>
 
 <table class="aligned_table" style="padding-right: 2em;">
-<tr><td class="bold">PLS components</td><td>
-  {# TODO: convert this to a double-handled slider #}
+<tr class="for_pls"><td class="bold">PLS components</td><td>
   <input type="number" id="cv_min_comps" value=2 min=1 max=100> -
   <input type="number" id="cv_max_comps" value=10 min=1 max=100>
 </td></tr>
@@ -35,8 +35,12 @@
   <button disabled class="needs_filter" onclick="train_model(this);">
   Train<span class="wait">ing...</span></button>
 </td><td>
-  <label><input type="number" id="pls_comps" value=6 min=1 max=100>
-  components</label>
+  <label class="for_pls">
+    <input type="number" id="pls_comps" value=6 min=1 max=100> components
+  </label>
+  <label class="for_lasso" style="display: none;">
+    <input type="text" id="lasso_alpha" value=0.01 size=5> alpha
+  </label>
 </td></tr>
 <tr><td>
   <button disabled class="needs_filter" onclick="upload_model(this);">

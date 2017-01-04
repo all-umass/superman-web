@@ -63,7 +63,8 @@ function _run_model(btn, ds_info, do_train) {
       fignum: fig.id,
       pp: collect_pp_args($('#pp_options')),
       pls_comps: +$('#pls_comps').val(),
-      pls_kind: $('#pls_kind').val(),
+      lasso_alpha: +$('#lasso_alpha').val(),
+      regress_kind: $('#regress_kind').val(),
       pred_meta: pred_vars,
       cv_folds: +$('#cv_folds').val(),
       cv_min_comps: +$('#cv_min_comps').val(),
@@ -138,7 +139,7 @@ function plot_coefs(btn) {
 }
 function predict_download(btn) {
   var dl_type = $(btn).next('select').val();
-  var dl_url = '/'+fig.id+'/pls_';
+  var dl_url = '/'+fig.id+'/regression_';
   if (dl_type === 'preds') {
     var ds_info = collect_ds_info();
     dl_url += 'predictions.csv?' + $.param({ds_name: ds_info.name,
@@ -149,4 +150,14 @@ function predict_download(btn) {
     dl_url += 'model.csv';
   }
   window.open(dl_url, '_blank');
+}
+function change_regression_kind(option) {
+  var container = $('#ds_prediction_container');
+  if (option.value === 'lasso') {
+    $('.for_pls', container).hide();
+    $('.for_lasso', container).show();
+  } else {
+    $('.for_lasso', container).hide();
+    $('.for_pls', container).show();
+  }
 }

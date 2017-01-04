@@ -4,11 +4,13 @@ import numpy as np
 import os
 import shutil
 from io import BytesIO
+from itertools import repeat
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.externals.joblib.numpy_pickle import (
     load as load_pickle, dump as dump_pickle)
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LassoLarsCV, LassoLars
 from tempfile import mkstemp
 from threading import Thread
 from tornado import gen
@@ -43,6 +45,16 @@ class ModelIOHandler(BaseHandler):
     os.remove(tmp_path)
 
   def _serve_csv(self, pred_model):
+    # extract coefficients
+    if isinstance(pred_model, PLS2):
+      all_coefs = pred_model.clf.coef_
+    elif isinstance(pred_model, PLS1):
+      all_coefs = np.column_stack([pred_model.models[key].coef_
+                                   for key in pred_model.var_keys])
+    else:
+      self.write('Cannot download model coefficients for %s.' % pred_model)
+      return
+
     fname = os.path.basename(self.request.path)
     self.set_header('Content-Type', 'text/plain')
     self.set_header('Content-Disposition', 'attachment; filename='+fname)
@@ -50,11 +62,6 @@ class ModelIOHandler(BaseHandler):
     self.write('# %s - %s\n' % (pred_model, pred_model.ds_kind))
     # write model coefficients as CSV
     self.write('wavelength,' + ','.join(pred_model.var_names) + '\n')
-    if isinstance(pred_model, PLS2):
-      all_coefs = pred_model.clf.coef_
-    else:
-      all_coefs = np.column_stack([pred_model.models[key].coef_
-                                   for key in pred_model.var_keys])
     wave = pred_model.wave
     fmt_str = ','.join(['%g'] * (all_coefs.shape[1] + 1)) + '\n'
     for i, row in enumerate(all_coefs):
@@ -76,14 +83,14 @@ class ModelIOHandler(BaseHandler):
     logging.info('Loading model file: %s', fname)
     fh = BytesIO(f['body'])
     try:
-      model = _PLS.load(fh)
+      model = _RegressionModel.load(fh)
     except Exception as e:
       logging.error('Failed to parse uploaded model file: %s', e.message)
       self.set_status(415)
       return self.finish('Invalid model file.')
 
     # do some validation
-    if not isinstance(model, _PLS):
+    if not isinstance(model, _RegressionModel):
       logging.error('Uploaded model file out of date: %r', model)
       self.set_status(415)
       return self.finish('Invalid model file.')
@@ -133,7 +140,7 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
     if fig_data is None:
       self.write('Oops, something went wrong. Try again?')
       return
-    if fig_data.last_plot != 'pls_preds':
+    if fig_data.last_plot != 'regression_preds':
       self.write('No plotted data to download.')
       return
 
@@ -200,7 +207,7 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
       return
 
     variables = self._collect_variables(all_ds_views)
-    pls_kind = self.get_argument('pls_kind')
+    regress_kind = self.get_argument('regress_kind')
     do_train = self.get_argument('do_train', None)
     if do_train is None:
       if len(variables) == 0:
@@ -208,24 +215,33 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
         return
       # run cross validation
       folds = int(self.get_argument('cv_folds'))
-      comps = np.arange(int(self.get_argument('cv_min_comps')),
-                        int(self.get_argument('cv_max_comps')) + 1)
-      logging.info('Running %d-fold cross-val in range [%d,%d]', folds,
-                   comps[0], comps[-1])
+      if regress_kind == 'lasso':
+        logging.info('Running %d-fold cross-val for Lasso alpha', folds)
+        # run the cross-val and plot scores for each alpha
+        yield gen.Task(_async_gridsearch_lasso, fig_data, X, variables, folds)
+      else:
+        comps = np.arange(int(self.get_argument('cv_min_comps')),
+                          int(self.get_argument('cv_max_comps')) + 1)
+        logging.info('Running %d-fold cross-val for PLS #comps [%d,%d]', folds,
+                     comps[0], comps[-1])
 
-      # convert pls2 into pls1 format via hacks
-      if pls_kind == 'pls2':
-        Y = np.column_stack([y for y, name in variables.values()])
-        variables = dict(combined=(Y, None))
+        # convert pls2 into pls1 format via hacks
+        if regress_kind == 'pls2':
+          Y = np.column_stack([y for y, name in variables.values()])
+          variables = dict(combined=(Y, None))
 
-      # run the cross-val and plot scores for each n_components
-      yield gen.Task(_async_gridsearch, fig_data, X, variables, comps, folds)
+        # run the cross-val and plot scores for each n_components
+        yield gen.Task(_async_gridsearch_pls, fig_data, X, variables,
+                       comps, folds)
       return
 
     if bool(int(do_train)):
       # train on all the data
-      cls = PLS1 if pls_kind == 'pls1' else PLS2
-      model = cls(int(self.get_argument('pls_comps')), ds_kind, wave)
+      if regress_kind == 'lasso':
+        model = Lasso(float(self.get_argument('lasso_alpha')), ds_kind, wave)
+      else:
+        cls = PLS1 if regress_kind == 'pls1' else PLS2
+        model = cls(int(self.get_argument('pls_comps')), ds_kind, wave)
       logging.info('Training %s on %d inputs, predicting %d vars',
                    model, X.shape[0], len(variables))
       model.train(X, variables)
@@ -261,7 +277,7 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
     # plot
     _plot_actual_vs_predicted(preds, stats, fig_data.figure, variables)
     fig_data.manager.canvas.draw()
-    fig_data.last_plot = 'pls_preds'
+    fig_data.last_plot = 'regression_preds'
 
     res = dict(stats=stats, info=fig_data.pred_model.info_html())
     # NaN isn't valid JSON, but json_encode doesn't catch it. :'(
@@ -300,9 +316,23 @@ class ModelPlottingHandler(MultiVectorDatasetHandler):
 
     model = fig_data.pred_model
     if isinstance(model, PLS2):
+      all_bands = repeat(wave)
       all_coefs = model.clf.coef_.T
-    else:
+    elif isinstance(model, PLS1):
+      all_bands = repeat(wave)
       all_coefs = [model.models[key].coef_.ravel() for key in model.var_keys]
+    elif isinstance(model, Lasso):
+      coef = model.clf.coef_
+      active = model.clf.active_
+      if isinstance(coef, np.ndarray):
+        all_bands = [wave[active]]
+        all_coefs = [coef[active]]
+      else:
+        all_bands = [wave[idx] for idx in active]
+        all_coefs = [cc[idx] for idx,cc in zip(active, coef)]
+    else:
+      self.visible_error(404, "%s doesn't support coefficient plots." % model)
+      return
 
     # Do the plot
     fig_data.figure.clf(keep_observers=True)
@@ -312,15 +342,15 @@ class ModelPlottingHandler(MultiVectorDatasetHandler):
     ax2.axhline(lw=1, ls='--', color='gray')
     size = 20 * float(self.get_argument('line_width'))
     alpha = float(self.get_argument('alpha'))
-    for name, coef in zip(model.var_names, all_coefs):
-      ax2.scatter(wave, coef, label=name, s=size, alpha=alpha)
+    for name, x, y in zip(model.var_names, all_bands, all_coefs):
+      ax2.scatter(x, y, label=name, s=size, alpha=alpha)
     if bool(int(self.get_argument('legend'))):
       ax2.legend()
     fig_data.manager.canvas.draw()
-    fig_data.last_plot = 'pls_coefs'
+    fig_data.last_plot = 'regression_coefs'
 
 
-def _async_gridsearch(fig_data, X, variables, comps, folds, callback=None):
+def _async_gridsearch_pls(fig_data, X, variables, comps, folds, callback=None):
   '''Wrap GridSearchCV calls in a Thread to allow the server to be responsive
   while grid searching.'''
   n_jobs = min(5, len(comps))
@@ -335,9 +365,34 @@ def _async_gridsearch(fig_data, X, variables, comps, folds, callback=None):
                          return_train_score=False, n_jobs=n_jobs)
       pls.fit(X, variables[key][0])
       axes[i].errorbar(comps, -pls.cv_results_['mean_test_score'],
-                       yerr=pls.cv_results_['std_test_score'])
+                       yerr=pls.cv_results_['std_test_score'],
+                       ecolor='k', elinewidth=1)
     fig_data.manager.canvas.draw()
     fig_data.last_plot = 'pls_crossval'
+    callback()
+
+  t = Thread(target=helper)
+  t.daemon = True
+  t.start()
+
+
+def _async_gridsearch_lasso(fig_data, X, variables, folds, callback=None):
+  '''Wrap LassoLarsCV calls in a Thread to allow the server to be responsive
+  while grid searching.'''
+
+  def helper():
+    fig_data.figure.clf(keep_observers=True)
+    axes = _axes_grid(fig_data.figure, len(variables), 'alpha', 'MSE')
+    for i, key in enumerate(sorted(variables)):
+      lasso = LassoLarsCV(fit_intercept=False, max_iter=2000, cv=folds,
+                          n_jobs=5)
+      lasso.fit(X, variables[key][0])
+      cv_mse = lasso.cv_mse_path_
+      axes[i].set_xscale('log')
+      axes[i].errorbar(lasso.cv_alphas_, cv_mse.mean(axis=1),
+                       yerr=cv_mse.std(axis=1), ecolor='k', elinewidth=1)
+    fig_data.manager.canvas.draw()
+    fig_data.last_plot = 'lasso_crossval'
     callback()
 
   t = Thread(target=helper)
@@ -389,9 +444,9 @@ def _axes_grid(fig, n, xlabel, ylabel):
   return axes
 
 
-class _PLS(object):
+class _RegressionModel(object):
   def __init__(self, k, ds_kind, wave):
-    self.n_components = k
+    self.parameter = k
     self.ds_kind = ds_kind
     self.wave = wave
     self.var_names = []
@@ -422,14 +477,14 @@ class _PLS(object):
     return '%s &mdash; %s' % (self, self.ds_kind)
 
   def __str__(self):
-    return '%s(%d)' % (self.__class__.__name__, self.n_components)
+    return '%s(%g)' % (self.__class__.__name__, self.parameter)
 
 
-class PLS1(_PLS):
+class PLS1(_RegressionModel):
   def train(self, X, variables):
     self.models = {}
     for key in variables:
-      clf = PLSRegression(scale=False, n_components=self.n_components)
+      clf = PLSRegression(scale=False, n_components=self.parameter)
       y, name = variables[key]
       self.models[key] = clf.fit(X, y)
       self.var_keys.append(key)
@@ -444,9 +499,9 @@ class PLS1(_PLS):
       yield key, clf.predict(X)
 
 
-class PLS2(_PLS):
+class PLS2(_RegressionModel):
   def train(self, X, variables):
-    self.clf = PLSRegression(scale=False, n_components=self.n_components)
+    self.clf = PLSRegression(scale=False, n_components=self.parameter)
     self.var_keys = variables.keys()
     y_cols = []
     for key in self.var_keys:
@@ -464,10 +519,33 @@ class PLS2(_PLS):
       yield key, P[:,i]
 
 
+class Lasso(_RegressionModel):
+  def train(self, X, variables):
+    self.clf = LassoLars(alpha=self.parameter, fit_intercept=False)
+    self.var_keys = variables.keys()
+    y_cols = []
+    for key in self.var_keys:
+      y, name = variables[key]
+      y_cols.append(y)
+      self.var_names.append(name)
+    self.clf.fit(X, np.column_stack(y_cols))
+
+  def _predict(self, X, variables):
+    P = self.clf.predict(X)
+    if P.ndim == 1:
+      assert len(variables) == 1
+      P = P[:,None]
+    for i, key in enumerate(self.var_keys):
+      if key not in variables:
+        logging.warning('No input variable for predicted: %r', key)
+        continue
+      yield key, P[:,i]
+
+
 routes = [
     (r'/_run_model', RegressionModelHandler),
-    (r'/([0-9]+)/pls_predictions\.csv', RegressionModelHandler),
+    (r'/([0-9]+)/regression_predictions\.csv', RegressionModelHandler),
     (r'/_load_model', ModelIOHandler),
-    (r'/([0-9]+)/pls_model\.(\w+)', ModelIOHandler),
+    (r'/([0-9]+)/regression_model\.(\w+)', ModelIOHandler),
     (r'/_plot_model_coefs', ModelPlottingHandler),
 ]
