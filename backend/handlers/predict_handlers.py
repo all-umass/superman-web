@@ -366,7 +366,7 @@ def _async_gridsearch_pls(fig_data, X, variables, comps, folds, callback=None):
       pls.fit(X, variables[key][0])
       axes[i].errorbar(comps, -pls.cv_results_['mean_test_score'],
                        yerr=pls.cv_results_['std_test_score'],
-                       ecolor='k', elinewidth=1)
+                       fmt='k-', ecolor='r', elinewidth=1, capsize=0)
     fig_data.manager.canvas.draw()
     fig_data.last_plot = 'pls_crossval'
     callback()
@@ -390,7 +390,8 @@ def _async_gridsearch_lasso(fig_data, X, variables, folds, callback=None):
       cv_mse = lasso.cv_mse_path_
       axes[i].set_xscale('log')
       axes[i].errorbar(lasso.cv_alphas_, cv_mse.mean(axis=1),
-                       yerr=cv_mse.std(axis=1), ecolor='k', elinewidth=1)
+                       yerr=cv_mse.std(axis=1),
+                       fmt='k-', ecolor='r', elinewidth=1, capsize=0)
     fig_data.manager.canvas.draw()
     fig_data.last_plot = 'lasso_crossval'
     callback()
