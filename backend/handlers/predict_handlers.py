@@ -45,15 +45,9 @@ class ModelIOHandler(BaseHandler):
     os.remove(tmp_path)
 
   def _serve_csv(self, pred_model):
-    # extract coefficients
-    if isinstance(pred_model, PLS2):
-      all_coefs = pred_model.clf.coef_
-    elif isinstance(pred_model, PLS1):
-      all_coefs = np.column_stack([pred_model.models[key].coef_
-                                   for key in pred_model.var_keys])
-    else:
-      self.write('Cannot download model coefficients for %s.' % pred_model)
-      return
+    all_bands, all_coefs = pred_model.coefficients()
+    var_names = pred_model.var_names
+    share_bands = isinstance(pred_model, (PLS1, PLS2))
 
     fname = os.path.basename(self.request.path)
     self.set_header('Content-Type', 'text/plain')
@@ -61,11 +55,15 @@ class ModelIOHandler(BaseHandler):
     # write header comment with model info
     self.write('# %s - %s\n' % (pred_model, pred_model.ds_kind))
     # write model coefficients as CSV
-    self.write('wavelength,' + ','.join(pred_model.var_names) + '\n')
-    wave = pred_model.wave
-    fmt_str = ','.join(['%g'] * (all_coefs.shape[1] + 1)) + '\n'
-    for i, row in enumerate(all_coefs):
-      self.write(fmt_str % ((wave[i],) + tuple(row)))
+    if share_bands:
+      wave = next(all_bands)
+      self.write('wavelength,%s\n' % ','.join('%g' % x for x in wave))
+      for name, coefs in zip(var_names, all_coefs):
+        self.write('%s,%s\n' % (name, ','.join('%g' % x for x in coefs)))
+    else:
+      for name, wave, coefs in zip(var_names, all_bands, all_coefs):
+        self.write('wavelength,%s\n' % ','.join('%g' % x for x in wave))
+        self.write('%s,%s\n' % (name, ','.join('%g' % x for x in coefs)))
     self.finish()
 
   def post(self):
@@ -315,24 +313,7 @@ class ModelPlottingHandler(MultiVectorDatasetHandler):
       return
 
     model = fig_data.pred_model
-    if isinstance(model, PLS2):
-      all_bands = repeat(wave)
-      all_coefs = model.clf.coef_.T
-    elif isinstance(model, PLS1):
-      all_bands = repeat(wave)
-      all_coefs = [model.models[key].coef_.ravel() for key in model.var_keys]
-    elif isinstance(model, Lasso):
-      coef = model.clf.coef_
-      active = model.clf.active_
-      if isinstance(coef, np.ndarray):
-        all_bands = [wave[active]]
-        all_coefs = [coef[active]]
-      else:
-        all_bands = [wave[idx] for idx in active]
-        all_coefs = [cc[idx] for idx,cc in zip(active, coef)]
-    else:
-      self.visible_error(404, "%s doesn't support coefficient plots." % model)
-      return
+    all_bands, all_coefs = model.coefficients()
 
     # Do the plot
     fig_data.figure.clf(keep_observers=True)
@@ -499,6 +480,11 @@ class PLS1(_RegressionModel):
       clf = self.models[key]
       yield key, clf.predict(X)
 
+  def coefficients(self):
+    all_bands = repeat(self.wave)
+    all_coefs = [self.models[key].coef_.ravel() for key in self.var_keys]
+    return all_bands, all_coefs
+
 
 class PLS2(_RegressionModel):
   def train(self, X, variables):
@@ -518,6 +504,9 @@ class PLS2(_RegressionModel):
         logging.warning('No input variable for predicted: %r', key)
         continue
       yield key, P[:,i]
+
+  def coefficients(self):
+    return repeat(self.wave), self.clf.coef_.T
 
 
 class Lasso(_RegressionModel):
@@ -541,6 +530,17 @@ class Lasso(_RegressionModel):
         logging.warning('No input variable for predicted: %r', key)
         continue
       yield key, P[:,i]
+
+  def coefficients(self):
+    coef = self.clf.coef_
+    active = self.clf.active_
+    if isinstance(coef, np.ndarray):
+      all_bands = [self.wave[active]]
+      all_coefs = [coef[active]]
+    else:
+      all_bands = [self.wave[idx] for idx in active]
+      all_coefs = [cc[idx] for idx,cc in zip(active, coef)]
+    return all_bands, all_coefs
 
 
 routes = [
