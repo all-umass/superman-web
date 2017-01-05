@@ -324,7 +324,7 @@ class ModelPlottingHandler(MultiVectorDatasetHandler):
     alpha = float(self.get_argument('alpha'))
     for name, x, y in zip(model.var_names, all_bands, all_coefs):
       ax2.scatter(x, y, label=name, s=size, alpha=alpha)
-    if bool(int(self.get_argument('legend'))):
+    if bool(int(self.get_argument('legend'))) and len(model.var_names) > 1:
       ax2.legend()
     fig_data.manager.canvas.draw()
     fig_data.last_plot = 'regression_coefs'
@@ -383,7 +383,7 @@ class HackAroundSklearnCV(GroupKFold):
     self.groups = groups
 
   def split(self, X, y):
-    return GroupKFold.split(X, y=y, groups=self.groups)
+    return GroupKFold.split(self, X, y=y, groups=self.groups)
 
 
 def _async_gridsearch_lasso(fig_data, X, variables, num_folds, labels=None,
