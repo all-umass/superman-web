@@ -553,6 +553,9 @@ class Lasso(_RegressionModel):
       y_cols.append(y)
       self.var_names.append(name)
     self.clf.fit(X, np.column_stack(y_cols))
+    # XXX: work around a bug in sklearn
+    # see https://github.com/scikit-learn/scikit-learn/pull/8160
+    self.clf.coef_ = np.array(self.clf.coef_)
 
   def _predict(self, X, variables):
     P = self.clf.predict(X)
@@ -568,7 +571,7 @@ class Lasso(_RegressionModel):
   def coefficients(self):
     coef = self.clf.coef_
     active = self.clf.active_
-    if isinstance(coef, np.ndarray):
+    if coef.ndim == 1:
       all_bands = [self.wave[active]]
       all_coefs = [coef[active]]
     else:
