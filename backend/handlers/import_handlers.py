@@ -138,8 +138,9 @@ class DatasetImportHandler(BaseHandler):
       wave = wave[mask]
       spectra = spectra[:, mask]
 
-    if ds_kind == 'LIBS' and wave.shape != (6144,):
-      self.visible_error(415, 'Wrong number of channels for LIBS data.')
+    if ds_kind == 'LIBS' and wave.shape[0] not in (6144, 6143, 5485):
+      self.visible_error(415, ('Wrong number of channels for LIBS data'
+                               ': %d.' % wave.shape[0]))
       return False
 
     if len(meta_pkeys) > 0 and not np.array_equal(meta_pkeys, pkey):
