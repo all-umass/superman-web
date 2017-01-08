@@ -401,7 +401,7 @@ def _async_gridsearch_lasso(fig_data, X, variables, num_folds, labels=None,
     for i, key in enumerate(sorted(variables)):
       lasso = LassoLarsCV(fit_intercept=False, max_iter=2000, cv=cv, n_jobs=5)
       lasso.fit(X, variables[key][0])
-      cv_mse = lasso.cv_mse_path_
+      cv_mse = lasso.mse_path_
       axes[i].set_title(variables[key][1])
       axes[i].set_xscale('log')
       axes[i].errorbar(lasso.cv_alphas_, cv_mse.mean(axis=1),
