@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import numpy as np
 import os
+import pandas as pd
 from io import BytesIO
 from superman.file_io import parse_spectrum
 from tornado.escape import url_escape
@@ -207,29 +208,28 @@ class DatasetImportHandler(BaseHandler):
     f, = self.request.files['metadata']
     fh = BytesIO(f['body'])
     try:
-      meta = np.genfromtxt(fh, dtype=None, delimiter=',', names=True)
-      meta_pkeys = np.array(meta[meta.dtype.names[0]])
+      meta = pd.read_csv(fh)
     except Exception as e:
       self.visible_error(415, 'Unable to parse metadata CSV.',
                          'bad metadata file: %s', e)
       return None, None
 
-    # get the actual meta names (dtype names are mangled)
-    fh.seek(0)
-    meta_names = next(fh).strip().split(',')[1:]
-    meta_keys = meta.dtype.names[1:]
+    if meta.columns[0] != 'pkey':
+      self.visible_error(415, 'Metadata CSV must start with "pkey" column.')
+      return None, None
 
     meta_kwargs = {}
-    for key, name in zip(meta_keys, meta_names):
-      x = meta[key]
+    for i, name in enumerate(meta.columns[1:]):
+      x = meta[name].values
       if np.issubdtype(x.dtype, np.bool_):
         m = BooleanMetadata(x, display_name=name)
       elif np.issubdtype(x.dtype, np.number):
         m = NumericMetadata(x, display_name=name)
       else:
         m = LookupMetadata(x, display_name=name)
-      meta_kwargs[key] = m
-    return meta_kwargs, meta_pkeys
+      # use a JS-friendly string key
+      meta_kwargs['k%d' % i] = m
+    return meta_kwargs, meta.pkey.values
 
 
 def _maybe_float(x, default=None):
