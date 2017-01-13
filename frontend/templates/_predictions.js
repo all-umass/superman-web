@@ -65,6 +65,7 @@ function _run_model(btn, ds_info, do_train) {
       pls_comps: +$('#pls_comps').val(),
       lasso_alpha: +$('#lasso_alpha').val(),
       regress_kind: $('#regress_kind').val(),
+      variate_kind: $('#variate_kind').val(),
       pred_meta: pred_vars,
       cv_folds: +$('#cv_folds').val(),
       cv_stratify: $('#cv_stratify').val(),

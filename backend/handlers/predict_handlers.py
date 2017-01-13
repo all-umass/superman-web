@@ -207,11 +207,14 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
     variables = _collect_variables(all_ds_views,
                                    self.get_arguments('pred_meta[]'))
     regress_kind = self.get_argument('regress_kind')
+    variate_kind = self.get_argument('variate_kind')
+
     do_train = self.get_argument('do_train', None)
     if do_train is None:
       if len(variables) == 0:
         self.visible_error(400, "No variables to predict.")
         return
+
       # set up cross validation info
       folds = int(self.get_argument('cv_folds'))
       stratify_meta = self.get_argument('cv_stratify', '')
@@ -222,6 +225,11 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
         _, stratify_labels = np.unique(vals, return_inverse=True)
       else:
         stratify_labels = None
+
+      # HACK: convert multivariate to univariate format
+      if variate_kind == 'multi' and len(variables) > 1:
+        Y = np.column_stack([y for y, name in variables.values()])
+        variables = dict(combined=(Y, None))
 
       # run the cross validation
       if regress_kind == 'lasso':
@@ -235,11 +243,6 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
         logging.info('Running %s for PLS n_comps [%d,%d]', cv_name,
                      comps[0], comps[-1])
 
-        # convert pls2 into pls1 format via hacks
-        if regress_kind == 'pls2':
-          Y = np.column_stack([y for y, name in variables.values()])
-          variables = dict(combined=(Y, None))
-
         # run the cross-val and plot scores for each n_components
         yield gen.Task(_async_gridsearch_pls, fig_data, X, variables, comps,
                        folds, stratify_labels)
@@ -248,9 +251,10 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
     if bool(int(do_train)):
       # train on all the data
       if regress_kind == 'lasso':
-        model = Lasso(float(self.get_argument('lasso_alpha')), ds_kind, wave)
+        cls = Lasso1 if variate_kind == 'uni' else Lasso2
+        model = cls(float(self.get_argument('lasso_alpha')), ds_kind, wave)
       else:
-        cls = PLS1 if regress_kind == 'pls1' else PLS2
+        cls = PLS1 if variate_kind == 'uni' else PLS2
         model = cls(int(self.get_argument('pls_comps')), ds_kind, wave)
       logging.info('Training %s on %d inputs, predicting %d vars',
                    model, X.shape[0], len(variables))
@@ -543,7 +547,38 @@ class PLS2(_RegressionModel):
     return repeat(self.wave), self.clf.coef_.T
 
 
-class Lasso(_RegressionModel):
+class Lasso1(_RegressionModel):
+  def train(self, X, variables):
+    self.models = {}
+    for key in variables:
+      clf = LassoLars(alpha=self.parameter, fit_intercept=False)
+      y, name = variables[key]
+      self.models[key] = clf.fit(X, y)
+      # XXX: work around a bug in sklearn
+      # see https://github.com/scikit-learn/scikit-learn/pull/8160
+      clf.coef_ = np.array(clf.coef_)
+      self.var_keys.append(key)
+      self.var_names.append(name)
+
+  def _predict(self, X, variables):
+    for key in variables:
+      if key not in self.models:
+        logging.warning('No trained model for variable: %r', key)
+        continue
+      clf = self.models[key]
+      yield key, clf.predict(X)[:, None]
+
+  def coefficients(self):
+    all_bands = []
+    all_coefs = []
+    for key in self.var_keys:
+      clf = self.models[key]
+      all_bands.append(self.wave[clf.active_])
+      all_coefs.append(clf.coef_[clf.active_])
+    return all_bands, all_coefs
+
+
+class Lasso2(_RegressionModel):
   def train(self, X, variables):
     self.clf = LassoLars(alpha=self.parameter, fit_intercept=False)
     self.var_keys = variables.keys()
