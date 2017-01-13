@@ -4,7 +4,6 @@ import numpy as np
 import os
 import shutil
 from io import BytesIO
-from sklearn.cross_decomposition import PLSRegression
 from tempfile import mkstemp
 from threading import Thread
 from tornado import gen
@@ -224,8 +223,12 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
 
       # HACK: convert multivariate to univariate format
       if variate_kind == 'multi' and len(variables) > 1:
+        if regress_kind == 'lasso':
+          self.visible_error(400, "Cross validation for multivariate Lasso is"
+                                  " not yet supported.")
+          return
         Y = np.column_stack([y for y, name in variables.values()])
-        variables = dict(combined=(Y, None))
+        variables = dict(combined=(Y, ''))
 
       # run the cross validation
       if regress_kind == 'lasso':

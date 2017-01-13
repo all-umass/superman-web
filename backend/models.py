@@ -11,7 +11,6 @@ from sklearn.linear_model import LassoLarsCV, LassoLars
 
 
 def _gridsearch_pls(X, variables, comps, num_folds, labels=None):
-  n_jobs = min(5, len(comps))
   grid = dict(n_components=comps)
   if labels is None:
     cv = KFold(n_splits=num_folds)
@@ -22,7 +21,7 @@ def _gridsearch_pls(X, variables, comps, num_folds, labels=None):
     y, name = variables[key]
     pls = GridSearchCV(PLSRegression(scale=False), grid, cv=cv,
                        scoring='neg_mean_squared_error',
-                       return_train_score=False, n_jobs=n_jobs)
+                       return_train_score=False, n_jobs=1)
     pls.fit(X, y=y, groups=labels)
     mse_mean = -pls.cv_results_['mean_test_score']
     mse_stdv = pls.cv_results_['std_test_score']
@@ -37,7 +36,7 @@ def _gridsearch_lasso(X, variables, num_folds, labels=None):
 
   for key in sorted(variables):
     y, name = variables[key]
-    lasso = LassoLarsCV(fit_intercept=False, max_iter=2000, cv=cv, n_jobs=5)
+    lasso = LassoLarsCV(fit_intercept=False, max_iter=2000, cv=cv, n_jobs=1)
     lasso.fit(X, y)
     cv_mse = lasso.mse_path_
     mse_mean = cv_mse.mean(axis=1)
