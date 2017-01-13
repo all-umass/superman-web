@@ -129,6 +129,9 @@ class PeakHandler(BaseHandler):
       kinds = self.get_arguments('fitkind[]')
       locs = map(float, self.get_arguments('fitloc[]'))
       xres = float(self.get_argument('xres'))
+      if num_peaks not in (1, len(locs)):
+        self.visible_error(403, "Peak locations don't match # peaks")
+        return
       bands, ints = spectrum.T
       peak_mask, peak_ys, peak_data = yield gen.Task(
           _async_peakfit, fit_composite_peak, bands, ints, locs,
