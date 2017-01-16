@@ -216,6 +216,10 @@ NIR:
       - [cpxopxpluscpx_Lcnorm, NumericMetadata, 'CPx(OPx+CPx) Lcnorm']
       - [ol_olplusopx_Lcnorm, NumericMetadata, 'Ol/(Ol+OPx) Lcnorm']
       - [ol_olpluspyx_Lcnorm, NumericMetadata, 'Ol/(Ol+Pyx) Lcnorm']
+    description: >-
+      Spectra of meteorite powders from the National Museum of Natural History,
+      along with spectra of synthetic olivines and pyroxenes (components of
+      those meteorites). All data acquired at RELAB, Brown University.
 XRD:
   RRUFF:
     file: /srv/nfs/common/spectra/misc/rruff-xrd.hdf5
