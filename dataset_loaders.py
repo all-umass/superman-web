@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import h5py
 import logging
-import pandas as pd
 import numpy as np
 import os.path
 import re
@@ -272,12 +271,15 @@ def load_mhc_raman(ds, data_dir, meta_file):
               vial=LookupMetadata(meta['vial_name'], 'Vial Name'),
               Instrument=LookupMetadata(meta['instrument']),
               Project=LookupMetadata(meta['project']),
-              ConfSpecies_A=LookupMetadata(_utolower(meta['conf_species_A'])),
-              ConfSpecies_B=LookupMetadata(_utolower(meta['conf_species_B'])),
-              ConfSpecies_C=LookupMetadata(_utolower(meta['conf_species_C'])),
-              Amount_A=NumericMetadata(meta['#_in_mix_A']),
-              Amount_B=NumericMetadata(meta['#_in_mix_B']),
-              Amount_C=NumericMetadata(meta['#_in_mix_C'])
+              SpeciesA=LookupMetadata(_utolower(meta['conf_species_A']),
+                                      display_name='Species A'),
+              SpeciesB=LookupMetadata(_utolower(meta['conf_species_B']),
+                                      display_name='Species B'),
+              SpeciesC=LookupMetadata(_utolower(meta['conf_species_C']),
+                                      display_name='Species C'),
+              AmountA=NumericMetadata(meta['#_in_mix_A'], display_name='%A'),
+              AmountB=NumericMetadata(meta['#_in_mix_B'], display_name='%B'),
+              AmountC=NumericMetadata(meta['#_in_mix_C'], display_name='%C'),
               )
   return True
 
