@@ -41,7 +41,8 @@ class ModelIOHandler(BaseHandler):
   def _serve_csv(self, pred_model):
     all_bands, all_coefs = pred_model.coefficients()
     var_names = pred_model.var_names
-    share_bands = isinstance(pred_model, REGRESSION_MODELS['pls'].values())
+    share_bands = isinstance(pred_model,
+                             tuple(REGRESSION_MODELS['pls'].values()))
 
     fname = os.path.basename(self.request.path)
     self.set_header('Content-Type', 'text/plain')
