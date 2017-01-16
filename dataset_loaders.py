@@ -29,7 +29,7 @@ def _generic_traj_loader(meta_mapping):
       if key not in meta:
         continue
       safe_key = re.sub(r'[^a-z0-9_-]', '', key, flags=re.I)
-      kwargs[safe_key] = cls(meta[key], display_name)
+      kwargs[safe_key] = cls(meta[key], display_name=display_name)
     ds.set_data(meta['pkey'], data['/spectra'], **kwargs)
     return True
   return _load
@@ -264,8 +264,10 @@ def load_mhc_raman(ds, data_dir, meta_file):
     logging.warning(str(e))
     return None
   pkey = meta['spectrum_number']
+
   def _utolower(array):
     return [spec.lower() if spec is not None else None for spec in array]
+
   ds.set_data(pkey, hdf5['/spectra'],
               vial=LookupMetadata(meta['vial_name'], 'Vial Name'),
               Instrument=LookupMetadata(meta['instrument']),
