@@ -11,7 +11,7 @@ from tornado.escape import xhtml_escape
 from six import BytesIO, string_types
 
 from superman.dataset import (
-    VectorDataset, TrajDataset, NumericMetadata, BooleanMetadata,
+    VectorDataset, TrajDataset, NumericMetadata, BooleanMetadata, DateMetadata,
     PrimaryKeyMetadata, LookupMetadata, CompositionMetadata, TagMetadata)
 
 __all__ = [
@@ -28,7 +28,8 @@ FILTER_ORDER = {
     LookupMetadata: 1,
     BooleanMetadata: 2,
     TagMetadata: 3,
-    NumericMetadata: 4,
+    DateMetadata: 4,
+    NumericMetadata: 5,
     CompositionMetadata: 999  # should always come last
 }
 
@@ -200,6 +201,8 @@ def _get_filter_js(m, full_key):
                    elt, lb, ub, m.step, lb, ub, full_key)
     collect_js = elt + '.slider("values")'
     return init_js, collect_js
+  if isinstance(m, DateMetadata):
+    return '', '[$("#%s_lb").val(),$("#%s_ub").val()]' % (full_key, full_key)
   if isinstance(m, CompositionMetadata):
     init_parts, collect_parts = [], []
     for k, mm in m.comps.items():
@@ -238,6 +241,11 @@ def _get_filter_html(m, key, full_key):
             '<div class="slider" id="%s" style="background-image: '
             'url(data:img/png;base64,%s);"></div>') % (
                 disp, full_key, lb, ub, full_key, m.hist_image)
+  if isinstance(m, DateMetadata):
+    lb, ub = map(str, np.array(m.bounds, dtype='datetime64[D]'))
+    lb_input = '<input type="date" id="%s_lb" value="%s">' % (full_key, lb)
+    ub_input = '<input type="date" id="%s_ub" value="%s">' % (full_key, ub)
+    return '%s:<br>%s to %s' % (disp, lb_input, ub_input)
   # only chosen selects remain (Lookup/PrimaryKey/Tag)
   html = ('%s:<br /><select id="%s_chooser" data-placeholder="All" '
           'class="chosen-select" multiple>\n') % (disp, full_key)

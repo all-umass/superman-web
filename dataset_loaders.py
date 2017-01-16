@@ -3,12 +3,13 @@ import h5py
 import logging
 import numpy as np
 import os.path
+import pandas as pd
 import re
 from six.moves import xrange
 
 from superman.dataset import (
     NumericMetadata, BooleanMetadata, PrimaryKeyMetadata, LookupMetadata,
-    CompositionMetadata, TagMetadata)
+    CompositionMetadata, TagMetadata, DateMetadata)
 
 
 def _generic_traj_loader(meta_mapping):
@@ -232,7 +233,6 @@ def load_mhc_libs(ds, data_dir, master_file):
       if np.nanmin(vals) < np.nanmax(vals):
         elem = key.lstrip('e_').replace('*', '')
         compositions[elem] = NumericMetadata(vals, display_name=elem)
-  # date = np.array(pd.to_datetime(meta['Date']), dtype=np.datetime64)
   ds.set_data(bands, hdf5['/spectra'],
               Composition=CompositionMetadata(compositions),
               samples=LookupMetadata(meta['Sample'], 'Sample Name'),
@@ -242,8 +242,8 @@ def load_mhc_libs(ds, data_dir, master_file):
               targets=LookupMetadata(meta['Target'], 'Target Name'),
               powers=LookupMetadata(meta['LaserAttenuation'], 'Laser Power'),
               projects=TagMetadata(projects, 'Project'),
-              # TODO: make a DateTimeMetadata to handle this
-              # date=NumericMetadata(date, 'Acquisition Time'),
+              date=DateMetadata(pd.to_datetime(meta['Date']),
+                                display_name='Acquisition Time'),
               # NOTE: These have only one unique value for now.
               # atmospheres=LookupMetadata(meta['Atmosphere'], 'Atmosphere'),
               # dists=LookupMetadata(meta['DistToTarget'],'Distance to Target')

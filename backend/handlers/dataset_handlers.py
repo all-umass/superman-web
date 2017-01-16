@@ -79,7 +79,6 @@ class DatasetPredictionOptionsHandler(BaseHandler):
 
     pred_pairs, strat_pairs = [], []
     for ds in all_ds:
-      # TODO: exclude boolean metadata from this
       pred_pairs.append(
           set(ds.metadata_names((NumericMetadata, CompositionMetadata))))
       strat_pairs.append(
