@@ -64,6 +64,7 @@ function _run_model(btn, ds_info, do_train) {
       pp: collect_pp_args($('#pp_options')),
       pls_comps: +$('#pls_comps').val(),
       lasso_alpha: +$('#lasso_alpha').val(),
+      lars_num_channels: +$('#lars_num_channels').val(),
       regress_kind: $('#regress_kind').val(),
       variate_kind: $('#variate_kind').val(),
       pred_meta: pred_vars,
@@ -71,6 +72,8 @@ function _run_model(btn, ds_info, do_train) {
       cv_stratify: $('#cv_stratify').val(),
       cv_min_comps: +$('#cv_min_comps').val(),
       cv_max_comps: +$('#cv_max_comps').val(),
+      cv_min_chans: +$('#cv_min_chans').val(),
+      cv_max_chans: +$('#cv_max_chans').val(),
   };
   add_resample_args($('#resample_options'), post_data);
   add_baseline_args($('#blr_options'), post_data);
@@ -155,11 +158,18 @@ function predict_download(btn) {
 }
 function change_regression_kind(option) {
   var container = $('#ds_prediction_container');
-  if (option.value === 'lasso') {
-    $('.for_pls', container).hide();
-    $('.for_lasso', container).show();
-  } else {
-    $('.for_lasso', container).hide();
-    $('.for_pls', container).show();
+  switch (option.value) {
+    case 'lasso':
+      $('.for_pls,.for_lars', container).hide();
+      $('.for_lasso', container).show();
+      break;
+    case 'pls':
+      $('.for_lasso,.for_lars', container).hide();
+      $('.for_pls', container).show();
+      break;
+    case 'lars':
+      $('.for_lasso,.for_pls', container).hide();
+      $('.for_lars', container).show();
+      break;
   }
 }

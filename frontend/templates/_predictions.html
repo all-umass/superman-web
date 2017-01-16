@@ -9,6 +9,7 @@
 <select id="regress_kind" onchange="change_regression_kind(this);">
   <option value="pls" selected>PLS</option>
   <option value="lasso">Lasso</option>
+  <option value="lars">Lars</option>
 </select></td></tr>
 <tr><td class="bold">Variate type</td><td>
 <select id="variate_kind">
@@ -33,6 +34,11 @@
   <input type="number" id="cv_min_comps" value=2 min=1 max=100> -
   <input type="number" id="cv_max_comps" value=10 min=1 max=100>
 </td></tr>
+<tr class="for_lars" style="display: none;">
+<td class="bold"># Channels</td><td>
+  <input type="number" id="cv_min_chans" value=1 min=1 max=100> -
+  <input type="number" id="cv_max_chans" value=9 min=1 max=100>
+</td></tr>
 <tr><td colspan=2>
   <button disabled class="needs_filter" onclick="run_crossval(this);">
     Cross-validate model<span class="wait">...</span>
@@ -51,6 +57,9 @@
   </label>
   <label class="for_lasso" style="display: none;">
     <input type="text" id="lasso_alpha" value=0.01 size=5> alpha
+  </label>
+  <label class="for_lars" style="display: none;">
+    <input type="number" id="lars_num_channels" value=1 min=1 max=100> channels
   </label>
 </td></tr>
 <tr><td>

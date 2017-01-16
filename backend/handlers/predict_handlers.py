@@ -10,8 +10,7 @@ from tornado import gen
 from tornado.escape import json_encode
 
 from .base import BaseHandler, MultiDatasetHandler
-from ..models import (Lasso1, Lasso2, PLS1, PLS2, _RegressionModel,
-                      _gridsearch_lasso, _gridsearch_pls)
+from ..models import REGRESSION_MODELS, RegressionModel
 
 
 class ModelIOHandler(BaseHandler):
@@ -42,7 +41,7 @@ class ModelIOHandler(BaseHandler):
   def _serve_csv(self, pred_model):
     all_bands, all_coefs = pred_model.coefficients()
     var_names = pred_model.var_names
-    share_bands = isinstance(pred_model, (PLS1, PLS2))
+    share_bands = isinstance(pred_model, REGRESSION_MODELS['pls'].values())
 
     fname = os.path.basename(self.request.path)
     self.set_header('Content-Type', 'text/plain')
@@ -76,14 +75,14 @@ class ModelIOHandler(BaseHandler):
     logging.info('Loading model file: %s', fname)
     fh = BytesIO(f['body'])
     try:
-      model = _RegressionModel.load(fh)
+      model = RegressionModel.load(fh)
     except Exception as e:
       logging.error('Failed to parse uploaded model file: %s', e.message)
       self.set_status(415)
       return self.finish('Invalid model file.')
 
     # do some validation
-    if not isinstance(model, _RegressionModel):
+    if not isinstance(model, RegressionModel):
       logging.error('Uploaded model file out of date: %r', model)
       self.set_status(415)
       return self.finish('Invalid model file.')
@@ -203,6 +202,10 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
                                    self.get_arguments('pred_meta[]'))
     regress_kind = self.get_argument('regress_kind')
     variate_kind = self.get_argument('variate_kind')
+    model_cls = REGRESSION_MODELS[regress_kind][variate_kind]
+    params = dict(pls=int(self.get_argument('pls_comps')),
+                  lasso=float(self.get_argument('lasso_alpha')),
+                  lars=int(self.get_argument('lars_num_channels')))
 
     do_train = self.get_argument('do_train', None)
     if do_train is None:
@@ -210,51 +213,50 @@ class RegressionModelHandler(MultiVectorDatasetHandler):
         self.visible_error(400, "No variables to predict.")
         return
 
+      no_crossval = (len(variables) > 1 and variate_kind == 'multi'
+                     and regress_kind == 'lasso')
+      if no_crossval:
+        msg = "Cross validation for %svariate %s is not yet supported." % (
+            variate_kind, regress_kind.title())
+        self.visible_error(400, msg)
+        return
+
       # set up cross validation info
       folds = int(self.get_argument('cv_folds'))
       stratify_meta = self.get_argument('cv_stratify', '')
-      cv_name = '%d-fold (%s) cross-val' % (folds, stratify_meta)
       if stratify_meta:
         tmp = _collect_variables(all_ds_views, (stratify_meta,))
         vals, _ = tmp[stratify_meta]
         _, stratify_labels = np.unique(vals, return_inverse=True)
       else:
         stratify_labels = None
+      num_vars = 1 if variate_kind == 'multi' else len(variables)
+      cv_args = (X, variables)
+      cv_kwargs = dict(num_folds=folds, labels=stratify_labels)
+      logging.info('Running %d-fold (%s) cross-val for %s', folds,
+                   stratify_meta, model_cls.__name__)
 
-      # HACK: convert multivariate to univariate format
-      if variate_kind == 'multi' and len(variables) > 1:
-        if regress_kind == 'lasso':
-          self.visible_error(400, "Cross validation for multivariate Lasso is"
-                                  " not yet supported.")
-          return
-        Y = np.column_stack([y for y, name in variables.values()])
-        variables = dict(combined=(Y, ''))
-
-      # run the cross validation
-      if regress_kind == 'lasso':
-        logging.info('Running %s for Lasso alpha', cv_name)
-        # run the cross-val and plot scores for each alpha
-        yield gen.Task(_async_gridsearch_lasso, fig_data, X, variables, folds,
-                       stratify_labels)
-      else:
+      if regress_kind == 'pls':
         comps = np.arange(int(self.get_argument('cv_min_comps')),
                           int(self.get_argument('cv_max_comps')) + 1)
-        logging.info('Running %s for PLS n_comps [%d,%d]', cv_name,
-                     comps[0], comps[-1])
+        cv_kwargs['comps'] = comps
+        plot_kwargs = dict(xlabel='# components')
+      elif regress_kind == 'lasso':
+        plot_kwargs = dict(xlabel='alpha', logx=True)
+      else:
+        chans = np.arange(int(self.get_argument('cv_min_chans')),
+                          int(self.get_argument('cv_max_chans')) + 1)
+        cv_kwargs['chans'] = chans
+        plot_kwargs = dict(xlabel='# channels')
 
-        # run the cross-val and plot scores for each n_components
-        yield gen.Task(_async_gridsearch_pls, fig_data, X, variables, comps,
-                       folds, stratify_labels)
+      # run the cross validation
+      yield gen.Task(_async_crossval, fig_data, model_cls, num_vars, cv_args,
+                     cv_kwargs, **plot_kwargs)
       return
 
     if bool(int(do_train)):
       # train on all the data
-      if regress_kind == 'lasso':
-        cls = Lasso1 if variate_kind == 'uni' else Lasso2
-        model = cls(float(self.get_argument('lasso_alpha')), ds_kind, wave)
-      else:
-        cls = PLS1 if variate_kind == 'uni' else PLS2
-        model = cls(int(self.get_argument('pls_comps')), ds_kind, wave)
+      model = model_cls(params[regress_kind], ds_kind, wave)
       logging.info('Training %s on %d inputs, predicting %d vars',
                    model, X.shape[0], len(variables))
       model.train(X, variables)
@@ -347,42 +349,24 @@ def _collect_variables(all_ds_views, meta_keys):
   return variables
 
 
-def _async_gridsearch_pls(fig_data, X, variables, comps, num_folds, labels=None,
-                          callback=None):
-  '''Wrap GridSearchCV calls in a Thread to allow the server to be responsive
-  while grid searching.'''
+def _async_crossval(fig_data, model_cls, num_vars, cv_args, cv_kwargs,
+                    xlabel='param', ylabel='MSE', logx=False, callback=None):
+  '''Wrap cross-validation calls in a Thread to avoid hanging the server.'''
   def helper():
     fig_data.figure.clf(keep_observers=True)
-    axes = _axes_grid(fig_data.figure, len(variables), '# components', 'MSE')
-    cv_gen = _gridsearch_pls(X, variables, comps, num_folds, labels=labels)
+    axes = _axes_grid(fig_data.figure, num_vars, xlabel, ylabel)
+    if logx:
+      for ax in axes:
+        ax.set_xscale('log')
+
+    cv_gen = model_cls.cross_validate(*cv_args, **cv_kwargs)
     for i, (name, x, y, yerr) in enumerate(cv_gen):
       axes[i].set_title(name)
       axes[i].errorbar(x, y, yerr=yerr, lw=2, fmt='k-', ecolor='r',
                        elinewidth=1, capsize=0)
+
     fig_data.manager.canvas.draw()
-    fig_data.last_plot = 'pls_crossval'
-    callback()
-
-  t = Thread(target=helper)
-  t.daemon = True
-  t.start()
-
-
-def _async_gridsearch_lasso(fig_data, X, variables, num_folds, labels=None,
-                            callback=None):
-  '''Wrap LassoLarsCV calls in a Thread to allow the server to be responsive
-  while grid searching.'''
-  def helper():
-    fig_data.figure.clf(keep_observers=True)
-    axes = _axes_grid(fig_data.figure, len(variables), 'alpha', 'MSE')
-    cv_gen = _gridsearch_lasso(X, variables, num_folds, labels=labels)
-    for i, (name, x, y, yerr) in enumerate(cv_gen):
-      axes[i].set_title(name)
-      axes[i].set_xscale('log')
-      axes[i].errorbar(x, y, yerr=yerr, lw=2, fmt='k-', ecolor='r',
-                       elinewidth=1, capsize=0)
-    fig_data.manager.canvas.draw()
-    fig_data.last_plot = 'lasso_crossval'
+    fig_data.last_plot = '%s_crossval' % model_cls.__name__
     callback()
 
   t = Thread(target=helper)
