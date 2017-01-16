@@ -30,12 +30,16 @@ class RegressionModel(object):
     for key, p in self._predict(X, variables):
       y, name = variables[key]
       preds[key] = p
-      if y is not None and np.isfinite(y).all():
-        stats.append(dict(r2=r2_score(y, p),
-                          rmse=np.sqrt(mean_squared_error(y, p)),
-                          name=name, key=key))
-      else:
-        stats.append(dict(name=name, key=key, r2=np.nan, rmse=np.nan))
+      stats_entry = dict(name=name, key=key, r2=np.nan, rmse=np.nan)
+      if y is not None:
+        mask = np.isfinite(y)
+        nnz = np.count_nonzero(mask)
+        if nnz != 0:
+          if nnz < len(y):
+            y, p = y[mask], p[mask]
+          stats_entry['r2'] = r2_score(y, p)
+          stats_entry['rmse'] = np.sqrt(mean_squared_error(y, p))
+      stats.append(stats_entry)
     stats.sort(key=lambda s: s['key'])
     return preds, stats
 
@@ -50,9 +54,10 @@ class _UnivariateRegression(RegressionModel):
   def train(self, X, variables):
     self.models = {}
     for key in variables:
-      clf = self._construct()
       y, name = variables[key]
-      self.models[key] = clf.fit(X, y)
+      m = self._construct()
+      _try_to_fit(m, X, y)
+      self.models[key] = m
       self.var_keys.append(key)
       self.var_names.append(name)
 
@@ -76,7 +81,7 @@ class _UnivariateRegression(RegressionModel):
       model = GridSearchCV(cls._cv_construct(), grid, cv=cv,
                            scoring='neg_mean_squared_error',
                            return_train_score=False, n_jobs=1)
-      model.fit(X, y=y, groups=labels)
+      _try_to_fit(model, X, y, groups=labels)
       mse_mean = -model.cv_results_['mean_test_score']
       mse_stdv = model.cv_results_['std_test_score']
       yield name, mse_mean, mse_stdv
@@ -91,7 +96,7 @@ class _MultivariateRegression(RegressionModel):
       y, name = variables[key]
       y_cols.append(y)
       self.var_names.append(name)
-    self.clf.fit(X, np.column_stack(y_cols))
+    _try_to_fit(self.clf, X, np.column_stack(y_cols))
 
   def _predict(self, X, variables):
     P = self.clf.predict(X)
@@ -112,7 +117,7 @@ class _MultivariateRegression(RegressionModel):
                        scoring='neg_mean_squared_error',
                        return_train_score=False, n_jobs=1)
     Y, names = zip(*variables.values())
-    pls.fit(X, y=np.column_stack(Y), groups=labels)
+    _try_to_fit(pls, X, np.column_stack(Y), groups=labels)
     mse_mean = -pls.cv_results_['mean_test_score']
     mse_stdv = pls.cv_results_['std_test_score']
     return '/'.join(names), mse_mean, mse_stdv
@@ -234,7 +239,7 @@ class Lasso1(_LassoOrLars1, _Lasso):
     for key in sorted(variables):
       y, name = variables[key]
       lasso = LassoLarsCV(fit_intercept=False, max_iter=2000, cv=cv, n_jobs=1)
-      lasso.fit(X, y)
+      _try_to_fit(lasso, X, y)
       cv_mse = lasso.mse_path_
       mse_mean = cv_mse.mean(axis=1)
       mse_stdv = cv_mse.std(axis=1)
@@ -255,6 +260,25 @@ class HackAroundSklearnCV(GroupKFold):
 
   def split(self, X, y):
     return GroupKFold.split(self, X, y=y, groups=self.groups)
+
+
+def _try_to_fit(model, X, y, groups=None):
+  """Fit a sklearn model, retrying in case there are non-finites in y."""
+  try:
+    if groups is None:
+      model.fit(X, y)
+    else:
+      model.fit(X, y, groups=groups)
+  except ValueError as e:
+    # if there are NaNs in y, try again without them
+    mask = np.isfinite(y)
+    if mask.all():
+      # no NaNs in y, so it must have been something else
+      raise e
+    if groups is None:
+      model.fit(X[mask, :], y[mask])
+    else:
+      model.fit(X[mask, :], y[mask], groups=groups[mask])
 
 
 REGRESSION_MODELS = dict(

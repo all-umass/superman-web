@@ -382,7 +382,15 @@ def _plot_actual_vs_predicted(preds, stats, fig, variables):
     y, name = variables[key]
     p = preds[key].ravel()
     ax.set_title(name)
-    if y is not None and np.isfinite(y).all():
+    # validate y
+    if y is not None:
+      mask = np.isfinite(y)
+      nnz = np.count_nonzero(mask)
+      if nnz == 0:
+        y = None
+      elif nnz < len(y):
+        y, p = y[mask], p[mask]
+    if y is not None:
       # actual values exist, so plot them
       ax.scatter(y, p)
       xlims = ax.get_xlim()
