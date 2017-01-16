@@ -200,6 +200,22 @@ NIR:
     metadata:
       - [dataset, LookupMetadata, Dataset]
     description: 1:1:1 mixtures of diopside, forsterite, and bytownite.
+  Meteorites:
+    file: /srv/nfs/common/spectra/misc/meteorite.hdf5
+    metadata:
+      - [type, LookupMetadata, Type]
+      - [name, LookupMetadata, Name]
+      - [Cpx_percentEn, NumericMetadata, 'CPx %En']
+      - [Cpx_percentFs, NumericMetadata, 'CPx %Fs']
+      - [Cpx_percentWo, NumericMetadata, 'CPx %Wo']
+      - [OlivinepercentFo, NumericMetadata, 'Olivine %Fo']
+      - [Opx_percentEn, NumericMetadata, 'OPx %En']
+      - [Opx_percentFs, NumericMetadata, 'OPx %Fs']
+      - [Opx_percentWo, NumericMetadata, 'OPx %Wo']
+      - [XRD_cpx_opxpluscpx, NumericMetadata, 'XRD CPx/(OPx+CPx)']
+      - [cpxopxpluscpx_Lcnorm, NumericMetadata, 'CPx(OPx+CPx) Lcnorm']
+      - [ol_olplusopx_Lcnorm, NumericMetadata, 'Ol/(Ol+OPx) Lcnorm']
+      - [ol_olpluspyx_Lcnorm, NumericMetadata, 'Ol/(Ol+Pyx) Lcnorm']
 XRD:
   RRUFF:
     file: /srv/nfs/common/spectra/misc/rruff-xrd.hdf5
