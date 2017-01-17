@@ -129,7 +129,7 @@ class PeakHandler(BaseHandler):
       kinds = self.get_arguments('fitkind[]')
       locs = map(float, self.get_arguments('fitloc[]'))
       xres = float(self.get_argument('xres'))
-      if num_peaks not in (1, len(locs)):
+      if len(locs) not in (1, num_peaks):
         self.visible_error(403, "Peak locations don't match # peaks")
         return
       bands, ints = spectrum.T
