@@ -6,13 +6,13 @@
 {% end %}
 </select></td></tr>
 <tr><td class="bold">Model type</td><td>
-<select id="regress_kind" onchange="change_regression_kind(this);">
+<select class="model_kind" onchange="change_regression_kind(this);">
   <option value="pls" selected>PLS</option>
   <option value="lasso">Lasso</option>
   <option value="lars">Lars</option>
 </select></td></tr>
 <tr><td class="bold">Variate type</td><td>
-<select id="variate_kind">
+<select class="variate_kind">
   <option value="uni" selected>Univariate</option>
   <option value="multi">Multivariate</option>
 </select></td></tr>
@@ -20,10 +20,10 @@
 
 <table class="aligned_table" style="padding-right: 2em;">
 <tr><td class="bold"># Folds</td><td>
-  <input type="number" id="cv_folds" value=5 min=2 max=100>
+  <input type="number" class="cv_folds" value=5 min=2 max=100>
 </td></tr>
 <tr><td class="bold">Stratifier</td><td>
-  <select id="cv_stratify" data-placeholder="select variable">
+  <select class="cv_stratify" data-placeholder="select variable">
     <option value="" selected></option>
   {% for key, name in strat_pairs %}
     <option value="{{key}}">{{name}}</option>
@@ -31,13 +31,13 @@
   </select>
 </td></tr>
 <tr class="for_pls"><td class="bold"># Components</td><td>
-  <input type="number" id="cv_min_comps" value=2 min=1 max=100> -
-  <input type="number" id="cv_max_comps" value=10 min=1 max=100>
+  <input type="number" class="cv_min_comps" value=2 min=1 max=100> -
+  <input type="number" class="cv_max_comps" value=10 min=1 max=100>
 </td></tr>
 <tr class="for_lars" style="display: none;">
 <td class="bold"># Channels</td><td>
-  <input type="number" id="cv_min_chans" value=1 min=1 max=100> -
-  <input type="number" id="cv_max_chans" value=9 min=1 max=100>
+  <input type="number" class="cv_min_chans" value=1 min=1 max=100> -
+  <input type="number" class="cv_max_chans" value=9 min=1 max=100>
 </td></tr>
 <tr><td colspan=2>
   <button disabled class="needs_filter" onclick="run_crossval(this);">
@@ -53,20 +53,20 @@
   Train<span class="wait">ing...</span></button>
 </td><td>
   <label class="for_pls">
-    <input type="number" id="pls_comps" value=6 min=1 max=100> components
+    <input type="number" class="pls_comps" value=6 min=1 max=100> components
   </label>
   <label class="for_lasso" style="display: none;">
-    <input type="text" id="lasso_alpha" value=0.01 size=5> alpha
+    <input type="text" class="lasso_alpha" value=0.01 size=5> alpha
   </label>
   <label class="for_lars" style="display: none;">
-    <input type="number" id="lars_num_channels" value=1 min=1 max=100> channels
+    <input type="number" class="lars_num_channels" value=1 min=1 max=100> channels
   </label>
 </td></tr>
 <tr><td>
   <button disabled class="needs_filter" onclick="upload_model(this);">
   Upload<span class="wait">ing...</span></button>
 </td><td>
-  <input type="file" id="modelfile" />
+  <input type="file" class="modelfile" />
 </td></tr></tbody>
 <tfoot>
 <tr><td colspan=2 class="err_msg"></td></tr>
@@ -74,7 +74,7 @@
 
 <div style="text-align: left;">
 {# info: ds_kind, (ds_name), vars, uni/multivariate, n_comps #}
-<div>Current Model: <span id="model_info">None</span></div>
+<div>Current Model: <span class="model_info">None</span></div>
 
 <button disabled class="needs_model" onclick="run_preds(this);">
 Run<span class="wait">ning</span> predictions<span class="wait">...</span>
@@ -84,7 +84,7 @@ Plot<span class="wait">ting</span> coefficients<span class="wait">...</span>
 </button>
 <div class="err_msg"></div>
 
-<table id="model_error" style="display: none;">
+<table class="model_error" style="display: none;">
   <thead><tr><th>Variable</th><th>R²</th><th>RMSE</th></tr></thead>
   <tbody></tbody>
 </table>

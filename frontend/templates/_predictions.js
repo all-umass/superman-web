@@ -8,9 +8,10 @@ function train_model(btn) {
   _run_model(btn, collect_ds_info(), true);
 }
 function upload_model(btn) {
+  var container = $('#ds_prediction_container');
   var ds_info = collect_ds_info(),
       ds_kind = ds_info.kind[0],
-      file_input = $('#modelfile')[0],
+      file_input = $('.modelfile', container)[0],
       err_span = $(btn).closest('table').find('.err_msg').empty(),
       do_flash = false;
   if (file_input.files.length != 1) {
@@ -48,32 +49,33 @@ function upload_model(btn) {
     success: function(data) {
       wait.hide();
       file_input.value = '';  // reset the input
-      $('.needs_model').attr('disabled', false);
-      $('#model_info').html(JSON.parse(data).info);
-      $('#model_error>tbody').empty();
+      $('.needs_model', container).attr('disabled', false);
+      $('.model_info', container).html(JSON.parse(data).info);
+      $('.model_error>tbody', container).empty();
     }
   });
 }
 function _run_model(btn, ds_info, do_train) {
-  var target_meta = $('#ds_prediction_container .target_meta');
-  var pred_vars = $('option:selected', target_meta).map(_value).toArray();
+  var container = $('#ds_prediction_container');
+  var pred_vars = $('.target_meta option:selected', container)
+                      .map(_value).toArray();
   var post_data = {
       ds_name: ds_info.name,
       ds_kind: ds_info.kind,
       fignum: fig.id,
       pp: collect_pp_args($('#pp_options')),
-      pls_comps: +$('#pls_comps').val(),
-      lasso_alpha: +$('#lasso_alpha').val(),
-      lars_num_channels: +$('#lars_num_channels').val(),
-      regress_kind: $('#regress_kind').val(),
-      variate_kind: $('#variate_kind').val(),
+      pls_comps: +$('.pls_comps', container).val(),
+      lasso_alpha: +$('.lasso_alpha', container).val(),
+      lars_num_channels: +$('.lars_num_channels', container).val(),
+      regress_kind: $('.model_kind', container).val(),
+      variate_kind: $('.variate_kind', container).val(),
       pred_meta: pred_vars,
-      cv_folds: +$('#cv_folds').val(),
-      cv_stratify: $('#cv_stratify').val(),
-      cv_min_comps: +$('#cv_min_comps').val(),
-      cv_max_comps: +$('#cv_max_comps').val(),
-      cv_min_chans: +$('#cv_min_chans').val(),
-      cv_max_chans: +$('#cv_max_chans').val(),
+      cv_folds: +$('.cv_folds', container).val(),
+      cv_stratify: $('.cv_stratify', container).val(),
+      cv_min_comps: +$('.cv_min_comps', container).val(),
+      cv_max_comps: +$('.cv_max_comps', container).val(),
+      cv_min_chans: +$('.cv_min_chans', container).val(),
+      cv_max_chans: +$('.cv_max_chans', container).val(),
   };
   add_resample_args($('#resample_options'), post_data);
   add_baseline_args($('#blr_options'), post_data);
@@ -95,9 +97,9 @@ function _run_model(btn, ds_info, do_train) {
     success: function(data){
       wait.hide();
       if (do_train === null) return;
-      $('.needs_model').attr('disabled', false);
+      $('.needs_model', container).attr('disabled', false);
       var stats = data.stats;
-      var tbody = $('#model_error>tbody').empty();
+      var tbody = $('.model_error>tbody', container).empty();
       var show_table = false;
       for (var i=0; i<stats.length; i++) {
         var v = stats[i];
@@ -107,8 +109,8 @@ function _run_model(btn, ds_info, do_train) {
           show_table = true;
         }
       }
-      $('#model_info').html(data.info);
-      $('#model_error').toggle(show_table);
+      $('.model_info', container).html(data.info);
+      $('.model_error', container).toggle(show_table);
     },
     error: function(jqXHR, textStatus, errorThrown) {
       wait.hide();
