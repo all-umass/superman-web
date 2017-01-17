@@ -158,7 +158,9 @@ class PeakHandler(BaseHandler):
 
     # write the peak data as a response
     peak_data['axis_limits'] = [xlim[0], xlim[1], ylim[0], ylim[1]]
-    self.write(json_encode(peak_data))
+    response = json_encode(peak_data)
+    response = response.replace('NaN', 'null').replace('Infinity', 'null')
+    self.write(response)
 
 
 def _async_peakfit(func, *args, **kwargs):

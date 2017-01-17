@@ -57,14 +57,14 @@ function collect_peakfit_args(alg) {
     post_data['ub'] = bounds[1];
     post_data['basetype'] = $('#basetype').val();
   } else if (alg === 'fit') {
-    post_data['xres'] = $('#xres').val();
-    post_data['fitloc'] = $('#peakloc').val();
+    post_data['xres'] = +$('#xres').val();
+    post_data['fitloc'] = +$('#peakloc').val();
     post_data['fitkind'] = $('#peaktype').val();
     post_data['locfixed'] = +($('label[for=locfixed]').attr('aria-pressed')
                               == "true");
   } else {
-    post_data['numpeaks'] = $('#numpeaks').val();
-    post_data['xres'] = $('#xres2').val();
+    post_data['numpeaks'] = +$('#numpeaks').val();
+    post_data['xres'] = +$('#xres2').val();
     post_data['fitloc'] = $('#peakloc2').val().split(',');
     post_data['fitkind'] = $('input[name=peaktypes]:checked').map(function(i,x){
       return x.value;
@@ -113,34 +113,43 @@ function add_peakdata_column(table, heading, area, area_std, height,
 function do_peakfit(alg) {
   var post_data = collect_peakfit_args(alg);
   post_data['fignum'] = fig.id;
-  $('#fit_result').hide();
-  $.post('/_peak', post_data, function(data, status) {
-    if (status !== 'success') return;
-    if ('axis_limits' in data) {
-      update_zoom_ctrl(data['axis_limits']);
-    }
-    var table = $('#fit_result').show();
-    $('td', table).remove();  // clear out any existing peak data
-    var heading;
-    if (alg == 'composite') {
-      for (var i=0; i < post_data['numpeaks']; i++) {
-        heading = 'Peak ' + (i+1) + ' (' + data['fit_kinds'][i] + ')';
-        add_peakdata_column(table, heading, data['area'][i],
-                            data['area_std'][i], data['height'][i],
-                            data['center'][i], data['center_std'][i],
-                            data['fwhm'][i], data['fwhm_std'][i]);
+  var table = $('#fit_result').hide();
+  var err_span = $('.err_msg').hide();
+  $.ajax({
+    url: '/_peak',
+    type: 'POST',
+    data: post_data,
+    dataType: 'json',
+    success: function(data) {
+      if ('axis_limits' in data) {
+        update_zoom_ctrl(data['axis_limits']);
       }
-    } else {
-      if (alg == 'manual') {
-        heading = 'Selection';
+      $('td', table).remove();  // clear out any existing peak data
+      var heading;
+      if (alg == 'composite') {
+        for (var i=0; i < post_data['numpeaks']; i++) {
+          heading = 'Peak ' + (i+1) + ' (' + data['fit_kinds'][i] + ')';
+          add_peakdata_column(table, heading, data['area'][i],
+                              data['area_std'][i], data['height'][i],
+                              data['center'][i], data['center_std'][i],
+                              data['fwhm'][i], data['fwhm_std'][i]);
+        }
       } else {
-        heading = 'Peak 1 (' + post_data['fitkind'] + ')';
+        if (alg == 'manual') {
+          heading = 'Selection';
+        } else {
+          heading = 'Peak 1 (' + post_data['fitkind'] + ')';
+        }
+        add_peakdata_column(table, heading, data['area'], data['area_std'],
+                            data['height'], data['center'], data['center_std'],
+                            data['fwhm'], data['fwhm_std']);
       }
-      add_peakdata_column(table, heading, data['area'], data['area_std'],
-                          data['height'], data['center'], data['center_std'],
-                          data['fwhm'], data['fwhm_std']);
+      table.show();
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      err_span.text(jqXHR.responseText).show();
     }
-  }, 'json');
+  });
 }
 function autofill_peakfit_params() {
   var bounds = $('input[name=peakrange]');
@@ -248,6 +257,7 @@ Automatic</button><br>(Multiple peaks)</td>
 <input type="checkbox" name="peaktypes" value="gaussian" checked>Gaussian
 </label></td></tr>
 </tbody></table>
+<div class="err_msg"></div>
 
 </div>  <!-- lhs -->
 
