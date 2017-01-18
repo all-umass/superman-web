@@ -14,27 +14,28 @@ class SelectHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
-      self.set_status(403)
-      return
+      return self.visible_error(403, 'Broken connection to server.')
+
     ds_name = self.get_argument('ds_name')
     ds_kind = self.get_argument('ds_kind')
     ds = self.get_dataset(ds_kind, ds_name)
     if ds is None:
-      logging.error("Failed to look up dataset: %s [%s]" % (ds_name, ds_kind))
-      self.set_status(404)
-      return
+      msg = "Can't find dataset: %s [%s]" % (ds_name, ds_kind)
+      return self.visible_error(404, msg)
+
     name = self.get_argument('name', None)
     if name is None:
       idx = int(self.get_argument('idx'))
       if not (0 <= idx < ds.num_spectra()):
-        logging.info('Index %d out of bounds in dataset %s', idx, ds)
-        self.set_status(403)
-        return
+        return self.visible_error(403, 'Invalid spectrum number.',
+                                  'Index %d out of bounds in dataset %s',
+                                  idx, ds)
       name = 'Spectrum #%d' % idx
     else:
       # XXX: hack to match dtype of pkey
       name = np.array(name, dtype=ds.pkey.keys.dtype).item()
       idx = ds.pkey.key2index(name)
+
     fig_data.set_selected(ds.view(mask=[idx]), title=str(name))
     axlimits = fig_data.plot()
     return self.write(json_encode(axlimits))
@@ -44,15 +45,14 @@ class FilterHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
-      self.set_status(403)
-      return
+      return self.visible_error(403, 'Broken connection to server.')
+
     ds_name = self.get_argument('ds_name')
     ds_kind = self.get_argument('ds_kind')
     ds = self.get_dataset(ds_kind, ds_name)
     if ds is None:
-      logging.error("Failed to look up dataset: %s [%s]" % (ds_name, ds_kind))
-      self.set_status(404)
-      return
+      msg = "Can't find dataset: %s [%s]" % (ds_name, ds_kind)
+      return self.visible_error(404, msg)
 
     params = {k: ast.literal_eval(self.get_argument(k)) for k in ds.metadata}
     if ds.pkey is not None:
@@ -74,12 +74,11 @@ class UploadHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
-      self.set_status(403)
-      return
+      return self.visible_error(403, 'Broken connection to server.')
+
     if not self.request.files:
-      logging.error('UploadHandler: no file uploaded')
-      self.set_status(403)
-      return
+      return self.visible_error(403, 'No file uploaded.')
+
     f = self.request.files['query'][0]
     fname = f['filename']
     logging.info('Parsing file: %s', fname)
@@ -91,9 +90,8 @@ class UploadHandler(BaseHandler):
         fh = StringIO(f['body'].decode('utf-8', 'ignore'), newline=None)
         query = parse_spectrum(fh)
       except Exception as e:
-        logging.error('Failed to parse uploaded file: %s', e.message)
-        self.set_status(415)
-        return
+        return self.visible_error(415, 'Spectrum upload failed.',
+                                  'Spectrum parse failed: %s', e.message)
     ds = UploadedSpectrumDataset(fname, query)
     fig_data.set_selected(ds.view(), title=fname)
     axlimits = fig_data.plot()
@@ -104,8 +102,8 @@ class PreprocessHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
-      self.set_status(403)
-      return
+      return self.visible_error(403, 'Broken connection to server.')
+
     pp = self.get_argument('pp')
     fig_data.add_transform('pp', pp=pp)
     axlimits = fig_data.plot('pp')
@@ -116,8 +114,8 @@ class ZoomFigureHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
-      self.set_status(403)
-      return
+      return self.visible_error(403, 'Broken connection to server.')
+
     xmin = float(self.get_argument('xmin'))
     xmax = float(self.get_argument('xmax'))
     ymin = float(self.get_argument('ymin'))
