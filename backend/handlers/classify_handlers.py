@@ -121,10 +121,10 @@ class ClassificationModelHandler(GenericModelHandler):
         X = Xnew
 
     # get predictions for each variable
-    preds, stats = model.predict(X, variables)
+    preds = model.predict(X, variables)
 
     # plot
-    _plot_confusion(preds, stats, fig_data.figure, variables)
+    stats = _plot_confusion(preds, fig_data.figure, variables)
     fig_data.manager.canvas.draw()
     fig_data.last_plot = 'classify_preds'
 
@@ -132,7 +132,7 @@ class ClassificationModelHandler(GenericModelHandler):
     self.write_json(res)
 
 
-def _plot_confusion(preds, stats, fig, variables):
+def _plot_confusion(preds, fig, variables):
   fig.clf(keep_observers=True)
   ax = fig.add_subplot(1, 1, 1)
 
@@ -141,26 +141,31 @@ def _plot_confusion(preds, stats, fig, variables):
   y, name = variables[key]
   ax.set_title(name)
 
-  if y is not None:
-    # true labels exist, so plot a confusion matrix
-    classes, counts = np.unique(y, return_counts=True)
-    conf = confusion_matrix(y, p) / counts.astype(float)
-    im = ax.imshow(conf.T, interpolation='nearest')
-    fig.colorbar(im)
-    tick_locs = np.arange(len(classes))
-    ax.set_xticks(tick_locs)
-    ax.set_yticks(tick_locs)
-    ax.set_xticklabels(classes, rotation=45)
-    ax.set_yticklabels(classes)
-    ax.set_xlabel('Actual')
-    ax.set_ylabel('Predicted')
-    # TODO: add text labels to the diagonal with %acc?
-  else:
+  if y is None:
     # no actual values exist, so only plot the predictions
     classes, counts = np.unique(p, return_counts=True)
     tick_locs = np.arange(len(classes))
     ax.bar(tick_locs, counts, tick_label=classes, align='center')
     ax.set_ylabel('# Predicted')
+    return []
+
+  # true labels exist, so plot a confusion matrix
+  classes, counts = np.unique(y, return_counts=True)
+  conf = confusion_matrix(y, p)
+  correct = conf.diagonal()
+  conf = (conf * 100 / counts.astype(float)).T
+  im = ax.imshow(conf, interpolation='nearest')
+  fig.colorbar(im, label='% Accuracy')
+  tick_locs = np.arange(len(classes))
+  ax.set_xticks(tick_locs)
+  ax.set_yticks(tick_locs)
+  ax.set_xticklabels(classes, rotation=45)
+  ax.set_yticklabels(classes)
+  ax.set_xlabel('Actual')
+  ax.set_ylabel('Predicted')
+  # return stats for showing in the model_error table
+  return [{'class': k, 'correct': c, 'total': t} for k, c, t in
+          zip(classes, correct, counts)]
 
 
 routes = [

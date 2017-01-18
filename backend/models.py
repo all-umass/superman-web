@@ -5,7 +5,7 @@ from itertools import repeat
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.externals.joblib.numpy_pickle import (
     load as load_pickle, dump as dump_pickle)
-from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.metrics import r2_score, mean_squared_error, confusion_matrix
 from sklearn.model_selection import GridSearchCV, KFold, GroupKFold
 from sklearn.linear_model import (
     LassoLars, LassoLarsCV, Lars, LogisticRegression)
@@ -53,10 +53,7 @@ class _Classifier(GenericModel):
     y, name = variables[key]
     m = self.models[key]
     p = m.predict(X)
-    correct = np.count_nonzero(p == y)
-    preds = {key: p}
-    stats = [dict(name=name, key=key, num_correct=correct, total=len(y))]
-    return preds, stats
+    return {key: p}
 
 
 class Logistic(_Classifier):

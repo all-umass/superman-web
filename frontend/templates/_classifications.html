@@ -70,11 +70,17 @@ Run<span class="wait">ning</span> classifier<span class="wait">...</span>
 </button>
 <div class="err_msg"></div>
 
+<table class="model_error" style="display: none;">
+  <thead><tr>
+    <th>Class</th><th>Correct</th><th>Total</th><th>Accuracy</th>
+  </tr></thead>
+  <tbody></tbody>
+</table>
+
 <button disabled class="needs_model" onclick="Classify.download(this);">
 Download</button>
 <select style="vertical-align: baseline;">
   <option value="preds">predictions</option>
   <option value="pkl">model (binary file)</option>
-  <option value="csv">coefficients (text file)</option>
 </select>
 </div>

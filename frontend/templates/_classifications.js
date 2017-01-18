@@ -38,7 +38,16 @@ var Classify = (function() {
         wait.hide();
         if (do_train === null) return;
         $('.needs_model', container).attr('disabled', false);
+        var stats = data.stats;
+        var tbody = $('.model_error>tbody', container).empty();
+        for (var i=0; i < stats.length; i++) {
+          var v = stats[i];
+          var acc = (100 * v.correct / v.total).toPrecision(3);
+          var row = [v.class, v.correct, v.total, acc].join('</td><td>');
+          tbody.append('<tr><td>' + row + '%</td></tr>');
+        }
         $('.model_info', container).html(data.info);
+        $('.model_error', container).toggle(stats.length > 0);
       },
       error: function(jqXHR, textStatus, errorThrown) {
         wait.hide();
