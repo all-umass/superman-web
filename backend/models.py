@@ -7,12 +7,15 @@ from sklearn.externals.joblib.numpy_pickle import (
     load as load_pickle, dump as dump_pickle)
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import GridSearchCV, KFold, GroupKFold
-from sklearn.linear_model import LassoLars, LassoLarsCV, Lars
+from sklearn.linear_model import (
+    LassoLars, LassoLarsCV, Lars, LogisticRegression)
+
+__all__ = ['GenericModel', 'REGRESSION_MODELS', 'CLASSIFICATION_MODELS']
 
 
 class GenericModel(object):
-  def __init__(self, k, ds_kind, wave):
-    self.parameter = k
+  def __init__(self, param, ds_kind, wave):
+    self.parameter = param
     self.ds_kind = ds_kind
     self.wave = wave
     self.var_names = []
@@ -32,7 +35,58 @@ class GenericModel(object):
     return '%s(%g)' % (self.__class__.__name__, self.parameter)
 
 
-class RegressionModel(GenericModel):
+class _Classifier(GenericModel):
+  def train(self, X, variables):
+    key, = variables.keys()
+    y, name = variables[key]
+    m = self._construct()
+    m.fit(X, y)
+    self.models = {key: m}
+    self.var_keys = [key]
+    self.var_names = [name]
+
+  def predict(self, X, variables):
+    key, = variables.keys()
+    if key not in self.models:
+      logging.warning('No trained model for variable: %r', key)
+      return
+    y, name = variables[key]
+    m = self.models[key]
+    p = m.predict(X)
+    correct = np.count_nonzero(p == y)
+    preds = {key: p}
+    stats = [dict(name=name, key=key, num_correct=correct, total=len(y))]
+    return preds, stats
+
+
+class Logistic(_Classifier):
+  def _construct(self):
+    return LogisticRegression(C=self.parameter, fit_intercept=False)
+
+  @classmethod
+  def cross_validate(cls, X, variables, Cs=None, num_folds=5, labels=None):
+    if labels is None:
+      cv = KFold(n_splits=num_folds)
+    else:
+      cv = GroupKFold(n_splits=num_folds)
+
+    key, = variables.keys()
+    y, name = variables[key]
+    # TODO: use LogisticRegressionCV here instead?
+    model = GridSearchCV(LogisticRegression(fit_intercept=False), dict(C=Cs),
+                         cv=cv, return_train_score=False, n_jobs=1)
+    model.fit(X, y, groups=labels)
+    acc_mean = model.cv_results_['mean_test_score']
+    acc_stdv = model.cv_results_['std_test_score']
+    yield name, Cs, acc_mean, acc_stdv
+
+
+class KNN(_Classifier):
+  def _construct(self):
+    pass  # TODO
+
+
+class _RegressionModel(GenericModel):
   def predict(self, X, variables):
     preds, stats = {}, []
     for key, p in self._predict(X, variables):
@@ -52,7 +106,7 @@ class RegressionModel(GenericModel):
     return preds, stats
 
 
-class _UnivariateRegression(RegressionModel):
+class _UnivariateRegression(_RegressionModel):
   def train(self, X, variables):
     self.models = {}
     for key in variables:
@@ -89,7 +143,7 @@ class _UnivariateRegression(RegressionModel):
       yield name, mse_mean, mse_stdv
 
 
-class _MultivariateRegression(RegressionModel):
+class _MultivariateRegression(_RegressionModel):
   def train(self, X, variables):
     self.clf = self._construct()
     self.var_keys = variables.keys()
@@ -288,3 +342,4 @@ REGRESSION_MODELS = dict(
     lasso=dict(uni=Lasso1, multi=Lasso2),
     lars=dict(uni=Lars1, multi=Lars2),
 )
+CLASSIFICATION_MODELS = dict(knn=KNN, logistic=Logistic)

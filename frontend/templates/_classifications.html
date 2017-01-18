@@ -1,12 +1,80 @@
-<div class="flex-column col-spaced">
-<label>Classify
-<select class="target_meta" data-placeholder="select class label">
+<table class="aligned_table" style="padding-right: 2em;">
+<tr><td class="bold">Class label</td><td>
+<select class="target_meta" data-placeholder="select variable">
 {% for key, name in meta_pairs %}
   <option value="{{key}}">{{name}}</option>
 {% end %}
-</select></label>
-<label>Classifier type
-<select id="classifier_type">
-  {# TODO #}
-</select></label>
+</select></td></tr>
+<tr><td class="bold">Model type</td><td>
+<select class="model_kind" onchange="Classify.change_kind(this);">
+  <option value="logistic">Logistic Regression</option>
+  <!-- <option value="knn">k-NN</option> -->
+</select></td></tr>
+</table>
+
+<table class="aligned_table" style="padding-right: 2em;">
+<tr><td class="bold"># Folds</td><td>
+  <input type="number" class="cv_folds" value=5 min=2 max=100>
+</td></tr>
+<tr><td class="bold">Stratifier</td><td>
+  <select class="cv_stratify" data-placeholder="select variable">
+    <option value="" selected></option>
+  {% for key, name in meta_pairs %}
+    <option value="{{key}}">{{name}}</option>
+  {% end %}
+  </select>
+</td></tr>
+<tr class="for_knn" style="display: none;"><td class="bold"># neighbors</td><td>
+  <input type="number" class="cv_min_k" value=1 min=1 max=100> -
+  <input type="number" class="cv_max_k" value=10 min=1 max=100>
+</td></tr>
+<tr class="for_logistic"><td class="bold">log(C)</td><td>
+  <input type="number" class="cv_min_C" value=-4 min=-8 max=8> -
+  <input type="number" class="cv_max_C" value=4 min=-8 max=8>
+</td></tr>
+<tr><td colspan=2>
+  <button disabled class="needs_filter" onclick="Classify.crossval(this);">
+    Cross-validate model<span class="wait">...</span>
+  </button>
+  <div class="err_msg"></div>
+</td></tr>
+</table>
+
+<table class="aligned_table"><tbody>
+<tr><td>
+  <button disabled class="needs_filter" onclick="Classify.train(this);">
+  Train<span class="wait">ing...</span></button>
+</td><td>
+  <label class="for_knn" style="display: none;">
+    <input type="number" class="knn_k" value=1 min=1 max=100> neighbors
+  </label>
+  <label class="for_logistic">
+    <input type="text" class="logistic_C" value=1.0 size=5> C
+  </label>
+</td></tr>
+<tr><td>
+  <button disabled class="needs_filter" onclick="Classify.upload(this);">
+  Upload<span class="wait">ing...</span></button>
+</td><td>
+  <input type="file" class="modelfile" />
+</td></tr></tbody>
+<tfoot>
+<tr><td colspan=2 class="err_msg"></td></tr>
+</tfoot></table>
+
+<div style="text-align: left;">
+<div>Current Model: <span class="model_info">None</span></div>
+
+<button disabled class="needs_model" onclick="Classify.predict(this);">
+Run<span class="wait">ning</span> classifier<span class="wait">...</span>
+</button>
+<div class="err_msg"></div>
+
+<button disabled class="needs_model" onclick="Classify.download(this);">
+Download</button>
+<select style="vertical-align: baseline;">
+  <option value="preds">predictions</option>
+  <option value="pkl">model (binary file)</option>
+  <option value="csv">coefficients (text file)</option>
+</select>
 </div>

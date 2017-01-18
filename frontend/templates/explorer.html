@@ -136,7 +136,7 @@ function load_ds_filters() {
   var plot_options = $('#ds_plotting_container');
   var comp_options = $('#ds_compositions_container');
   var pred_options = $('#ds_prediction_container');
-  // var clas_options = $('#ds_classification_container');
+  var clas_options = $('#ds_classification_container');
   if (ds_kind !== undefined) {
     plot_options.load('/_dataset_plot_options', ds_info, function() {
       $('#dl_metadata').css('width', '+=15').chosen({search_contains: true});
@@ -154,10 +154,15 @@ function load_ds_filters() {
     pred_options.load('/_dataset_pred_options', ds_info, function() {
       $('.target_meta', pred_options).css('width', '+=20')
                                      .chosen({search_contains: true});
-      $('#cv_stratify', pred_options).css('width', '+=25')
+      $('.cv_stratify', pred_options).css('width', '+=25')
                                      .chosen({allow_single_deselect: true});
     });
-    // clas_options.load('/_dataset_classify_options', ds_info);
+    clas_options.load('/_dataset_classify_options', ds_info, function() {
+      $('.target_meta', clas_options).css('width', '+=25')
+                                     .chosen({allow_single_deselect: true});
+      $('.cv_stratify', clas_options).css('width', '+=25')
+                                     .chosen({allow_single_deselect: true});
+    });
     {% end %}
     var kind = ds_info.kind[0];
     var fragment = 'explorer?ds_kind=' + kind;
@@ -169,7 +174,7 @@ function load_ds_filters() {
     plot_options.empty();
     comp_options.empty();
     pred_options.empty();
-    // clas_options.empty();
+    clas_options.empty();
     window.history.pushState('', '', 'explorer');
   }
 }
@@ -194,7 +199,10 @@ function change_blr_method(option) {
 
 {% include '_filterplots.js' %}
 {% include '_compositions.js' %}
-{% if logged_in %}{% include '_predictions.js' %}{% end %}
+{% if logged_in %}
+  {% include '_predictions.js' %}
+  {% include '_classifications.js' %}
+{% end %}
 
 $(document).ready(function(){
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
@@ -295,15 +303,13 @@ $(document).ready(function(){
 <div id="ds_prediction_container" class="section_body"></div>
 </div>
 
-{# TODO: add this section when it's ready
 <div class="horiz_section">
-<div class='section_heading'>Classify Spectra
+<div class='section_heading'>Train Classifiers
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'div');"></button>
 </div>
 <div id="ds_classification_container" class="section_body"></div>
 </div>
-#}
 {% end %}
 
 <div class="horiz_section">
