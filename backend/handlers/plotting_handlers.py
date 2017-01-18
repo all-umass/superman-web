@@ -12,7 +12,6 @@ from matplotlib.patches import Patch
 from six.moves import xrange
 from threading import Thread
 from tornado import gen
-from tornado.escape import json_encode
 
 from .base import MultiDatasetHandler
 
@@ -217,7 +216,7 @@ class FilterPlotHandler(MultiDatasetHandler):
     # return the axis limits
     xmin,xmax = ax.get_xlim()
     ymin,ymax = ax.get_ylim()
-    self.write(json_encode([xmin,xmax,ymin,ymax]))
+    self.write_json([xmin,xmax,ymin,ymax])
 
   def _get_axis_info(self, ax_char):
     atype = self.get_argument(ax_char + 'axis')

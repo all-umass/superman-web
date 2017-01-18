@@ -4,7 +4,6 @@ import numpy as np
 import os
 from sklearn.metrics import confusion_matrix
 from tornado import gen
-from tornado.escape import json_encode
 
 from .model_handlers import GenericModelHandler, async_crossval
 from ..models import CLASSIFICATION_MODELS
@@ -130,8 +129,7 @@ class ClassificationModelHandler(GenericModelHandler):
     fig_data.last_plot = 'classify_preds'
 
     res = dict(stats=stats, info=fig_data.classify_model.info_html())
-    # NaN isn't valid JSON, but json_encode doesn't catch it. :'(
-    self.write(json_encode(res).replace('NaN', 'null'))
+    self.write_json(res)
 
 
 def _plot_confusion(preds, stats, fig, variables):
@@ -152,7 +150,7 @@ def _plot_confusion(preds, stats, fig, variables):
     tick_locs = np.arange(len(classes))
     ax.set_xticks(tick_locs)
     ax.set_yticks(tick_locs)
-    ax.set_xticklabels(classes)
+    ax.set_xticklabels(classes, rotation=45)
     ax.set_yticklabels(classes)
     ax.set_xlabel('Actual')
     ax.set_ylabel('Predicted')

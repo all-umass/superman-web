@@ -6,6 +6,7 @@ import tornado.web
 from itertools import izip_longest
 from superman.baseline import BL_CLASSES
 from superman.baseline.common import Baseline
+from tornado.escape import json_encode
 
 from ..web_datasets import DATASETS
 
@@ -101,6 +102,14 @@ class BaseHandler(tornado.web.RequestHandler):
         chan_mask=bool(int(self.get_argument('chan_mask', 0))),
         pp=self.get_argument('pp', ''), blr_obj=bl_obj, blr_inverted=inverted,
         blr_segmented=segmented, flip=flip, crop=tuple(crops), **extra_kwargs)
+
+  def write_json(self, obj):
+    """Essentially self.write(json_encode(obj)),
+    but with some fixes to avoid invalid JSON (NaN, Infinity, etc).
+    """
+    s = json_encode(obj)
+    s = s.replace('NaN', 'null').replace('Infinity', 'null')
+    self.write(s)
 
 
 class MultiDatasetHandler(BaseHandler):

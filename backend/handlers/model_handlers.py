@@ -6,7 +6,6 @@ import shutil
 from io import BytesIO
 from tempfile import mkstemp
 from threading import Thread
-from tornado.escape import json_encode
 
 from .base import BaseHandler, MultiDatasetHandler
 from ..models import GenericModel, REGRESSION_MODELS
@@ -101,7 +100,7 @@ class ModelIOHandler(BaseHandler):
       fig_data.pred_model = model
     else:
       fig_data.classify_model = model
-    return self.write(json_encode(dict(info=model.info_html())))
+    return self.write_json(dict(info=model.info_html()))
 
 
 class GenericModelHandler(MultiDatasetHandler):

@@ -4,7 +4,6 @@ import logging
 import numpy as np
 import scipy.stats
 from scipy import odr
-from tornado.escape import json_encode
 
 from .base import BaseHandler
 
@@ -187,7 +186,7 @@ class CompositionPlotHandler(BaseHandler):
 
     # respond with fit parameters and zoom info
     results['zoom'] = (xlim[0], xlim[1], ylim[0], ylim[1])
-    return self.write(json_encode(results))
+    return self.write_json(results)
 
 """
 class CompositionBatchHandler(BaseHandler):

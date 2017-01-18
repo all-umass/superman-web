@@ -4,7 +4,6 @@ import logging
 import numpy as np
 from io import BytesIO, StringIO
 from superman.file_io import parse_spectrum
-from tornado.escape import json_encode
 
 from .base import BaseHandler
 from ..web_datasets import UploadedSpectrumDataset
@@ -38,7 +37,7 @@ class SelectHandler(BaseHandler):
 
     fig_data.set_selected(ds.view(mask=[idx]), title=str(name))
     axlimits = fig_data.plot()
-    return self.write(json_encode(axlimits))
+    return self.write_json(axlimits)
 
 
 class FilterHandler(BaseHandler):
@@ -95,7 +94,7 @@ class UploadHandler(BaseHandler):
     ds = UploadedSpectrumDataset(fname, query)
     fig_data.set_selected(ds.view(), title=fname)
     axlimits = fig_data.plot()
-    return self.write(json_encode(axlimits))
+    return self.write_json(axlimits)
 
 
 class PreprocessHandler(BaseHandler):
@@ -107,7 +106,7 @@ class PreprocessHandler(BaseHandler):
     pp = self.get_argument('pp')
     fig_data.add_transform('pp', pp=pp)
     axlimits = fig_data.plot('pp')
-    return self.write(json_encode(axlimits))
+    return self.write_json(axlimits)
 
 
 class ZoomFigureHandler(BaseHandler):

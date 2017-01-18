@@ -3,7 +3,6 @@ import logging
 import numpy as np
 import os
 from tornado import gen
-from tornado.escape import json_encode
 
 from .model_handlers import GenericModelHandler, async_crossval, axes_grid
 from ..models import REGRESSION_MODELS
@@ -168,8 +167,7 @@ class RegressionModelHandler(GenericModelHandler):
     fig_data.last_plot = 'regression_preds'
 
     res = dict(stats=stats, info=fig_data.pred_model.info_html())
-    # NaN isn't valid JSON, but json_encode doesn't catch it. :'(
-    self.write(json_encode(res).replace('NaN', 'null'))
+    self.write_json(res)
 
 
 class ModelPlottingHandler(GenericModelHandler):

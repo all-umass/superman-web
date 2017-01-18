@@ -6,7 +6,6 @@ import scipy.integrate
 from superman.peaks.bump_fit import fit_single_peak, fit_composite_peak
 from threading import Thread
 from tornado import gen
-from tornado.escape import json_encode
 
 from .base import BaseHandler
 
@@ -158,9 +157,7 @@ class PeakHandler(BaseHandler):
 
     # write the peak data as a response
     peak_data['axis_limits'] = [xlim[0], xlim[1], ylim[0], ylim[1]]
-    response = json_encode(peak_data)
-    response = response.replace('NaN', 'null').replace('Infinity', 'null')
-    self.write(response)
+    self.write_json(peak_data)
 
 
 def _async_peakfit(func, *args, **kwargs):
