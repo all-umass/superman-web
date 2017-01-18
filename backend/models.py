@@ -5,10 +5,11 @@ from itertools import repeat
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.externals.joblib.numpy_pickle import (
     load as load_pickle, dump as dump_pickle)
-from sklearn.metrics import r2_score, mean_squared_error, confusion_matrix
+from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import GridSearchCV, KFold, GroupKFold
 from sklearn.linear_model import (
     LassoLars, LassoLarsCV, Lars, LogisticRegression)
+from superman.distance import pairwise_within, pairwise_dists
 
 __all__ = ['GenericModel', 'REGRESSION_MODELS', 'CLASSIFICATION_MODELS']
 
@@ -39,26 +40,27 @@ class _Classifier(GenericModel):
   def train(self, X, variables):
     key, = variables.keys()
     y, name = variables[key]
-    m = self._construct()
-    m.fit(X, y)
-    self.models = {key: m}
     self.var_keys = [key]
     self.var_names = [name]
+    self._train(X, y)
 
   def predict(self, X, variables):
     key, = variables.keys()
-    if key not in self.models:
+    preds = {key: None}
+    if key != self.var_keys[0]:
       logging.warning('No trained model for variable: %r', key)
-      return
-    y, name = variables[key]
-    m = self.models[key]
-    p = m.predict(X)
-    return {key: p}
+    else:
+      preds[key] = self._predict(X)
+    return preds
 
 
 class Logistic(_Classifier):
-  def _construct(self):
-    return LogisticRegression(C=self.parameter, fit_intercept=False)
+  def _train(self, X, y):
+    self.clf = LogisticRegression(C=self.parameter, fit_intercept=False)
+    self.clf.fit(X, y)
+
+  def _predict(self, X):
+    return self.clf.predict(X)
 
   @classmethod
   def cross_validate(cls, X, variables, Cs=None, num_folds=5, labels=None):
@@ -79,8 +81,60 @@ class Logistic(_Classifier):
 
 
 class KNN(_Classifier):
-  def _construct(self):
-    pass  # TODO
+  def _train(self, X, y):
+    self.library = X
+    self.classes, self.labels = np.unique(y, return_inverse=True)
+    # TODO: expose these in the UI
+    self.metric = 'cosine'
+    self.weighting = 'distance'
+
+  def _predict(self, X):
+    if X is self.library:
+      dists = pairwise_within(X, self.metric, num_procs=5)
+      ks = slice(1, min(self.parameter+1, dists.shape[0]))
+    else:
+      dists = pairwise_dists(self.library, X, self.metric, num_procs=5)
+      ks = slice(0, min(self.parameter, dists.shape[0]))
+    top_k = np.argsort(dists, axis=0)[ks]  # shape: (k, nX)
+
+    num_classes = len(self.classes)
+    votes = np.zeros((num_classes, len(X)))
+    idx = np.arange(len(X))
+    if self.weighting == 'uniform':
+      for kk in top_k:
+        labels = self.labels[kk]
+        votes[labels[None], idx] += 1
+    else:
+      for kk in top_k:
+        labels = self.labels[kk]
+        votes[labels[None], idx] += 1./(1 + dists[kk, idx])
+    winner = votes.argmax(axis=0)
+    return self.classes[winner]
+
+  @classmethod
+  def cross_validate(cls, X, variables, ks=None, num_folds=5, labels=None):
+    if labels is None:
+      cv = KFold(n_splits=num_folds)
+    else:
+      cv = GroupKFold(n_splits=num_folds)
+
+    key, = variables.keys()
+    y, name = variables[key]
+
+    acc = np.zeros((num_folds, len(ks)))
+    for i, (train_idx, test_idx) in enumerate(cv.split(y, groups=labels)):
+      trainY, testY = y[train_idx], y[test_idx]
+      if hasattr(X, 'shape'):
+        trainX, testX = X[train_idx], X[test_idx]
+      else:
+        trainX = [X[ti] for ti in train_idx]
+        testX = [X[ti] for ti in test_idx]
+      for j, k in enumerate(ks):
+        clf = cls(k, None, None)
+        clf._train(trainX, trainY)
+        pred = clf._predict(testX)
+        acc[i, j] = (pred == testY).mean()
+    yield name, ks, acc.mean(axis=0), acc.std(axis=0)
 
 
 class _RegressionModel(GenericModel):

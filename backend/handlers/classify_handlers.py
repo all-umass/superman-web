@@ -44,10 +44,15 @@ class ClassificationModelHandler(GenericModelHandler):
 
   @gen.coroutine
   def post(self):
-    res = self.validate_inputs()
-    if res is None:
+    fig_data = self.get_fig_data()
+    if fig_data is None:
+      self.visible_error(403, "Broken connection to server.")
       return
-    fig_data, all_ds_views, ds_kind, wave, X = res
+
+    all_ds_views, _ = self.prepare_ds_views(fig_data, nan_gap=None)
+    if all_ds_views is None:
+      self.visible_error(404, "Failed to look up dataset(s).")
+      return
 
     model_kind = self.get_argument('model_kind')
     model_cls = CLASSIFICATION_MODELS[model_kind]
@@ -55,6 +60,25 @@ class ClassificationModelHandler(GenericModelHandler):
                   logistic=int(self.get_argument('logistic_C')))
     pred_key = self.get_argument('pred_var')
     variables = self.collect_variables(all_ds_views, (pred_key,))
+
+    if model_kind == 'knn':
+      # TODO: detect case where collect_spectra would work,
+      #  and use vectors then instead of forcing trajectory format
+      ds_kind, wave, X = None, None, []
+      for dv in all_ds_views:
+        X.extend(np.array(t, dtype=np.float32, order='C')
+                 for t in dv.get_trajectories())
+        if ds_kind is None:
+          ds_kind = dv.ds.kind
+        elif ds_kind != dv.ds.kind:
+          self.visible_error(400, "Mismatching dataset types.",
+                             "Mismatching ds_kind: %s != %s", dv.ds, ds_kind)
+          return
+    else:
+      ds_kind, wave, X = self.collect_spectra(all_ds_views)
+      if X is None:
+        # self.visible_error has already been called in collect_spectra
+        return
 
     do_train = self.get_argument('do_train', None)
     if do_train is None:
@@ -92,7 +116,7 @@ class ClassificationModelHandler(GenericModelHandler):
       # train on all the data
       model = model_cls(params[model_kind], ds_kind, wave)
       logging.info('Training %s on %d inputs, predicting %d variables',
-                   model, X.shape[0], len(variables))
+                   model, len(X), len(variables))
       model.train(X, variables)
       fig_data.classify_model = model
     else:
@@ -110,7 +134,8 @@ class ClassificationModelHandler(GenericModelHandler):
           dummy_vars[key] = variables[key]
       variables = dummy_vars
       # make sure we're using the same wavelengths
-      if wave.shape != model.wave.shape or not np.allclose(wave, model.wave):
+      if (model_kind != 'knn' and (wave.shape != model.wave.shape or
+                                   not np.allclose(wave, model.wave))):
         if wave[-1] <= model.wave[0] or wave[0] >= model.wave[-1]:
           self.visible_error(400, "Data to predict doesn't overlap "
                                   "with training wavelengths.")
