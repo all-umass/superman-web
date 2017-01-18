@@ -78,13 +78,15 @@
 #fit_info td:last-child { text-align: right; }
 #fit_info th { padding-top: 0.5em; }
 
-/* Prediction stuff */
+/* Generic regress/classify model stuff */
 @keyframes flash { 50% { background-color: pink; } }
-#model_error { padding: 0.25em 1em; margin: 0.25em auto; text-align: center; }
-#model_error thead { border-bottom: 1px solid black; font-weight: bold; }
-#model_error th { padding: 0 0.5em; }
-#model_error td { padding: 0 0.5em; text-align: right; }
-#model_error td:first-child { text-align: left; }
+.model_error { padding: 0.25em 1em; margin: 0.25em auto; text-align: center; }
+.model_error thead { border-bottom: 1px solid black; font-weight: bold; }
+.model_error th { padding: 0 0.5em; }
+.model_error td { padding: 0 0.5em; text-align: right; }
+.model_error td:first-child { text-align: left; }
+
+/* Prediction stuff */
 #ds_prediction_container input[type="number"] { width: 3em; }
 #ds_prediction_container > table { display: block; }
 

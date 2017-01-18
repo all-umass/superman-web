@@ -10,7 +10,7 @@ from sklearn.model_selection import GridSearchCV, KFold, GroupKFold
 from sklearn.linear_model import LassoLars, LassoLarsCV, Lars
 
 
-class RegressionModel(object):
+class GenericModel(object):
   def __init__(self, k, ds_kind, wave):
     self.parameter = k
     self.ds_kind = ds_kind
@@ -25,6 +25,14 @@ class RegressionModel(object):
   def save(self, fname):
     dump_pickle(self, fname, compress=3)
 
+  def info_html(self):
+    return '%s &mdash; %s' % (self, self.ds_kind)
+
+  def __str__(self):
+    return '%s(%g)' % (self.__class__.__name__, self.parameter)
+
+
+class RegressionModel(GenericModel):
   def predict(self, X, variables):
     preds, stats = {}, []
     for key, p in self._predict(X, variables):
@@ -42,12 +50,6 @@ class RegressionModel(object):
       stats.append(stats_entry)
     stats.sort(key=lambda s: s['key'])
     return preds, stats
-
-  def info_html(self):
-    return '%s &mdash; %s' % (self, self.ds_kind)
-
-  def __str__(self):
-    return '%s(%g)' % (self.__class__.__name__, self.parameter)
 
 
 class _UnivariateRegression(RegressionModel):

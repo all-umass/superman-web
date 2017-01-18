@@ -35,7 +35,7 @@ var Regress = (function() {
     var wait = $('.wait', btn).show();
     $.ajax({
       type: 'POST',
-      url: '/_run_model',
+      url: '/_run_regression',
       data: post_data,
       dataType: 'json',
       success: function(data){
@@ -100,6 +100,7 @@ var Regress = (function() {
       post_data.append('fignum', fig.id);
       post_data.append('modelfile', f);
       post_data.append('ds_kind', ds_kind);
+      post_data.append('model_type', 'regression');
       var wait = $('.wait', btn).show();
       $.ajax({
         url: '/_load_model',
