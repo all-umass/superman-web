@@ -145,9 +145,9 @@ def _plot_confusion(preds, stats, fig, variables):
 
   if y is not None:
     # true labels exist, so plot a confusion matrix
-    classes = np.unique(y)
-    conf = confusion_matrix(y, p).T
-    im = ax.imshow(conf, interpolation='nearest')
+    classes, counts = np.unique(y, return_counts=True)
+    conf = confusion_matrix(y, p) / counts.astype(float)
+    im = ax.imshow(conf.T, interpolation='nearest')
     fig.colorbar(im)
     tick_locs = np.arange(len(classes))
     ax.set_xticks(tick_locs)
