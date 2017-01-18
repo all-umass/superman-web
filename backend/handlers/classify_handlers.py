@@ -82,6 +82,7 @@ class ClassificationModelHandler(GenericModelHandler):
                                 self.get_argument('cv_max_logC')))
         cv_kwargs['Cs'] = np.logspace(start, stop, num=20, endpoint=True)
         plot_kwargs['xlabel'] = 'C'
+        plot_kwargs['logx'] = True
 
       # run the cross validation
       yield gen.Task(async_crossval, fig_data, model_cls, len(variables),
