@@ -178,7 +178,7 @@ def _plot_confusion(preds, fig, variables):
   classes, counts = np.unique(y, return_counts=True)
   conf = confusion_matrix(y, p)
   correct = conf.diagonal()
-  conf = (conf * 100 / counts.astype(float)).T
+  conf = conf.T * 100 / counts.astype(float)
   im = ax.imshow(conf, interpolation='nearest')
   fig.colorbar(im, label='% Accuracy')
   tick_locs = np.arange(len(classes))
