@@ -180,7 +180,7 @@ def _plot_confusion(preds, fig, variables):
   correct = conf.diagonal()
   conf = conf.T * 100 / counts.astype(float)
   im = ax.imshow(conf, interpolation='nearest')
-  fig.colorbar(im, label='% Accuracy')
+  fig.colorbar(im, label='% of Actual')
   tick_locs = np.arange(len(classes))
   ax.set_xticks(tick_locs)
   ax.set_yticks(tick_locs)
