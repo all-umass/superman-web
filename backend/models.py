@@ -1,10 +1,9 @@
 from __future__ import absolute_import
+import ast
 import logging
 import numpy as np
 from itertools import repeat
 from sklearn.cross_decomposition import PLSRegression
-from sklearn.externals.joblib.numpy_pickle import (
-    load as load_pickle, dump as dump_pickle)
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import GridSearchCV, KFold, GroupKFold
 from sklearn.linear_model import (
@@ -24,10 +23,29 @@ class GenericModel(object):
 
   @staticmethod
   def load(fh):
-    return load_pickle(fh)
+    class_name = fh.readline().strip()
+    cls = globals().get(class_name)
+    if not issubclass(cls, GenericModel):
+      raise ValueError('Invalid model file.')
+    param = ast.literal_eval(fh.readline().strip())
+    ds_kind = fh.readline().strip()
+    var_names = ast.literal_eval(fh.readline().strip())
+    var_keys = ast.literal_eval(fh.readline().strip())
+    wave_len = int(fh.readline().strip())
+    wave = np.fromstring(fh.read(wave_len * 8))
+    model = cls(param, ds_kind, wave)
+    model.var_names = var_names
+    model.var_keys = var_keys
+    model._finish_loading(fh)
+    return model
 
-  def save(self, fname):
-    dump_pickle(self, fname, compress=3)
+  def save(self, fh):
+    w = np.array(self.wave, dtype=float, copy=False)
+    fh.write(b'%s\n%r\n%s\n%r\n%r\n%d\n' % (
+        self.__class__.__name__, self.parameter, self.ds_kind, self.var_names,
+        self.var_keys, w.shape[0]))
+    # don't use w.tofile(fh) here, because it requires an actual file object
+    fh.write(w.tobytes())
 
   def info_html(self):
     return '%s &mdash; %s' % (self, self.ds_kind)
@@ -78,6 +96,23 @@ class Logistic(_Classifier):
     acc_mean = model.cv_results_['mean_test_score']
     acc_stdv = model.cv_results_['std_test_score']
     yield name, Cs, acc_mean, acc_stdv
+
+  def _finish_loading(self, fh):
+    params = ast.literal_eval(fh.readline().strip())
+    classes = ast.literal_eval(fh.readline().strip())
+    coef_shape = ast.literal_eval(fh.readline().strip())
+    self.clf = LogisticRegression().set_params(**params)
+    self.clf.classes_ = np.array(classes)
+    self.clf.intercept_ = 0.0
+    n = np.prod(coef_shape) * 8
+    self.clf.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
+
+  def save(self, fh):
+    GenericModel.save(self, fh)
+    fh.write('%r\n%r\n%r\n' % (self.clf.get_params(),
+                               self.clf.classes_.tolist(),
+                               self.clf.coef_.shape))
+    fh.write(self.clf.coef_.tobytes())
 
 
 class KNN(_Classifier):
@@ -136,6 +171,12 @@ class KNN(_Classifier):
         acc[i, j] = (pred == testY).mean()
     yield name, ks, acc.mean(axis=0), acc.std(axis=0)
 
+  def _finish_loading(self, fh):
+    raise NotImplementedError('Cannot load a KNN model from file.')
+
+  def save(self, fh):
+    raise NotImplementedError('Cannot serialize a KNN model.')
+
 
 class _RegressionModel(GenericModel):
   def predict(self, X, variables):
@@ -193,6 +234,14 @@ class _UnivariateRegression(_RegressionModel):
       mse_stdv = model.cv_results_['std_test_score']
       yield name, mse_mean, mse_stdv
 
+  def _finish_loading(self, fh):
+    self.models = {key: self._load_model(fh) for key in self.var_keys}
+
+  def save(self, fh):
+    GenericModel.save(self, fh)
+    for key in self.var_keys:
+      self._save_model(self.models[key], fh)
+
 
 class _MultivariateRegression(_RegressionModel):
   def train(self, X, variables):
@@ -229,6 +278,13 @@ class _MultivariateRegression(_RegressionModel):
     mse_stdv = pls.cv_results_['std_test_score']
     return '/'.join(names), mse_mean, mse_stdv
 
+  def _finish_loading(self, fh):
+    self.clf = self._load_model(fh)
+
+  def save(self, fh):
+    GenericModel.save(self, fh)
+    self._save_model(self.clf, fh)
+
 
 class _PLS(object):
   def _construct(self):
@@ -238,10 +294,47 @@ class _PLS(object):
   def _cv_construct(cls):
     return PLSRegression(scale=False)
 
+  @classmethod
+  def _save_model(cls, pls, fh):
+    fh.write('%r\n%r\n' % (pls.get_params(), pls.coef_.shape))
+    fh.write(pls.x_mean_.tobytes())
+    fh.write(pls.y_mean_.tobytes())
+    fh.write(pls.coef_.tobytes())
+
+  @classmethod
+  def _load_model(cls, fh):
+    params = ast.literal_eval(fh.readline().strip())
+    coef_shape = ast.literal_eval(fh.readline().strip())
+    pls = PLSRegression().set_params(**params)
+    pls.x_mean_ = np.fromstring(fh.read(coef_shape[0] * 8))
+    pls.y_mean_ = np.fromstring(fh.read(coef_shape[1] * 8))
+    pls.x_std_ = np.ones(coef_shape[0])
+    pls.y_std_ = np.ones(coef_shape[1])
+    n = coef_shape[0] * coef_shape[1] * 8
+    pls.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
+    return pls
+
 
 class _Lasso(object):
   def _construct(self):
     return LassoLars(alpha=self.parameter, fit_intercept=False)
+
+  @classmethod
+  def _save_model(cls, m, fh):
+    fh.write('%r\n%r\n%r\n' % (m.get_params(), m.active_, m.coef_.shape))
+    fh.write(m.coef_.tobytes())
+
+  @classmethod
+  def _load_model(cls, fh):
+    params = ast.literal_eval(fh.readline().strip())
+    active = ast.literal_eval(fh.readline().strip())
+    coef_shape = ast.literal_eval(fh.readline().strip())
+    m = LassoLars().set_params(**params)
+    m.intercept_ = 0.0
+    n = coef_shape[0] * coef_shape[1] * 8
+    m.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
+    m.active_ = active
+    return m
 
 
 class _Lars(object):
@@ -251,6 +344,23 @@ class _Lars(object):
   @classmethod
   def _cv_construct(cls):
     return Lars(fit_intercept=False, fit_path=False)
+
+  @classmethod
+  def _save_model(cls, m, fh):
+    fh.write('%r\n%r\n%r\n' % (m.get_params(), m.active_, m.coef_.shape))
+    fh.write(m.coef_.tobytes())
+
+  @classmethod
+  def _load_model(cls, fh):
+    params = ast.literal_eval(fh.readline().strip())
+    active = ast.literal_eval(fh.readline().strip())
+    coef_shape = ast.literal_eval(fh.readline().strip())
+    m = Lars().set_params(**params)
+    m.intercept_ = 0.0
+    n = coef_shape[0] * coef_shape[1] * 8
+    m.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
+    m.active_ = active
+    return m
 
 
 class _LassoOrLars1(_UnivariateRegression):
@@ -274,10 +384,9 @@ class _LassoOrLars1(_UnivariateRegression):
 class _LassoOrLars2(_MultivariateRegression):
   def train(self, X, variables):
     _MultivariateRegression.train(self, X, variables)
-    for clf in self.models.values():
-      # XXX: work around a bug in sklearn
-      # see https://github.com/scikit-learn/scikit-learn/pull/8160
-      clf.coef_ = np.array(clf.coef_)
+    # XXX: work around a bug in sklearn
+    # see https://github.com/scikit-learn/scikit-learn/pull/8160
+    self.clf.coef_ = np.array(self.clf.coef_)
 
   def coefficients(self):
     coef = self.clf.coef_

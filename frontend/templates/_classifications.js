@@ -121,10 +121,8 @@ var Classify = (function() {
         var ds_info = collect_ds_info();
         dl_url += 'predictions.csv?' + $.param({ds_name: ds_info.name,
                                                 ds_kind: ds_info.kind});
-      } else if (dl_type === 'pkl') {
-        dl_url += 'model.pkl';
       } else {
-        dl_url += 'model.csv';
+        dl_url += 'model.' + dl_type;
       }
       window.open(dl_url, '_blank');
     },

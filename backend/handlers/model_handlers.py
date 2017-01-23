@@ -2,9 +2,7 @@ from __future__ import absolute_import
 import logging
 import numpy as np
 import os
-import shutil
 from io import BytesIO
-from tempfile import mkstemp
 from threading import Thread
 
 from .base import BaseHandler, MultiDatasetHandler
@@ -27,22 +25,17 @@ class ModelIOHandler(BaseHandler):
     else:
       model = fig_data.classify_model
 
-    if ext == 'pkl':
-      self._serve_pickle(model)
+    if ext == 'bin':
+      self._serve_binary(model)
     else:
       self._serve_csv(model)
 
-  def _serve_pickle(self, model):
-    _, tmp_path = mkstemp()
-    model.save(tmp_path)
-
+  def _serve_binary(self, model):
     fname = os.path.basename(self.request.path)
     self.set_header('Content-Type', 'application/octet-stream')
     self.set_header('Content-Disposition', 'attachment; filename='+fname)
-    with open(tmp_path, 'rb') as fh:
-      shutil.copyfileobj(fh, self)
+    model.save(self)  # use self as a file-like object
     self.finish()
-    os.remove(tmp_path)
 
   def _serve_csv(self, pred_model):
     all_bands, all_coefs = pred_model.coefficients()
@@ -208,5 +201,5 @@ def axes_grid(fig, n, xlabel, ylabel):
 
 routes = [
     (r'/_load_model', ModelIOHandler),
-    (r'/([0-9]+)/(regression|classifier)_model\.(csv|pkl)', ModelIOHandler),
+    (r'/([0-9]+)/(regression|classifier)_model\.(csv|bin)', ModelIOHandler),
 ]
