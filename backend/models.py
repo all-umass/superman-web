@@ -25,7 +25,7 @@ class GenericModel(object):
   def load(fh):
     class_name = fh.readline().strip()
     cls = globals().get(class_name)
-    if not issubclass(cls, GenericModel):
+    if cls is None or not issubclass(cls, GenericModel):
       raise ValueError('Invalid model file.')
     param = ast.literal_eval(fh.readline().strip())
     ds_kind = fh.readline().strip()
@@ -117,17 +117,19 @@ class Logistic(_Classifier):
 
 class KNN(_Classifier):
   def _train(self, X, y):
-    self.library = X
+    self._orig_library = X
+    self.library = self._prepare_spectra(X)
     self.classes, self.labels = np.unique(y, return_inverse=True)
     # TODO: expose these in the UI
     self.metric = 'cosine'
     self.weighting = 'distance'
 
   def _predict(self, X):
-    if X is self.library:
-      dists = pairwise_within(X, self.metric, num_procs=5)
+    if X is self._orig_library:
+      dists = pairwise_within(self.library, self.metric, num_procs=5)
       ks = slice(1, min(self.parameter+1, dists.shape[0]))
     else:
+      X = self._prepare_spectra(X)
       dists = pairwise_dists(self.library, X, self.metric, num_procs=5)
       ks = slice(0, min(self.parameter, dists.shape[0]))
     top_k = np.argsort(dists, axis=0)[ks]  # shape: (k, nX)
@@ -146,6 +148,11 @@ class KNN(_Classifier):
     winner = votes.argmax(axis=0)
     return self.classes[winner]
 
+  def _prepare_spectra(self, X):
+    if len(X) > 0 and np.asanyarray(X[0]).ndim == 2:
+      return [np.array(t, copy=False, order='C', dtype=np.float32) for t in X]
+    return np.array(X, copy=False, dtype=np.float64)
+
   @classmethod
   def cross_validate(cls, X, variables, ks=None, num_folds=5, labels=None):
     if labels is None:
@@ -155,6 +162,7 @@ class KNN(_Classifier):
 
     key, = variables.keys()
     y, name = variables[key]
+    y = np.array(y)
 
     acc = np.zeros((num_folds, len(ks)))
     for i, (train_idx, test_idx) in enumerate(cv.split(y, groups=labels)):
@@ -331,7 +339,7 @@ class _Lasso(object):
     coef_shape = ast.literal_eval(fh.readline().strip())
     m = LassoLars().set_params(**params)
     m.intercept_ = 0.0
-    n = coef_shape[0] * coef_shape[1] * 8
+    n = np.prod(coef_shape) * 8
     m.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
     m.active_ = active
     return m
@@ -357,7 +365,7 @@ class _Lars(object):
     coef_shape = ast.literal_eval(fh.readline().strip())
     m = Lars().set_params(**params)
     m.intercept_ = 0.0
-    n = coef_shape[0] * coef_shape[1] * 8
+    n = np.prod(coef_shape) * 8
     m.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
     m.active_ = active
     return m
@@ -456,7 +464,10 @@ class Lasso1(_LassoOrLars1, _Lasso):
       y, name = variables[key]
       lasso = LassoLarsCV(fit_intercept=False, max_iter=2000, cv=cv, n_jobs=1)
       _try_to_fit(lasso, X, y)
-      cv_mse = lasso.mse_path_
+      try:
+        cv_mse = lasso.mse_path_
+      except AttributeError:
+        cv_mse = lasso.cv_mse_path_
       mse_mean = cv_mse.mean(axis=1)
       mse_stdv = cv_mse.std(axis=1)
       yield name, lasso.cv_alphas_, mse_mean, mse_stdv

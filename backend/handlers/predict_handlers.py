@@ -86,8 +86,8 @@ class RegressionModelHandler(GenericModelHandler):
         self.visible_error(400, "No variables to predict.")
         return
 
-      no_crossval = (len(variables) > 1 and variate_kind == 'multi'
-                     and regress_kind == 'lasso')
+      no_crossval = (len(variables) > 1 and variate_kind == 'multi' and
+                     regress_kind == 'lasso')
       if no_crossval:
         msg = "Cross validation for %svariate %s is not yet supported." % (
             variate_kind, regress_kind.title())
