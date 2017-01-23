@@ -21,7 +21,7 @@ class SearchHandler(BaseHandler):
       return
     # get the most up to date spectrum
     try:
-      query = fig_data.get_trajectory(nan_gap=False)
+      query = fig_data.get_trajectory(nan_gap=None)
     except ValueError:
       logging.error('No query spectrum to search with.')
       return
