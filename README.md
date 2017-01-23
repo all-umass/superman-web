@@ -31,6 +31,11 @@ of the process running `superman_server.py`.
  * `tornado`
  * `pandas`
 
+For running tests:
+
+ * `coverage`
+ * `mock`
+
 
 ### Testing
 
@@ -38,5 +43,5 @@ Tests live in the `test/` directory.
 Run them directly, or use `python -m unittest discover -s test`.
 To generate a nice coverage report:
 
-    coverage run --source server -m unittest discover -s test
+    coverage run --source backend -m unittest discover -s test
     coverage html
