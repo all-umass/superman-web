@@ -205,6 +205,7 @@ NIR:
     metadata:
       - [type, LookupMetadata, Type]
       - [name, LookupMetadata, Name]
+      - [group, LookupMetadata, Group]
       - [Cpx_percentEn, NumericMetadata, 'CPx %En']
       - [Cpx_percentFs, NumericMetadata, 'CPx %Fs']
       - [Cpx_percentWo, NumericMetadata, 'CPx %Wo']
