@@ -63,8 +63,9 @@ class FigData(object):
       trans.update(t)
     return trans
 
-  def get_trajectory(self, key='pp'):
+  def get_trajectory(self, key='pp', **transformations):
     self._ds_view.transformations = self.get_trans(key=key)
+    self._ds_view.transformations.update(**transformations)
     traj, = self._ds_view.get_trajectories()
     return traj
 
