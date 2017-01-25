@@ -49,7 +49,11 @@ class _ReloadableMixin(object):
       mtime = 0
     if mtime < self.load_time:
       return
+    # release any existing data first
+    self.clear_data()
     if not self.loader_fn(self, *self.loader_args):
+      # loader failed, remove ourselves from the registry
+      DATASETS[self.kind].pop(self.name, None)
       return
     self.load_time = mtime if mtime > 0 else time.time()
     # register with the global dataset manager
