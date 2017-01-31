@@ -26,6 +26,8 @@ class RefreshHandler(BaseHandler):
 class DatasetSelectorHandler(BaseHandler):
   def post(self):
     ds = self.request_one_ds('kind', 'name')
+    if ds is None:
+      return self.visible_error(404, 'Dataset not found.')
     logging.info('Generating selector for dataset: %s', ds)
     return self.render('_spectrum_selector.html', ds=ds)
 
@@ -33,6 +35,8 @@ class DatasetSelectorHandler(BaseHandler):
 class DatasetFiltererHandler(BaseHandler):
   def post(self):
     ds = self.request_one_ds('kind', 'name')
+    if ds is None:
+      return self.visible_error(404, 'Dataset not found.')
     logging.info('Generating filter HTML for dataset: %s', ds)
 
     if ds.pkey is None and not ds.metadata:
@@ -61,7 +65,7 @@ class DatasetCompositionOptionsHandler(BaseHandler):
   def post(self):
     all_ds = self.request_many_ds('kind[]', 'name[]')
     if len(all_ds) != 1:
-      return self.write('This only works for 1 dataset at a time.')
+      return self.visible_error(403, 'This only works for 1 dataset at a time.')
     ds, = all_ds
     logging.info('Generating composition options HTML for: %s', ds)
 
@@ -106,7 +110,7 @@ class DatasetRemovalHandler(BaseHandler):
   def post(self):
     ds = self.request_one_ds('kind', 'name')
     if not ds.user_added:
-      return self.write('Cannot remove this dataset.')
+      return self.visible_error(403, 'Cannot remove this dataset.')
     logging.info('Removing user-added dataset: %s', ds)
     del DATASETS[ds.kind][ds.name]
     self.redirect('/datasets')
