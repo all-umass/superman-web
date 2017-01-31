@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import logging
 import numpy as np
 import os
 import pandas as pd
@@ -74,9 +75,9 @@ class DatasetImportHandler(BaseHandler):
       try:
         # TODO: ensure each traj has wavelengths in increasing order
         traj_data[fname] = parse_spectrum(sub_fh)
-      except Exception as e:
-        self.visible_error(415, 'Unable to parse spectrum file: %s' % fname,
-                           'bad spectrum subfile (%s): %s', fname, e)
+      except Exception:
+        logging.exception('bad spectrum subfile: ' + fname)
+        self.visible_error(415, 'Unable to parse spectrum file: %s' % fname)
         return False
 
     num_meta = len(meta_pkeys)
@@ -128,9 +129,9 @@ class DatasetImportHandler(BaseHandler):
       data = np.genfromtxt(fh, dtype=np.float32, delimiter=',', unpack=True)
       wave = data[0]
       spectra = data[1:]
-    except Exception as e:
-      self.visible_error(415, 'Unable to parse spectrum data CSV.',
-                         'bad spectra file: %s', e)
+    except Exception:
+      logging.exception('Bad spectra file.')
+      self.visible_error(415, 'Unable to parse spectrum data CSV.')
       return False
 
     # cut out empty rows (where wave is NaN)
@@ -209,9 +210,9 @@ class DatasetImportHandler(BaseHandler):
     fh = BytesIO(f['body'])
     try:
       meta = pd.read_csv(fh)
-    except Exception as e:
-      self.visible_error(415, 'Unable to parse metadata CSV.',
-                         'bad metadata file: %s', e)
+    except Exception:
+      logging.exception('Bad metadata file')
+      self.visible_error(415, 'Unable to parse metadata CSV.')
       return None, None
 
     if meta.columns[0] != 'pkey':

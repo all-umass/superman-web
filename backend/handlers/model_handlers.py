@@ -74,9 +74,9 @@ class ModelIOHandler(BaseHandler):
     fh = BytesIO(f['body'])
     try:
       model = GenericModel.load(fh)
-    except Exception as e:
-      return self.visible_error(415, 'Invalid model file.',
-                                'Failed to parse model file: %s', e.message)
+    except Exception:
+      logging.exception('Failed to parse model file.')
+      return self.visible_error(415, 'Invalid model file.')
 
     # do some validation
     if not isinstance(model, GenericModel):

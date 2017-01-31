@@ -34,21 +34,27 @@ class BaselineHandler(BaseHandler):
 
     fig_data.add_transform('baseline-corrected', **trans)
     logging.info('Running BLR: %r', trans)
+    try:
+      bands, corrected = fig_data.get_trajectory('baseline-corrected').T
+    except Exception:
+      logging.exception('BLR failed.')
+      return self.visible_error(400, 'Baseline correction failed.')
 
     if len(fig_data.figure.axes) == 2:
       # comparison view for the baseline page
       ax1, ax2 = fig_data.figure.axes
       fig_data.plot('upload', ax=ax1)
-      bands, corrected = fig_data.get_trajectory('baseline-corrected').T
       baseline = trans['blr_obj'].baseline.ravel()
       fig_data.baseline = baseline
       ax1.plot(bands, baseline, 'r-')
       ax2.plot(bands, corrected, 'k-')
       ax2.set_title('Corrected')
-      fig_data.manager.canvas.draw()
     else:
       # regular old plot of the corrected spectrum
-      fig_data.plot('baseline-corrected')
+      ax = fig_data.figure.gca()
+      ax.plot(bands, corrected, '-')
+      ax.set_title(fig_data.title)
+    fig_data.manager.canvas.draw()
 
 # Define the routes for each handler.
 routes = [

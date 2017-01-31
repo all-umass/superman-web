@@ -84,13 +84,13 @@ class UploadHandler(BaseHandler):
     fh = BytesIO(f['body'])
     try:
       query = parse_spectrum(fh)
-    except Exception as e:
+    except Exception:
       try:
         fh = StringIO(f['body'].decode('utf-8', 'ignore'), newline=None)
         query = parse_spectrum(fh)
-      except Exception as e:
-        return self.visible_error(415, 'Spectrum upload failed.',
-                                  'Spectrum parse failed: %s', e.message)
+      except Exception:
+        logging.exception('Spectrum parse failed.')
+        return self.visible_error(415, 'Spectrum upload failed.')
     ds = UploadedSpectrumDataset(fname, query)
     fig_data.set_selected(ds.view(), title=fname)
     axlimits = fig_data.plot()
