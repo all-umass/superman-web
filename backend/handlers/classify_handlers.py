@@ -37,7 +37,7 @@ class ClassificationModelHandler(GenericModelHandler):
     self.set_header('Content-Type', 'text/plain')
     self.set_header('Content-Disposition',
                     'attachment; filename='+fname)
-    self.write('Spectrum,%s,Predicted\n' % model.var_name)
+    self.write('Spectrum,%s,Predicted\n' % model.var_names[0])
     for row in zip(all_pkeys, actuals, preds):
       self.write('%s,%s,%s\n' % row)
     self.finish()
