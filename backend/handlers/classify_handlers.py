@@ -57,7 +57,7 @@ class ClassificationModelHandler(GenericModelHandler):
     model_kind = self.get_argument('model_kind')
     model_cls = CLASSIFICATION_MODELS[model_kind]
     params = dict(knn=int(self.get_argument('knn_k')),
-                  logistic=int(self.get_argument('logistic_C')))
+                  logistic=float(self.get_argument('logistic_C')))
     pred_key = self.get_argument('pred_var')
     variables = self.collect_variables(all_ds_views, (pred_key,))
 
