@@ -57,11 +57,9 @@ class RegressionModelHandler(GenericModelHandler):
     if actuals and preds:
       actuals = np.column_stack(actuals)
       preds = np.column_stack(preds)
-      row = np.empty((len(names) * 2,), dtype=float)
-      for i, key in enumerate(all_pkeys):
-        row[::2] = actuals[i]
-        row[1::2] = preds[i]
-        self.write('%s,' % key + ','.join('%g' % x for x in row) + '\n')
+      for key, aa, pp in zip(all_pkeys, actuals, preds):
+        row = ','.join('%g,%g' % t for t in zip(aa, pp))
+        self.write('%s,%s\n' % (key, row))
     self.finish()
 
   @gen.coroutine
