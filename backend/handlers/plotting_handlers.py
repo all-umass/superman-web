@@ -257,6 +257,7 @@ class FilterPlotHandler(MultiDatasetHandler):
         try:
           tt = dv.get_trajectories()
         except ValueError as e:
+          logging.exception('Failed to get data from %s', dv.ds)
           self.visible_error(400, e.message)
           return None
         else:
@@ -264,12 +265,19 @@ class FilterPlotHandler(MultiDatasetHandler):
       return PlotData(scatter=False, trajs=trajs, xlabel=' & '.join(xlabels),
                       ylabel='Intensity', xticks=None, yticks=None)
     # scatter
-    xdata, xlabel, xticks = _get_axis_data(all_ds_views, xaxis)
-    ydata, ylabel, yticks = _get_axis_data(all_ds_views, yaxis)
+    try:
+      xdata, xlabel, xticks = _get_axis_data(all_ds_views, xaxis)
+      ydata, ylabel, yticks = _get_axis_data(all_ds_views, yaxis)
+    except Exception as e:
+      logging.exception('Failed to get axis data.')
+      self.visible_error(400, e.message)
+      return None
+
     if xdata is None or ydata is None:
       self.visible_error(400, 'Bad axis type combination.',
                          'Invalid axis combo: %s vs %s', xaxis, yaxis)
       return None
+
     trajs = [np.column_stack((xdata, ydata))]
     return PlotData(scatter=True, trajs=trajs, xlabel=xlabel, ylabel=ylabel,
                     xticks=xticks, yticks=yticks)
