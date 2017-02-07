@@ -221,6 +221,14 @@ NIR:
       Spectra of meteorite powders from the National Museum of Natural History,
       along with spectra of synthetic olivines and pyroxenes (components of
       those meteorites). All data acquired at RELAB, Brown University.
+  Asteroids:
+    file: /srv/nfs/common/spectra/misc/asteroids.hdf5
+    metadata:
+      - [id, LookupMetadata, ID]
+      - [name, LookupMetadata, Name]
+      - [type, LookupMetadata, Type]
+      - [class, LookupMetadata, Class]
+      - [date, DateMetadata, Date]
 XRD:
   RRUFF:
     file: /srv/nfs/common/spectra/misc/rruff-xrd.hdf5
