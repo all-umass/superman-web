@@ -30,7 +30,7 @@ def _generic_traj_loader(meta_mapping):
         continue
       m = meta[key]
       if cls is DateMetadata:
-        m = pd.to_datetime(m)
+        m = pd.to_datetime(np.array(m))
       safe_key = re.sub(r'[^a-z0-9_-]', '', key, flags=re.I)
       kwargs[safe_key] = cls(m, display_name=display_name)
     ds.set_data(meta['pkey'], data['/spectra'], **kwargs)
@@ -58,7 +58,7 @@ def _generic_vector_loader(meta_mapping):
       if cls is PrimaryKeyMetadata:
         kwargs['pkey'] = cls(meta[key])
       elif cls is DateMetadata:
-        kwargs[key] = cls(pd.to_datetime(meta[key]), display_name=display_name)
+        kwargs[key] = cls(pd.to_datetime(np.array(meta[key])), display_name=display_name)
       else:
         kwargs[key] = cls(meta[key], display_name=display_name)
     if '/composition' in data:
