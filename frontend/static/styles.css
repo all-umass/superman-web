@@ -1,6 +1,6 @@
 body { padding: 1.5em; }
 .title { font:3em bold; vertical-align: middle; }
-#logo { vertical-align: middle; }
+#logo { vertical-align: middle; width: 100px; height: 100px; }
 .uline { border-bottom: 1px solid black; }
 .oline { border-top: 1px solid black; }
 .rline { border-right: 1px solid black; }
