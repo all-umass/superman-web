@@ -179,7 +179,7 @@ function add_baseline_args(ctx, post_data, method) {
   post_data['blr_flip'] = table.find('.blr_flip').is(':checked');
   if (method) {
     var idx = method.length + 1;
-    table.find('td.param.'+method+'>span').each(function(i,e){
+    table.find('.param.'+method+'>span').each(function(i,e){
       var param = e.className.substr(idx);
       post_data['blr_' + param] = e.innerHTML;
     });

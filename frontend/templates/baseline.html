@@ -11,37 +11,69 @@ $(document).ready(function(){
 });
 </script>
 <style type="text/css">
-#ds_selector_wrapper { padding-top: 1em; }
-#baseline_steps { float: left; }
-#fig_wrapper { clear: none; float: left; padding: 0 2em; display: inline-block;}
+#ds_selector_wrapper { padding: 1em 0; }
+input[type="number"] { width: 4em; }
+input[type="range"] {
+  width: 20em;
+  padding-right: 1em;
+  padding-bottom: 0.75em;
+  display: block;
+}
+#container {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+}
+#lhs {
+  display: inline-flex;
+  flex-flow: column nowrap;
+  flex-grow: 1;
+  padding-right: 1em;
+  padding-bottom: 1em;
+  max-width: 35em;
+}
+.bl_options {
+  display: inline-flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+}
+.bl_chunk {
+  display: inline-flex;
+  justify-content: center;
+  text-align: center;
+}
+.bl_heading {
+  padding: 0.5em 0;
+  flex-grow: 1;
+}
+.bl_separator { height: 1em; }
 </style>
 {% end %}
 
 {% block body_matter %}
 {% include '_dataset_selector.html' %}
 
-<div id="baseline_steps">
-<table id="baseline_table" class="pp_table">
-<tr class="uline"><th colspan=4>Baseline Correction Algorithms</th></tr>
-<!-- generic options -->
-<tr class="uline"><td class="rline vcenter">General Options</td>
-<td colspan=2>
-<label>Segmented: <input type="checkbox" class="blr_segmented"></label>
-<label>Inverted: <input type="checkbox" class="blr_inverted"></label>
-<label>Flip: <input type="checkbox" class="blr_flip"></label></td>
-<td>Bounds:
+<div id="container">
+<div id="lhs">
+
+<div class="bl_options">
+<label>Bounds:
   <input class="crop_lb" type="number" step="any" placeholder="min"> to
   <input class="crop_ub" type="number" step="any" placeholder="max">
-</td></tr>
+</label>
+<label><input type="checkbox" class="blr_segmented">Segmented</label>
+<label><input type="checkbox" class="blr_inverted">Inverted</label>
+<label><input type="checkbox" class="blr_flip">Flipped</label>
+</div>
+
 {% for key, bl in bl_classes %}
-  <tr>
-  <td class="rline uline vcenter" rowspan=2>
-    <button class="needs_plot" disabled onclick="do_baseline('#baseline_table', '{{key}}')">
-      {{bl.__class__.__name__}}
-    </button>
-  </td>
+  <div class="bl_separator"></div>
+  <div class="bl_chunk">
+  <div class="flex-column">
   {% for param, (lb,ub,scale) in list(bl.param_ranges().items()) %}
-    <td class="param {{key}}" colspan={{3 if len(bl.param_ranges()) == 1 else 1}}>
+    <label class="param {{key}}"}>
+      {{param.replace('_', ' ').strip()}} =
+      <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
       <input type="range"
              step={{compute_step(lb,ub,scale)}}
         {% if scale == 'log' %}
@@ -55,24 +87,16 @@ $(document).ready(function(){
              oninput="$('.{{key}}_{{param}}').text(this.value);"
              onchange="$('.{{key}}_{{param}}').text(this.value);"
         {% end %}>
-    </td>
+    </label>
   {% end %}
-  </tr>
-  <tr class="uline">
-  {% for param in list(bl.param_ranges()) %}
-    <td class="param {{key}}" colspan={{3 if len(bl.param_ranges()) == 1 else 1}}>
-      {{param.replace('_', ' ').strip()}} =
-      <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
-    </td>
-  {% end %}
-  {% if len(bl.param_ranges()) == 0 %}
-    <td colspan=3></td>
-  {% elif len(bl.param_ranges()) == 2 %}
-    <td></td>
-  {% end %}
-  </tr>
+  </div>
+  <button class="needs_plot bl_heading" disabled
+          onclick="do_baseline('#lhs', '{{key}}')">
+    {{bl.__class__.__name__}}
+  </button>
+  </div>
 {% end %}
-</table>
+
 <div id="baseline_messages"></div>
 </div>
 
@@ -81,5 +105,6 @@ $(document).ready(function(){
 <br />
 <button class="needs_plot" onclick="download_baseline();" disabled>
 Download original &amp; baseline</button>
+</div>
 </div>
 {% end %}
