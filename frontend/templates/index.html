@@ -1,15 +1,18 @@
 {% extends "_common.html" %}
 {% block head_matter %}
 <style type="text/css">
-#page_nav { text-align: center; }
+#page_nav {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+}
 .footer { font-size: smaller; }
 .subpage {
   padding: 0.5em;
   margin: 0.5em 1.5em;
   font-size: 1.2em;
   text-align: center;
-  display: inline-block;
-  width: 30%;
+  width: 25em;
   border: 1px solid black;
   border-radius: 1em;
   color: black;
