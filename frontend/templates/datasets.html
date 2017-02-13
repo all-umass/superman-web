@@ -58,7 +58,10 @@ $(document).ready(function() {
   border: none;
 }
 #datasets tr.extra .hideme {
-  display: none;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
   border-top: 1px solid black;
 }
 #datasets tr.extra .explore_btn {
@@ -67,18 +70,13 @@ $(document).ready(function() {
   appearance: button;
   color: initial;
   text-decoration: none;
-  display: inline-block;
-  vertical-align: middle;
   text-align: center;
-  margin: 0;
+  margin: 0 0.5em;
   padding: 1em 0.5em;
-  width: 10%;
+  flex: 1 0 auto;
 }
 #datasets tr.extra .ds_info {
-  display: inline-block;
-  vertical-align: middle;
   padding: 0.25em 0;
-  width: 85%;
 }
 #datasets tr.extra .ds_info .metadata {
   display: inline;
@@ -139,7 +137,8 @@ $(document).ready(function() {
     {% end %}
     <td>{{dt(int(d.load_time)).strftime("%Y-%m-%d %H:%M")}}</td>
   </tr>
-  <tr class='extra tablesorter-childRow'><td colspan=6><div class='hideme'>
+  <tr class='extra tablesorter-childRow'><td colspan=6>
+   <div class='hideme' style="display: none;">
     <a class='explore_btn'
  href="/explorer?ds_kind={{url_escape(d.kind)}}&ds_name={{url_escape(d.name)}}">
     Explore</a>
