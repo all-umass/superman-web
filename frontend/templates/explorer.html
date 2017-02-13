@@ -4,11 +4,16 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
 <style type="text/css">
+.all_sections {
+  display: inline-flex;
+  flex-direction: column;
+}
 .horiz_section {
-  padding: 0.25em 1.5em;
-  margin: 0 -1.5em;
   background-color: #abe3ff;
   text-align: center;
+  /* XXX: these depend on body padding = 0.7em */
+  padding: 0.25em 0.7em;
+  margin: 0 -0.7em;
 }
 .horiz_section:nth-child(even) { background-color: #8ec0d8; }
 .section_heading { font-size: large; text-align: left; }
@@ -218,8 +223,9 @@ $(document).ready(function(){
 {% block body_matter %}
 <div id="easter_egg" onclick="$('body,.horiz_section').toggleClass('darby');"></div>
 
+<div class="all_sections">
 <div class="horiz_section">
-<div class='section_heading'>Select Data
+<div class="section_heading">Select Data
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'ul,div');"></button>
 </div>
@@ -316,5 +322,5 @@ $(document).ready(function(){
 <div id="figure"></div>
 {% include '_zoom_control.html' %}
 </div>
-
+</div>
 {% end %}
