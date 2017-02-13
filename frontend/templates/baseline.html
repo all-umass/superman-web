@@ -19,18 +19,21 @@ input[type="range"] {
   padding-bottom: 0.75em;
   display: block;
 }
-#container {
+#two_columns {
   display: flex;
   flex-flow: row wrap;
   justify-content: space-around;
 }
-#lhs {
+#bl_methods_column {
   display: inline-flex;
   flex-flow: column nowrap;
-  flex-grow: 1;
+  flex: 0 0 auto;
   padding-right: 1em;
   padding-bottom: 1em;
-  max-width: 35em;
+}
+#fig_column {
+  flex: 1 0 auto;
+  padding-bottom: 50%;
 }
 .bl_options {
   display: inline-flex;
@@ -53,8 +56,8 @@ input[type="range"] {
 {% block body_matter %}
 {% include '_dataset_selector.html' %}
 
-<div id="container">
-<div id="lhs">
+<div id="two_columns">
+<div id="bl_methods_column">
 
 <div class="bl_options">
 <label>Bounds:
@@ -91,7 +94,7 @@ input[type="range"] {
   {% end %}
   </div>
   <button class="needs_plot bl_heading" disabled
-          onclick="do_baseline('#lhs', '{{key}}')">
+          onclick="do_baseline('#bl_methods_column', '{{key}}')">
     {{bl.__class__.__name__}}
   </button>
   </div>
@@ -100,7 +103,7 @@ input[type="range"] {
 <div id="baseline_messages"></div>
 </div>
 
-<div id="fig_wrapper">
+<div id="fig_column">
 <div id="figure"></div>
 <br />
 <button class="needs_plot" onclick="download_baseline();" disabled>

@@ -96,7 +96,7 @@ class DataExplorerPage(Subpage):
   template = 'explorer.html'
   title = 'Dataset Explorer'
   description = 'Filter and plot datasets.'
-  figsize = (14, 6)
+  figsize = (8, 4)
 
   def get(self):
     ds_tree = defaultdict(dict)

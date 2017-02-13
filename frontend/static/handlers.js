@@ -131,10 +131,21 @@ function onready_boilerplate(ws_uri, fignum) {
     window.open('/'+figure.id+'/download.' + format, '_blank');
   }
   $('body').on('contextmenu', '#figure', function(e){ return false; });
+  var fig_div = $('div#figure'),
+      fig_width = fig_div.width(),
+      fig_height = fig_div.height();
   var websocket_type = mpl.get_websocket_type();
   var websocket = new websocket_type(ws_uri + fignum + "/ws");
-  fig = new mpl.figure(fignum, websocket, ondownload, $('div#figure'));
-  $('.mpl-toolbar-option option')[2].disabled = true;  // Hack to disable pgf
+  fig = new mpl.figure(fignum, websocket, ondownload, fig_div);
+  // Hack to disable pgf image download option
+  $('.mpl-toolbar-option option')[2].disabled = true;
+  // wait for the websocket to be ready, then ask the figure to resize
+  var check_ready = setInterval(function(){
+    if (websocket.readyState === 1) {
+      clearInterval(check_ready);
+      fig.request_resize(fig_width, fig_height);
+    }
+  }, 100);
 }
 function do_zoom() {
   var post_data = {

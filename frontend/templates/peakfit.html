@@ -159,7 +159,6 @@ function autofill_peakfit_params() {
   $('#peakloc,#peakloc2').val(midpt);
 }
 $(document).ready(function(){
-  $('#blr_pp_steps').toggle();
   $('#locfixed').button();
   onready_boilerplate("{{ws_uri}}", {{ fig_id }});
   // make the blr/pp interactive
@@ -179,9 +178,15 @@ $(document).ready(function(){
 </script>
 <style type="text/css">
 #ds_selector_wrapper { padding-top: 1em; }
-#lhs { float: left; }
-#fig_wrapper { clear: none; float: left; padding: 0 2em; display: inline-block;}
-#fit_result { float: right; }
+#single_peakfit {
+  display: flex;
+  flex-flow: column nowrap;
+}
+#single_peakfit_options {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-end;
+}
 #fit_result th { padding: 0.2em 1em; text-align: right; font-weight: bold; }
 #fit_result td { padding: 0.2em 1em; text-align: left; }
 #peakfit_params td.ralign { text-align: right; padding-right: 0; }
@@ -194,13 +199,10 @@ label[for=locfixed].ui-state-active>span:after { content: "fixed" }
 {% block body_matter %}
 {% include '_dataset_selector.html' %}
 
-<div id='lhs'>
-<div>
-(Optional) apply baseline correction / preprocessing:
-<button onclick="$('#blr_pp_steps').toggle()">show/hide table</button>
+<div id="single_peakfit">
+<div id="single_peakfit_options">
 <div id='blr_pp_steps'>
 {% include '_blr_pp_table.html' %}
-</div>
 </div>
 
 <table id="peakfit_params" class="pp_table">
@@ -257,12 +259,9 @@ Automatic</button><br>(Multiple peaks)</td>
 <input type="checkbox" name="peaktypes" value="gaussian" checked>Gaussian
 </label></td></tr>
 </tbody></table>
+
 <div class="err_msg"></div>
 
-</div>  <!-- lhs -->
-
-<div id="fig_wrapper">
-<div id="figure"></div>
 <table id='fit_result' style='display: none'>
 <!-- <caption class='bold'>Peak Parameters</caption> -->
 <thead><tr class='uline'><th></th></tr></thead>
@@ -273,12 +272,17 @@ Automatic</button><br>(Multiple peaks)</td>
 <tr id='fit_area'><th class='rline'>Area</th></tr>
 </tbody>
 </table>
-<br style="clear:both">
-{% include '_zoom_control.html' %}
+</div>  <!-- single_peakfit_options -->
+
+<div>
+  <div id="figure"></div>
+  {% include '_zoom_control.html' %}
 </div>
 
+</div>  <!-- single_peakfit -->
+
 <!-- batch mode -->
-<div style="clear:both">
+<div id="batch_peakfit">
 <b>Batch Mode</b>
 <p>
 Download all peak data for the filtered subset using the settings above.
@@ -298,7 +302,6 @@ Algorithm type:
 <br />
 <button class="needs_filter" onclick="do_batch_download();" disabled>
 Download peak data</button>
-</div>
 </div>
 
 {% end %}
