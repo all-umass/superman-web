@@ -1,12 +1,8 @@
 {% extends "_common.html" %}
 {% block head_matter %}
 <style type="text/css">
-#page_nav {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: center;
-}
-.footer { font-size: smaller; }
+nav { display: flex; flex-flow: row wrap; justify-content: center; }
+footer { font-size: smaller; }
 .subpage {
   padding: 0.5em;
   margin: 0.5em 1.5em;
@@ -27,17 +23,17 @@
 {% end %}
 
 {% block body_matter %}
-<div id="page_nav">
+<nav>
 {% for title, link, desc in subpage_info %}
   <a href='{{link}}' class="subpage"><p>
     <span class='subpage_title'>{{title}}</span>
     {{desc}}
   </p></a>
 {% end %}
-</div>
+</nav>
 
-<hr />
-<p class="footer">
+<footer>
+<hr>
 {% if logged_in %}
 Source code available on
 <a href='https://github.com/all-umass/superman-web'>Github</a>.<br />
@@ -45,5 +41,5 @@ Source code available on
 {% else %}
 <a href='/login?next=/'>Log in</a> to view non-public data.
 {% end %}
-</p>
+</footer>
 {% end %}
