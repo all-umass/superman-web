@@ -1,17 +1,8 @@
 body { padding: 0.7em; }
-.header {
-  display: flex;
-  align-items: center;
-}
-.title {
-  font: 3em bold;
-  padding-left: 0.1em;
-}
-#logo {
-  display: block;
-  width: 100px;
-  height: 100px;
-}
+body > header { display: flex; align-items: center; }
+body > header .title { font: 3em bold; padding-left: 0.1em; }
+body > header #logo { display: block; width: 100px; height: 100px; }
+
 .uline { border-bottom: 1px solid black; }
 .oline { border-top: 1px solid black; }
 .rline { border-right: 1px solid black; }
