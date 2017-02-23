@@ -59,8 +59,8 @@ $(document).ready(function() {
 }
 #datasets tr.extra .hideme {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
   align-items: center;
   border-top: 1px solid black;
 }
@@ -73,7 +73,7 @@ $(document).ready(function() {
   text-align: center;
   margin: 0 0.5em;
   padding: 1em 0.5em;
-  flex: 1 0 auto;
+  flex: 0 0 auto;
 }
 #datasets tr.extra .ds_info {
   padding: 0.25em 0;
