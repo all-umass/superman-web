@@ -253,18 +253,18 @@ def _get_filter_html(m, key, full_key):
     ub_input = '<input type="date" id="%s_ub" value="%s">' % (full_key, ub)
     return '%s:<br>%s to %s' % (disp, lb_input, ub_input)
   # only chosen selects remain (Lookup/PrimaryKey/Tag)
-  html = ('%s:<br /><select id="%s_chooser" data-placeholder="All" '
-          'class="chosen-select" multiple>\n') % (disp, full_key)
+  html = (u'%s:<br /><select id="%s_chooser" data-placeholder="All" '
+          u'class="chosen-select" multiple>\n') % (disp, full_key)
   if isinstance(m, PrimaryKeyMetadata):
     uniques = sorted(m.keys)
   elif isinstance(m, TagMetadata):
     uniques = sorted(m.tags)
   else:
     uniques = m.uniques
-  html += '\n'.join(
-      '<option value="%s">%s</option>' % (x, xhtml_escape(str(x)))
+  html += u'\n'.join(
+      u'<option value="%s">%s</option>' % (x, xhtml_escape(str(x)))
       for x in uniques)
-  html += '</select>'
+  html += u'</select>'
   return html
 
 
