@@ -289,6 +289,32 @@ def load_mhc_raman(ds, data_dir, meta_file):
   return True
 
 
+def load_mhc_mossbauer(ds, data_dir, meta_file):
+  logging.info('Loading MHC Mossbauer data...')
+  data_file = os.path.join(data_dir, 'mossbauer.%03d.hdf5')
+  chan_file = os.path.join(data_dir, 'channels.npy')
+  bands = np.load(chan_file)
+  try:
+    hdf5 = h5py.File(data_file, driver='family', mode='r')
+    meta = np.load(meta_file)
+  except IOError as e:
+    logging.warning('Failed to load data in %s!' % data_dir)
+    logging.warning(str(e))
+    return None
+  pkey = PrimaryKeyMetadata(meta['Sample #'])
+  ds.set_data(bands, hdf5['/spectra'], pkey=pkey,
+              SampleName=LookupMetadata(meta['Sample Name'],
+                                        display_name='Sample Name'),
+              DanaGroup=LookupMetadata(meta['Dana Group'],
+                                       display_name='Dana Group'),
+              #Temp=NumericMetadata(meta['T(K)']), # TODO
+              Temp=LookupMetadata(meta['T(K)']),
+              GroupFolder=LookupMetadata(meta['Group Folder']),
+              OwnerSource=LookupMetadata(meta['Owner/Source']),
+              )
+  return True
+
+
 def _try_load(filepath, data_name):
   logging.info('Loading %s data...' % data_name)
   if not os.path.exists(filepath):

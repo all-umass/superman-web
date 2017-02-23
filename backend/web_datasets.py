@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 # Global structure for all loaded datasets.
-DATASETS = dict(Raman={}, LIBS={}, FTIR={}, NIR={}, XAS={}, XRD={})
+DATASETS = dict(Raman={}, LIBS={}, FTIR={}, NIR={}, XAS={}, XRD={}, Mossbauer={})
 
 # Ordering for filters of various metadata types.
 FILTER_ORDER = {
@@ -69,6 +69,8 @@ class _ReloadableMixin(object):
       return 'Energy (eV)'
     if self.kind == 'XRD':
       return '2 Theta'
+    if self.kind == 'Mossbauer':
+      return 'Velocity (mm/s)'
     return 'Unknown units'
 
   def filter_ui(self):
