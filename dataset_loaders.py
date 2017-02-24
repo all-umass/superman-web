@@ -7,6 +7,7 @@ import pandas as pd
 import re
 from six.moves import xrange
 
+from superman.dana import dana_class_names
 from superman.dataset import (
     NumericMetadata, BooleanMetadata, PrimaryKeyMetadata, LookupMetadata,
     CompositionMetadata, TagMetadata, DateMetadata)
@@ -58,7 +59,8 @@ def _generic_vector_loader(meta_mapping):
       if cls is PrimaryKeyMetadata:
         kwargs['pkey'] = cls(meta[key])
       elif cls is DateMetadata:
-        kwargs[key] = cls(pd.to_datetime(np.array(meta[key])), display_name=display_name)
+        kwargs[key] = cls(pd.to_datetime(np.array(meta[key])),
+                          display_name=display_name)
       else:
         kwargs[key] = cls(meta[key], display_name=display_name)
     if '/composition' in data:
@@ -293,24 +295,39 @@ def load_mhc_mossbauer(ds, data_dir, meta_file):
   logging.info('Loading MHC Mossbauer data...')
   data_file = os.path.join(data_dir, 'mossbauer.%03d.hdf5')
   chan_file = os.path.join(data_dir, 'channels.npy')
-  bands = np.load(chan_file)
   try:
     hdf5 = h5py.File(data_file, driver='family', mode='r')
     meta = np.load(meta_file)
+    bands = np.load(chan_file)
   except IOError as e:
     logging.warning('Failed to load data in %s!' % data_dir)
     logging.warning(str(e))
     return None
-  pkey = PrimaryKeyMetadata(meta['Sample #'])
-  ds.set_data(bands, hdf5['/spectra'], pkey=pkey,
-              SampleName=LookupMetadata(meta['Sample Name'],
-                                        display_name='Sample Name'),
-              DanaGroup=LookupMetadata(meta['Dana Group'],
-                                       display_name='Dana Group'),
-              #Temp=NumericMetadata(meta['T(K)']), # TODO
-              Temp=LookupMetadata(meta['T(K)']),
-              GroupFolder=LookupMetadata(meta['Group Folder']),
-              OwnerSource=LookupMetadata(meta['Owner/Source']),
+
+  # convert Dana class names
+  dana_nums, dana_labels = np.unique(meta['Dana Group'], return_inverse=True)
+  dana_classes = []
+  for d in dana_nums:
+    try:
+      d = int(d)
+    except ValueError:
+      dana_classes.append('N/A')
+    else:
+      dana_classes.append(dana_class_names.get(d, 'Unknown'))
+  dana = LookupMetadata(dana_classes, labels=dana_labels,
+                        display_name='Dana Class')
+
+  # TODO: Convert temps to numeric form.
+  # Currently it's mostly numeric, with some free-form garbage values.
+  temp = LookupMetadata(meta['T(K)'], display_name='Temperature (K)')
+
+  ds.set_data(bands, hdf5['/spectra'], temp=temp, dana=dana,
+              pkey=PrimaryKeyMetadata(meta['Sample #']),
+              name=LookupMetadata(meta['Sample Name'],
+                                  display_name='Sample Name'),
+              folder=LookupMetadata(meta['Group Folder']),
+              source=LookupMetadata(meta['Owner/Source'],
+                                    display_name='Owner/Source'),
               )
   return True
 
