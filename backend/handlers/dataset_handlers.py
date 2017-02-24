@@ -18,6 +18,7 @@ class RefreshHandler(BaseHandler):
 
   def post(self):
     logging.info('Refreshing datasets')
+    # TODO: run these in separate threads!
     for ds in self.all_datasets():
       ds.reload()
     self.redirect('/datasets')
