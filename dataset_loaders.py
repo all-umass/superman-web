@@ -310,7 +310,7 @@ def load_mhc_mossbauer(ds, data_dir, meta_file):
   for d in dana_nums:
     try:
       d = int(d)
-    except ValueError:
+    except (ValueError, TypeError):
       dana_classes.append('N/A')
     else:
       dana_classes.append(dana_class_names.get(d, 'Unknown'))
