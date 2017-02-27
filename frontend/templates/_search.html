@@ -29,8 +29,8 @@ function do_search(btn) {
   // collect search params
   var ds_info = collect_ds_info();
   var post_data = {
-    target_name: ds_info.name,
-    target_kind: ds_info.kind,
+    ds_name: ds_info.name,
+    ds_kind: ds_info.kind,
     pp: collect_pp_args($('#pp_options')),
     metric: $('#wsm_metric > option:selected').val(),
     param: $('#wsm_param').text(),

@@ -9,15 +9,15 @@ from superman.dataset import LookupMetadata
 from tornado import gen
 from threading import Thread
 
-from .base import BaseHandler
+from .base import BaseHandler, MultiDatasetHandler
 
 
-class SearchHandler(BaseHandler):
+class SearchHandler(MultiDatasetHandler):
   @gen.coroutine
   def post(self):
     fig_data = self.get_fig_data()
-    ds = self.request_one_ds('target_kind', 'target_name')
-    if fig_data is None or ds is None:
+    if fig_data is None:
+      self.visible_error(403, "Broken connection to server.")
       return
     # get the most up to date spectrum
     try:
@@ -46,12 +46,21 @@ class SearchHandler(BaseHandler):
       query[:,1] = preprocess(query[:,1:2].T, 'normalize:max').ravel()
 
     # prepare the target library
-    trans = self.ds_view_kwargs(nan_gap=None)
-    if not trans['pp']:
+    extra_kwargs = dict(nan_gap=None)
+    if self.get_argument('pp', None) is None:
       logging.warning('Applying max-normalization to library before search')
-      trans['pp'] = 'normalize:max'
-    mask = fig_data.filter_mask.get(ds, Ellipsis)
-    ds_view = ds.view(mask=mask, **trans)
+      extra_kwargs['pp'] = 'normalize:max'
+    all_ds_views, _ = self.prepare_ds_views(fig_data, **extra_kwargs)
+    if all_ds_views is None:
+      self.visible_error(404, 'Failed to look up dataset(s).')
+      return
+
+    # TODO: enable searching over multiple datasets
+    if len(all_ds_views) != 1:
+      self.visible_error(403, 'Can only search over one dataset.')
+      return
+    ds_view, = all_ds_views
+    ds = ds_view.ds
 
     # search!
     try:
@@ -61,14 +70,18 @@ class SearchHandler(BaseHandler):
       return
 
     # get query info
-    query_name, = fig_data._ds_view.ds.pkey.index2key(fig_data._ds_view.mask)
+    query_name, = fig_data._ds_view.get_primary_keys()
     query_meta = {label: data[0] for data, label
                   in _lookup_metas(fig_data._ds_view)}
 
     # get any LookupMetadata associated with the matches
     all_names = [n for names in top_names for n in names]
-    ds_view.mask, = np.nonzero(ds.filter_metadata(dict(pkey=all_names)))
-    all_names = ds.pkey.keys[ds_view.mask]
+    if ds.pkey is None:
+      ds_view.mask = np.array([int(n.rsplit(' ', 1)[1]) for n in all_names],
+                              dtype=int)
+    else:
+      ds_view.mask, = np.nonzero(ds.filter_metadata(dict(pkey=all_names)))
+    all_names = ds_view.get_primary_keys()
     top_meta = defaultdict(dict)
     for data, label in _lookup_metas(ds_view):
       for name, x in zip(all_names, data):
@@ -137,6 +150,7 @@ class CompareHandler(BaseHandler):
 
     # select only the comparison samples
     names = ast.literal_eval(self.get_argument('compare'))
+    # TODO: make this work if ds.pkey is None
     mask = ds.filter_metadata(dict(pkey=names))
     ds_view = ds.view(mask=mask, **trans)
 
