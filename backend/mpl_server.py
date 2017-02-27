@@ -178,7 +178,7 @@ class MatplotlibServer(tornado.web.Application):
             blob.encode('base64').replace('\n', ''))
         self.write_message(data_uri)
 
-  def __init__(self, *handlers, **kwargs):
+  def __init__(self, handlers, password=None, **kwargs):
     handlers = [
         (r'/_static/(.*)',
          tornado.web.StaticFileHandler,
@@ -189,6 +189,7 @@ class MatplotlibServer(tornado.web.Application):
     ] + list(handlers)
     super(MatplotlibServer, self).__init__(handlers, **kwargs)
     self.figure_data = {}  # id -> FigData
+    self.login_password = str(password)
 
   def run_forever(self, port):
     self.listen(port)

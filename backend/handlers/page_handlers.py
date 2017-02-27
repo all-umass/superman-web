@@ -52,7 +52,7 @@ class LoginPage(BaseHandler):
 
   def post(self):
     password = self.get_argument('pw')
-    if password == 'superman':  # Elite security
+    if password == self.application.login_password:
       # Doesn't matter what value it has, just needs to be there.
       self.set_secure_cookie('user', 'authenticated')
       self.redirect(self.get_argument('next', '/'))
