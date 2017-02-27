@@ -114,6 +114,8 @@ function change_blr_method(option) {
 {% end %}
 
 $(document).ready(function(){
+  // hide all but the first section
+  $('section:not(:first) .collapse').click()
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
   {% if ds_kind and ds_name %}
     $('.ds_select.{{ds_kind}} input[value="{{ds_name}},{{ds_kind}}"]'
