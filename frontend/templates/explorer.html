@@ -42,10 +42,10 @@ function load_ds_filters() {
     });
   });
   // load/unload tool sections below
-  var plot_options = $('#ds_plotting_container');
-  var comp_options = $('#ds_compositions_container');
-  var pred_options = $('#ds_prediction_container');
-  var clas_options = $('#ds_classification_container');
+  var plot_options = $('#ds_plotting_container'),
+      comp_options = $('#ds_compositions_container'),
+      pred_options = $('#ds_prediction_container'),
+      clas_options = $('#ds_classification_container');
   if (ds_kind !== undefined) {
     plot_options.load('/_dataset_plot_options', ds_info, function() {
       $('#dl_metadata').css('width', '+=15').chosen({search_contains: true});
@@ -73,6 +73,7 @@ function load_ds_filters() {
                                      .chosen({allow_single_deselect: true});
     });
     {% end %}
+    // update the URL bar
     var kind = ds_info.kind[0];
     var fragment = 'explorer?ds_kind=' + kind;
     if (ds_info.name.length == 1) {
@@ -80,10 +81,7 @@ function load_ds_filters() {
     }
     window.history.pushState(kind, '', fragment);
   } else {
-    plot_options.empty();
-    comp_options.empty();
-    pred_options.empty();
-    clas_options.empty();
+    $([plot_options, comp_options, pred_options, clas_options]).empty();
     window.history.pushState('', '', 'explorer');
   }
 }
@@ -316,6 +314,16 @@ section > header { font-size: large; text-align: left; }
 <div id="ds_classification_container" class="section_body"></div>
 </section>
 {% end %}
+
+<section>
+<header>Match a Spectrum
+<button class="collapse up_chevron"
+  onclick="toggle_collapse(this, 'div');"></button>
+</header>
+<div id="ds_search_container" class="section_body">
+{% include '_search.html' %}
+</div>
+</section>
 
 <section>
 <div id="figure"></div>

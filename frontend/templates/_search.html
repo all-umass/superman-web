@@ -1,0 +1,169 @@
+<style>
+#wsm_results {
+  margin: 0 1em;
+  border: 2px solid black;
+}
+#wsm_results td,#wsm_results th {
+  border: 1px solid black;
+  padding: 0.2em;
+  vertical-align: middle;
+}
+#wsm_results td:first-child { text-align: center; }
+caption.match { font-weight: bold; }
+.match >.popup {
+  display: none;
+  position: absolute;
+  border: 1px solid black;
+  background-color: bisque;
+}
+.match:hover >.popup {
+  display: inline;
+  text-align: left;
+  font-weight: normal;
+}
+</style>
+<script type="text/javascript">
+function do_search(btn) {
+  // make sure we run the final pp before searching
+  do_pp(collect_pp_args($('#query_prep>table')));
+  // collect search params
+  var ds_info = collect_ds_info();
+  var post_data = {
+    target_name: ds_info.name,
+    target_kind: ds_info.kind,
+    pp: collect_pp_args($('#pp_options')),
+    metric: $('#wsm_metric > option:selected').val(),
+    param: $('#wsm_param').text(),
+    min_window: $('#wsm_min_window').text(),
+    num_comps: $('#wsm_endmembers').text(),
+    score_pct: $('#wsm_score_pct').text(),
+    fignum: fig.id
+  };
+  add_resample_args($('#resample_options'), post_data);
+  add_baseline_args($('#blr_options'), post_data);
+  // search
+  var res = $('#wsm_results').fadeOut(),
+      wait = $('.wait', btn).show();
+  res.load('/_search', post_data, function() {
+    wait.hide();
+    res.fadeIn();
+    res.next('button').prop('disabled', false);
+  });
+}
+function do_compare(names, target_name, target_kind) {
+  var post_data = {
+    compare: JSON.stringify(names),
+    target_name: target_name,
+    target_kind: target_kind,
+    pp: collect_pp_args($('#pp_options')),
+    fignum: fig.id
+  };
+  add_resample_args($('#resample_options'), post_data);
+  add_baseline_args($('#blr_options'), post_data);
+  $.post('/_compare', post_data);
+}
+function download_search_data() {
+  window.open('/'+fig.id+'/search_results.csv', '_blank');
+}
+</script>
+
+<!-- dataset selector -->
+<div class="flex-column" style="align-items: baseline;">
+<div class="flow">
+  Select a query spectrum:
+  <select onchange="if(this.value.length>0){
+    get_dataset(this.value); $('#selector').show();
+  } else {
+    $('#selector').hide();
+  }">
+  <option value="">Choose a dataset</option>
+  {% for kind, k_dict in sorted(ds_tree.items()) %}
+    {% for name in sorted(k_dict) %}
+      <option value="{{name}},{{kind}}">{{name}} [{{kind}}]</option>
+    {% end %}
+  {% end %}
+  </select>
+  <img id='spinner' src='/loading_bar.gif' style='display:none'>
+  <div id='selector' style='display:none'></div>
+</div>
+<div>
+  or upload your own:
+  <input type="file" name="query" onchange="do_upload(this);"/>
+</div>
+<span id="upload_messages"></span>
+</div>
+
+<div id="query_prep">
+{% include '_blr_pp_table.html' %}
+</div>
+
+<table id="wsm_table" class="pp_table">
+<caption style="font-weight: bold">Whole Spectrum Matching</caption>
+<!-- match score options -->
+<tr><td class="rline vcenter" rowspan=2>MatchScore</td>
+<td>Match type:</td>
+<td><input type="range" min=0 max=1 value=0 step=0.01
+           onchange="$('#wsm_param').text(this.value);"
+           oninput="$('#wsm_param').text(this.value);"></td>
+</tr>
+<tr class="uline">
+<td><select id="wsm_metric">
+<option value='combo'>L1/Cosine mixture (IJCAI 15)</option>
+<option value='ms'>Min-scaled L1 (JRS 15)</option>
+</select></td>
+<td>parameter = <span id="wsm_param">0</span></td></tr>
+<!-- min window options -->
+<tr><td class="rline vcenter" rowspan=2>Sliding Minimum</td>
+<td colspan=2>
+<input type="range" min=0 max=100 value=0 step=1
+       onchange="$('#wsm_min_window').text(this.value);"
+       oninput="$('#wsm_min_window').text(this.value);"></td>
+</tr>
+<tr class="uline">
+<td colspan=2>window size = <span id="wsm_min_window">0</span></td></tr>
+<!-- unmixing options -->
+<tr><td class="rline vcenter uline" rowspan=2>Unmixing</td>
+<td><input type="range" min=1 max=5 value=1 step=1
+           onchange="$('#wsm_endmembers').text(this.value);"
+           oninput="$('#wsm_endmembers').text(this.value);"></td>
+<td><input type="range" min=1 max=99 value=1 step=1
+           onchange="$('#wsm_score_pct').text(this.value);"
+           oninput="$('#wsm_score_pct').text(this.value);"></td>
+</tr><tr class="uline">
+<td># endmembers = <span id="wsm_endmembers">1</span></td>
+<td>unmixing threshold = <span id="wsm_score_pct">1</span>%</td>
+</tr>
+<tr><td colspan=3>
+<button class="needs_filter" onclick="do_search(this);" disabled>
+  Search<span class="wait">ing...</span>
+</button>
+</td></tr>
+</table>
+
+<div class="flex-column">
+<table id="wsm_results">
+<thead>
+  <tr><th>Rank</th><th>Similarity</th><th>Name</th><th>Plot</th></tr>
+</thead>
+<tbody>
+{% for i in range(1,6) %}
+  <tr><td>{{i}}</td><td></td><td></td><td></td></tr>
+{% end %}
+</tbody>
+</table>
+<button onclick="download_search_data()" disabled>Download search data</button>
+</div>
+
+<script type="text/javascript">
+// TODO: defer this to dataset load time
+// make the query prep interactive
+var query_table = $('#query_prep>table');
+query_table.find('tr').slice(0,3).find('select,input').change(function(){
+  do_baseline(query_table);
+});
+var pp_watcher = new MutationObserver(function(){
+  do_pp(collect_pp_args(query_table));
+});
+pp_watcher.observe(query_table.find('.pp_staging')[0],
+                   {childList: true, subtree: true});
+</script>
