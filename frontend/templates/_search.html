@@ -1,12 +1,14 @@
 <style>
 #wsm_results ol { text-align: left; }
 #wsm_results li { display: flex; justify-content: space-between; }
-#wsm_results li a { cursor: pointer; }
+#wsm_results li a { cursor: pointer; margin-left: 1em; }
 .match >.popup {
   display: none;
   position: absolute;
   border: 1px solid black;
+  border-radius: 0.5em;
   background-color: bisque;
+  padding: 0.2em 0.4em;
 }
 .match:hover >.popup {
   display: inline;
@@ -82,7 +84,8 @@
 <button class="needs_filter" onclick="Search.search(this);" disabled>
   Search<span class="wait">ing...</span>
 </button>
+<span class="err_msg"></span>
 </td></tr>
 </table>
 
-<div id="wsm_results" class="flex-column"></div>
+<div id="wsm_results" class="flex-column" style="display: none"></div>

@@ -20,11 +20,23 @@ var Search = (function() {
       add_baseline_args($('#blr_options'), post_data);
       // search
       var res = $('#wsm_results').fadeOut(),
-          wait = $('.wait', btn).show();
-      res.load('/_search', post_data, function() {
-        wait.hide();
-        res.fadeIn();
-        res.next('button').prop('disabled', false);
+          wait = $('.wait', btn).show(),
+          err_span = $(btn).next('.err_msg');
+      $.ajax({
+        url: '/_search',
+        type: 'POST',
+        data: post_data,
+        success: function(data) {
+          wait.hide();
+          err_span.empty();
+          res.html(data).fadeIn();
+          $('button', res).prop('disabled', false);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+          wait.hide();
+          err_span.text(jqXHR.responseText);
+          $('button', res).prop('disabled', true);
+        }
       });
     },
     compare: function(names, target_name, target_kind) {
