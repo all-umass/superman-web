@@ -14,14 +14,12 @@ $(document).ready(function() {
 <style type="text/css">
 #datasets {
   margin: 1em auto;
-  border-collapse: collapse;
   border: 1px solid black;
 }
 #datasets td {
   vertical-align: middle;
   background-color: #f7d3b2;
   border-right: 1px solid black;
-  border-top: 1px solid black;
   text-align: center;
   padding: 6px;
   word-wrap: break-word;
@@ -62,7 +60,6 @@ $(document).ready(function() {
   flex-flow: row nowrap;
   justify-content: flex-start;
   align-items: center;
-  border-top: 1px solid black;
 }
 #datasets tr.extra .explore_btn {
   -webkit-appearance: button;
@@ -96,7 +93,6 @@ $(document).ready(function() {
 {% end %}
 
 {% block body_matter %}
-<div>
 <table class='tablesorter' id='datasets'>
   <caption>
     A listing of all available datasets.
@@ -158,6 +154,5 @@ $(document).ready(function() {
 {% end %}
   </tbody>
 </table>
-</div>
 
 {% end %}
