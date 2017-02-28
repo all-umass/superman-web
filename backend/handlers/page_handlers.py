@@ -126,17 +126,6 @@ class BaselinePage(Subpage):
     self.render(datasets=self.all_datasets(), fig_id=fignum, **blr_kwargs)
 
 
-class SearcherPage(Subpage):
-  template = 'search.html'
-  title = 'Spectrum Matching'
-  description = 'Match a spectrum against a target dataset.'
-  figsize = (8, 4)
-
-  def get(self):
-    pkey_ds = [d for d in self.all_datasets() if d.pkey is not None]
-    self.render(datasets=pkey_ds, **blr_kwargs)
-
-
 class PeakFitPage(Subpage):
   template = 'peakfit.html'
   title = 'Peak Fitting'
@@ -171,7 +160,6 @@ routes = [
     (r'/datasets', DatasetsPage),
     (r'/explorer', DataExplorerPage),
     (r'/baseline', BaselinePage),
-    (r'/search', SearcherPage),
     (r'/peakfit', PeakFitPage),
     (r'/login', LoginPage),
     (r'/import', DatasetImportPage),
