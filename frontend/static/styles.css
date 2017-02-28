@@ -104,9 +104,11 @@ button.remove_row {
   border: 2px groove #eee;
   border-radius: 0.5em;
   padding: 0.5em;
+  margin: 0 auto;
   background-color: white;
   min-height: 400px;
   min-width: 400px;
+  width: 98%;
 }
 #figure .ui-dialog-titlebar { display: none; }
 #figure .ui-icon {
@@ -118,7 +120,7 @@ button.remove_row {
 #figure_controls {
   display: inline-flex;
   padding-top: 1em;
-  width: 100%;
+  width: 98%;
   justify-content: space-around;
 }
 
