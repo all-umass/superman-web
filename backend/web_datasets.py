@@ -20,7 +20,9 @@ __all__ = [
 ]
 
 # Global structure for all loaded datasets.
-DATASETS = dict(Raman={}, LIBS={}, FTIR={}, NIR={}, XAS={}, XRD={}, Mossbauer={})
+DATASETS = dict(
+    Raman={}, LIBS={}, FTIR={}, NIR={}, XAS={}, XRD={}, Mossbauer={}
+)
 
 # Ordering for filters of various metadata types.
 FILTER_ORDER = {
