@@ -52,6 +52,7 @@ class BaselineHandler(BaseHandler):
     else:
       # regular old plot of the corrected spectrum
       ax = fig_data.figure.gca()
+      ax.clear()
       ax.plot(bands, corrected, '-')
       ax.set_title(fig_data.title)
     fig_data.manager.canvas.draw()
