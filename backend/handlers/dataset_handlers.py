@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 import logging
 import tornado.web
+from tornado import gen
+from threading import Thread
 
 from .base import BaseHandler
 from ..web_datasets import (
@@ -16,12 +18,18 @@ class RefreshHandler(BaseHandler):
                   <input type='submit' value='Refresh Data'>
                   </form>''')
 
+  @gen.coroutine
   def post(self):
     logging.info('Refreshing datasets')
-    # TODO: run these in separate threads!
     for ds in self.all_datasets():
-      ds.reload()
+      yield gen.Task(RefreshHandler._reload, ds)
     self.redirect('/datasets')
+
+  @staticmethod
+  def _reload(ds, callback=None):
+    t = Thread(target=lambda: callback(ds.reload()))
+    t.daemon = True
+    t.start()
 
 
 class DatasetSelectorHandler(BaseHandler):
