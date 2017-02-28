@@ -1,4 +1,10 @@
 <style>
+.param_slider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 0.5em;
+}
 #wsm_results ol { text-align: left; }
 #wsm_results li { display: flex; justify-content: space-between; }
 #wsm_results li a { cursor: pointer; margin-left: 1em; }
@@ -22,7 +28,8 @@
 <div class="flow">
   Select a query spectrum:
   <select onchange="if(this.value.length>0){
-    get_dataset(this.value); $('#selector').show();
+    get_dataset(this.value);
+    $('#selector').show();
   } else {
     $('#selector').hide();
   }">
@@ -42,47 +49,54 @@
 </div>
 
 <div id="query_prep">
-{% include '_blr_pp_table.html' %}
+<table class='ds_table'>
+  <caption>Prepare Query</caption>
+  {% include '_blr_rows.html' %}
+  {% include '_pp_rows.html' %}
+</table>
 </div>
 
-<table id="wsm_table" class="pp_table">
 <!-- match score options -->
-<tr><td class="vcenter" rowspan=2>MatchScore</td>
-<td>Match type:</td>
-<td><input type="range" min=0 max=1 value=0 step=0.01
-           onchange="$('#wsm_param').text(this.value);"
-           oninput="$('#wsm_param').text(this.value);"></td>
-</tr>
-<tr>
-<td><select id="wsm_metric">
-<option value='combo'>L1/Cosine mixture (IJCAI 15)</option>
-<option value='ms'>Min-scaled L1 (JRS 15)</option>
-</select></td>
-<td>parameter = <span id="wsm_param">0</span></td></tr>
-<!-- min window options -->
-<tr><td class="vcenter" rowspan=2>Sliding Minimum</td>
-<td colspan=2>
+<table class="aligned_table">
+<tr><td class="bold">Match Score</td><td>
+<select id="wsm_metric">
+  <option value='combo'>L1/Cosine mixture (IJCAI 15)</option>
+  <option value='ms'>Min-scaled L1 (JRS 15)</option>
+</select>
+</td></tr>
+
+<tr><td class="bold">Metric<br>Parameter</td>
+<td class="param_slider">
+<input type="range" min=0 max=1 value=0 step=0.01
+       onchange="$('#wsm_param').text(this.value);"
+       oninput="$('#wsm_param').text(this.value);">
+<div>alpha = <span id="wsm_param">0</span></div>
+</td></tr>
+
+<tr><td class="bold">Sliding<br>Minimum</td>
+<td class="param_slider">
 <input type="range" min=0 max=100 value=0 step=1
        onchange="$('#wsm_min_window').text(this.value);"
-       oninput="$('#wsm_min_window').text(this.value);"></td>
-</tr>
-<tr>
-<td colspan=2>window size = <span id="wsm_min_window">0</span></td></tr>
-<!-- unmixing options -->
-<tr><td class="vcenter" rowspan=2>Unmixing</td>
-<td><input type="range" min=1 max=5 value=1 step=1
-           onchange="$('#wsm_endmembers').text(this.value);"
-           oninput="$('#wsm_endmembers').text(this.value);"></td>
-<td><input type="range" min=1 max=99 value=1 step=1
-           onchange="$('#wsm_score_pct').text(this.value);"
-           oninput="$('#wsm_score_pct').text(this.value);"></td>
-</tr><tr>
-<td># endmembers = <span id="wsm_endmembers">1</span></td>
-<td>unmixing threshold = <span id="wsm_score_pct">1</span>%</td>
-</tr>
-<tr><td colspan=3>
+       oninput="$('#wsm_min_window').text(this.value);">
+<div>window size = <span id="wsm_min_window">0</span></div>
+</td></tr>
+
+<tr><td class="bold">Endmembers</td><td>
+<input id="wsm_endmembers" type="number" min=1 max=5 value=1 step=1>
+</td></tr>
+
+<tr><td class="bold">Unmixing<br>Threshold</td>
+<td class="param_slider">
+<input type="range" min=1 max=99 value=1 step=1
+       onchange="$('#wsm_score_pct').text(this.value);"
+       oninput="$('#wsm_score_pct').text(this.value);">
+<div><span id="wsm_score_pct">1</span>%</div>
+</td></tr>
+
+<tr><td colspan=2 style="text-align: center; max-width: 25em;">
 <button class="needs_filter" onclick="Search.search(this);" disabled>
   Search<span class="wait">ing...</span>
+  <b class="needs_plot" disabled></b>
 </button>
 <span class="err_msg"></span>
 </td></tr>

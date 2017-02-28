@@ -1,6 +1,11 @@
 var Search = (function() {
   return {
     search: function(btn) {
+      var err_span = $(btn).next('.err_msg');
+      if ($('.needs_plot', btn).attr('disabled')) {
+        err_span.text('Choose a query spectrum.');
+        return;
+      }
       // make sure we run the final pp before searching
       do_pp(collect_pp_args($('#query_prep>table')));
       // collect search params
@@ -12,7 +17,7 @@ var Search = (function() {
         metric: $('#wsm_metric > option:selected').val(),
         param: $('#wsm_param').text(),
         min_window: $('#wsm_min_window').text(),
-        num_comps: $('#wsm_endmembers').text(),
+        num_comps: $('#wsm_endmembers').val(),
         score_pct: $('#wsm_score_pct').text(),
         fignum: fig.id
       };
@@ -20,8 +25,7 @@ var Search = (function() {
       add_baseline_args($('#blr_options'), post_data);
       // search
       var res = $('#wsm_results').fadeOut(),
-          wait = $('.wait', btn).show(),
-          err_span = $(btn).next('.err_msg');
+          wait = $('.wait', btn).show();
       $.ajax({
         url: '/_search',
         type: 'POST',
