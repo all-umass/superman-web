@@ -22,50 +22,6 @@ caption.match { font-weight: bold; }
   font-weight: normal;
 }
 </style>
-<script type="text/javascript">
-function do_search(btn) {
-  // make sure we run the final pp before searching
-  do_pp(collect_pp_args($('#query_prep>table')));
-  // collect search params
-  var ds_info = collect_ds_info();
-  var post_data = {
-    ds_name: ds_info.name,
-    ds_kind: ds_info.kind,
-    pp: collect_pp_args($('#pp_options')),
-    metric: $('#wsm_metric > option:selected').val(),
-    param: $('#wsm_param').text(),
-    min_window: $('#wsm_min_window').text(),
-    num_comps: $('#wsm_endmembers').text(),
-    score_pct: $('#wsm_score_pct').text(),
-    fignum: fig.id
-  };
-  add_resample_args($('#resample_options'), post_data);
-  add_baseline_args($('#blr_options'), post_data);
-  // search
-  var res = $('#wsm_results').fadeOut(),
-      wait = $('.wait', btn).show();
-  res.load('/_search', post_data, function() {
-    wait.hide();
-    res.fadeIn();
-    res.next('button').prop('disabled', false);
-  });
-}
-function do_compare(names, target_name, target_kind) {
-  var post_data = {
-    compare: JSON.stringify(names),
-    target_name: target_name,
-    target_kind: target_kind,
-    pp: collect_pp_args($('#pp_options')),
-    fignum: fig.id
-  };
-  add_resample_args($('#resample_options'), post_data);
-  add_baseline_args($('#blr_options'), post_data);
-  $.post('/_compare', post_data);
-}
-function download_search_data() {
-  window.open('/'+fig.id+'/search_results.csv', '_blank');
-}
-</script>
 
 <!-- dataset selector -->
 <div class="flex-column" style="align-items: baseline;">
@@ -77,10 +33,8 @@ function download_search_data() {
     $('#selector').hide();
   }">
   <option value="">Choose a dataset</option>
-  {% for kind, k_dict in sorted(ds_tree.items()) %}
-    {% for name in sorted(k_dict) %}
-      <option value="{{name}},{{kind}}">{{name}} [{{kind}}]</option>
-    {% end %}
+  {% for name in ds_names %}
+    <option value="{{name}},{{ds_kind}}">{{name}}</option>
   {% end %}
   </select>
   <img id='spinner' src='/loading_bar.gif' style='display:none'>
@@ -134,7 +88,7 @@ function download_search_data() {
 <td>unmixing threshold = <span id="wsm_score_pct">1</span>%</td>
 </tr>
 <tr><td colspan=3>
-<button class="needs_filter" onclick="do_search(this);" disabled>
+<button class="needs_filter" onclick="Search.search(this);" disabled>
   Search<span class="wait">ing...</span>
 </button>
 </td></tr>
@@ -151,19 +105,5 @@ function download_search_data() {
 {% end %}
 </tbody>
 </table>
-<button onclick="download_search_data()" disabled>Download search data</button>
+<button onclick="Search.download()" disabled>Download search data</button>
 </div>
-
-<script type="text/javascript">
-// TODO: defer this to dataset load time
-// make the query prep interactive
-var query_table = $('#query_prep>table');
-query_table.find('tr').slice(0,3).find('select,input').change(function(){
-  do_baseline(query_table);
-});
-var pp_watcher = new MutationObserver(function(){
-  do_pp(collect_pp_args(query_table));
-});
-pp_watcher.observe(query_table.find('.pp_staging')[0],
-                   {childList: true, subtree: true});
-</script>

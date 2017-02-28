@@ -5,6 +5,7 @@ from tornado import gen
 from threading import Thread
 
 from .base import BaseHandler
+from .page_handlers import blr_kwargs
 from ..web_datasets import (
     DATASETS, CompositionMetadata, NumericMetadata, LookupMetadata,
     BooleanMetadata
@@ -115,6 +116,19 @@ class DatasetClassificationOptionsHandler(BaseHandler):
     return self.render('_classifications.html', meta_pairs=pairs)
 
 
+class DatasetSearchOptionsHandler(BaseHandler):
+  def post(self):
+    ds_kinds = set(self.get_arguments('kind[]'))
+    if len(ds_kinds) != 1:
+      return self.visible_error(403, 'Only one dataset kind is allowed.')
+
+    ds_kind, = ds_kinds
+    logging.info('Generating search options HTML for %s', ds_kind)
+    ds_names = sorted(DATASETS[ds_kind])
+    return self.render('_search.html', ds_kind=ds_kind, ds_names=ds_names,
+                       **blr_kwargs)
+
+
 class DatasetRemovalHandler(BaseHandler):
   def post(self):
     ds = self.request_one_ds('kind', 'name')
@@ -132,6 +146,7 @@ routes = [
     (r'/_dataset_comp_options', DatasetCompositionOptionsHandler),
     (r'/_dataset_pred_options', DatasetPredictionOptionsHandler),
     (r'/_dataset_classify_options', DatasetClassificationOptionsHandler),
+    (r'/_dataset_search_options', DatasetSearchOptionsHandler),
     (r'/_dataset_remover', DatasetRemovalHandler),
     (r'/refresh', RefreshHandler),
 ]

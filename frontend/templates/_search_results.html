@@ -1,34 +1,40 @@
-
-<caption class="match">
-  {{query_name}}
+<caption class="match">{{query_name}}
+{% if query_meta %}
   <span class="popup">
     {% for key, val in query_meta.items() %}
       {{key}}: {{val}}<br />
     {% end %}
   </span>
+{% end %}
 </caption>
 
-<tr>
-{% for colname in header %}
-<th>{{colname}}</th>
-{% end %}
-</tr>
+<thead><tr>
+  <th></th>
+  <th>Score</th>
+  <th>Match{% if len(top_names[0]) > 1 %}es{% end %}</th>
+  <th>Plot</th>
+</tr></thead>
 
-{% for i,(sim,names) in enumerate(rows, start=1) %}
-  <tr><td>{{i}}</td>
-  <td>{{'%.5f' % sim}}</td>
+<tbody>
+{% for i in range(len(top_sim)) %}
+  <tr><td>{{i + 1}}</td>
+  <td>{{'%.5f' % top_sim[i]}}</td>
   <td>
-  {% for n in names %}
+  {% for n in top_names[i] %}
     <div class="match">{{n}}
+    {% if top_meta[n] %}
       <span class="popup">
       {% for key, val in top_meta[n].items() %}
         {{key}}: {{val}}<br />
       {% end %}
       </span>
+    {% end %}
     </div>
   {% end %}
   </td>
   <td><button
-onclick="do_compare({{names}},'{{ds_name}}','{{ds_kind}}');"
->PLOT</button></td></tr>
+    onclick="Search.compare({{top_names[i]}},'{{ds.name}}','{{ds.kind}}');">
+    PLOT
+  </button></td></tr>
 {% end %}
+</tbody>

@@ -87,12 +87,8 @@ class SearchHandler(MultiDatasetHandler):
       for name, x in zip(all_names, data):
         top_meta[name][label] = x
 
-    header = ['Rank', 'Score', 'Match', 'Plot']
-    if len(top_names[0]) > 1:
-      header[2] = 'Matches'
-    rows = zip(top_sim, top_names)
-    self.render('_search_results.html', header=header, rows=rows,
-                ds_name=ds.name, ds_kind=ds.kind, top_meta=top_meta,
+    self.render('_search_results.html', ds=ds, top_sim=top_sim,
+                top_names=top_names, top_meta=top_meta,
                 query_name=query_name, query_meta=query_meta)
 
 

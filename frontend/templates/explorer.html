@@ -45,7 +45,8 @@ function load_ds_filters() {
   var plot_options = $('#ds_plotting_container'),
       comp_options = $('#ds_compositions_container'),
       pred_options = $('#ds_prediction_container'),
-      clas_options = $('#ds_classification_container');
+      clas_options = $('#ds_classification_container'),
+      srch_options = $('#ds_search_container');
   if (ds_kind !== undefined) {
     plot_options.load('/_dataset_plot_options', ds_info, function() {
       $('#dl_metadata').css('width', '+=15').chosen({search_contains: true});
@@ -73,6 +74,18 @@ function load_ds_filters() {
                                      .chosen({allow_single_deselect: true});
     });
     {% end %}
+    srch_options.load('/_dataset_search_options', ds_info, function() {
+      // make the query prep interactive
+      var query_table = $('#query_prep>table', srch_options);
+      query_table.find('tr').slice(0,3).find('select,input').change(function(){
+        do_baseline(query_table);
+      });
+      var pp_watcher = new MutationObserver(function(){
+        do_pp(collect_pp_args(query_table));
+      });
+      pp_watcher.observe(query_table.find('.pp_staging')[0],
+                         {childList: true, subtree: true});
+    });
     // update the URL bar
     var kind = ds_info.kind[0];
     var fragment = 'explorer?ds_kind=' + kind;
@@ -81,7 +94,8 @@ function load_ds_filters() {
     }
     window.history.pushState(kind, '', fragment);
   } else {
-    $([plot_options, comp_options, pred_options, clas_options]).empty();
+    $([plot_options, comp_options, pred_options, clas_options,
+       srch_options]).empty();
     window.history.pushState('', '', 'explorer');
   }
 }
@@ -110,6 +124,7 @@ function change_blr_method(option) {
   {% include '_predictions.js' %}
   {% include '_classifications.js' %}
 {% end %}
+{% include '_search.js' %}
 
 $(document).ready(function(){
   // hide all but the first section
@@ -320,9 +335,7 @@ section > header { font-size: large; text-align: left; }
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'div');"></button>
 </header>
-<div id="ds_search_container" class="section_body">
-{% include '_search.html' %}
-</div>
+<div id="ds_search_container" class="section_body"></div>
 </section>
 
 <section>
