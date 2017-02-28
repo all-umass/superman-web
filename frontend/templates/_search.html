@@ -1,15 +1,7 @@
 <style>
-#wsm_results {
-  margin: 0 1em;
-  border: 2px solid black;
-}
-#wsm_results td,#wsm_results th {
-  border: 1px solid black;
-  padding: 0.2em;
-  vertical-align: middle;
-}
-#wsm_results td:first-child { text-align: center; }
-caption.match { font-weight: bold; }
+#wsm_results ol { text-align: left; }
+#wsm_results li { display: flex; justify-content: space-between; }
+#wsm_results li a { cursor: pointer; }
 .match >.popup {
   display: none;
   position: absolute;
@@ -52,38 +44,37 @@ caption.match { font-weight: bold; }
 </div>
 
 <table id="wsm_table" class="pp_table">
-<caption style="font-weight: bold">Whole Spectrum Matching</caption>
 <!-- match score options -->
-<tr><td class="rline vcenter" rowspan=2>MatchScore</td>
+<tr><td class="vcenter" rowspan=2>MatchScore</td>
 <td>Match type:</td>
 <td><input type="range" min=0 max=1 value=0 step=0.01
            onchange="$('#wsm_param').text(this.value);"
            oninput="$('#wsm_param').text(this.value);"></td>
 </tr>
-<tr class="uline">
+<tr>
 <td><select id="wsm_metric">
 <option value='combo'>L1/Cosine mixture (IJCAI 15)</option>
 <option value='ms'>Min-scaled L1 (JRS 15)</option>
 </select></td>
 <td>parameter = <span id="wsm_param">0</span></td></tr>
 <!-- min window options -->
-<tr><td class="rline vcenter" rowspan=2>Sliding Minimum</td>
+<tr><td class="vcenter" rowspan=2>Sliding Minimum</td>
 <td colspan=2>
 <input type="range" min=0 max=100 value=0 step=1
        onchange="$('#wsm_min_window').text(this.value);"
        oninput="$('#wsm_min_window').text(this.value);"></td>
 </tr>
-<tr class="uline">
+<tr>
 <td colspan=2>window size = <span id="wsm_min_window">0</span></td></tr>
 <!-- unmixing options -->
-<tr><td class="rline vcenter uline" rowspan=2>Unmixing</td>
+<tr><td class="vcenter" rowspan=2>Unmixing</td>
 <td><input type="range" min=1 max=5 value=1 step=1
            onchange="$('#wsm_endmembers').text(this.value);"
            oninput="$('#wsm_endmembers').text(this.value);"></td>
 <td><input type="range" min=1 max=99 value=1 step=1
            onchange="$('#wsm_score_pct').text(this.value);"
            oninput="$('#wsm_score_pct').text(this.value);"></td>
-</tr><tr class="uline">
+</tr><tr>
 <td># endmembers = <span id="wsm_endmembers">1</span></td>
 <td>unmixing threshold = <span id="wsm_score_pct">1</span>%</td>
 </tr>
@@ -94,16 +85,4 @@ caption.match { font-weight: bold; }
 </td></tr>
 </table>
 
-<div class="flex-column">
-<table id="wsm_results">
-<thead>
-  <tr><th>Rank</th><th>Similarity</th><th>Name</th><th>Plot</th></tr>
-</thead>
-<tbody>
-{% for i in range(1,6) %}
-  <tr><td>{{i}}</td><td></td><td></td><td></td></tr>
-{% end %}
-</tbody>
-</table>
-<button onclick="Search.download()" disabled>Download search data</button>
-</div>
+<div id="wsm_results" class="flex-column"></div>

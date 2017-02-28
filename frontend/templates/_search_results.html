@@ -1,4 +1,4 @@
-<caption class="match">{{query_name}}
+<div class="match">{{query_name}}
 {% if query_meta %}
   <span class="popup">
     {% for key, val in query_meta.items() %}
@@ -6,22 +6,17 @@
     {% end %}
   </span>
 {% end %}
-</caption>
+</div>
 
-<thead><tr>
-  <th></th>
-  <th>Score</th>
-  <th>Match{% if len(top_names[0]) > 1 %}es{% end %}</th>
-  <th>Plot</th>
-</tr></thead>
+<b>Search Results</b>
 
-<tbody>
+<ol>
 {% for i in range(len(top_sim)) %}
-  <tr><td>{{i + 1}}</td>
-  <td>{{'%.5f' % top_sim[i]}}</td>
-  <td>
+  <li>
+  {{'%.5f' % top_sim[i]}}
+  <a onclick="Search.compare({{top_names[i]}},'{{ds.name}}','{{ds.kind}}');">
   {% for n in top_names[i] %}
-    <div class="match">{{n}}
+    <span class="match">{{n}}
     {% if top_meta[n] %}
       <span class="popup">
       {% for key, val in top_meta[n].items() %}
@@ -29,12 +24,10 @@
       {% end %}
       </span>
     {% end %}
-    </div>
+    </span>
   {% end %}
-  </td>
-  <td><button
-    onclick="Search.compare({{top_names[i]}},'{{ds.name}}','{{ds.kind}}');">
-    PLOT
-  </button></td></tr>
+  </a></li>
 {% end %}
-</tbody>
+</ol>
+
+<button onclick="Search.download()" disabled>Download search data</button>

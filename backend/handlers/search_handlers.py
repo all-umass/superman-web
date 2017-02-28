@@ -75,7 +75,7 @@ class SearchHandler(MultiDatasetHandler):
                   in _lookup_metas(fig_data._ds_view)}
 
     # get any LookupMetadata associated with the matches
-    all_names = [n for names in top_names for n in names]
+    all_names = set([n for names in top_names for n in names])
     if ds.pkey is None:
       ds_view.mask = np.array([int(n.rsplit(' ', 1)[1]) for n in all_names],
                               dtype=int)
@@ -146,8 +146,10 @@ class CompareHandler(BaseHandler):
 
     # select only the comparison samples
     names = ast.literal_eval(self.get_argument('compare'))
-    # TODO: make this work if ds.pkey is None
-    mask = ds.filter_metadata(dict(pkey=names))
+    if ds.pkey is not None:
+      mask = ds.filter_metadata(dict(pkey=names))
+    else:
+      mask = np.array([int(n.rsplit(' ', 1)[1]) for n in names], dtype=int)
     ds_view = ds.view(mask=mask, **trans)
 
     fig_data.figure.clf(keep_observers=True)

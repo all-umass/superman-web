@@ -29,7 +29,7 @@ class SelectHandler(BaseHandler):
         return self.visible_error(403, 'Invalid spectrum number.',
                                   'Index %d out of bounds in dataset %s',
                                   idx, ds)
-      name = 'Spectrum #%d' % idx
+      name = 'Spectrum %d' % idx
     else:
       # XXX: hack to match dtype of pkey
       name = np.array(name, dtype=ds.pkey.keys.dtype).item()
