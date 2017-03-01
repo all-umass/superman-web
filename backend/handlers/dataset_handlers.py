@@ -81,9 +81,10 @@ class DatasetCompositionOptionsHandler(BaseHandler):
 
     # Get composition and numeric metadata (key, display_name) pairs
     comp_pairs = sorted(ds.metadata_names((CompositionMetadata,)))
-    num_pairs = sorted(ds.metadata_names((NumericMetadata,)))
-    return self.render('_compositions.html', ds=ds,
-                       comp_pairs=comp_pairs, num_pairs=num_pairs)
+    if comp_pairs:
+      num_pairs = sorted(ds.metadata_names((NumericMetadata,)))
+      self.render('_compositions.html', ds=ds,
+                  comp_pairs=comp_pairs, num_pairs=num_pairs)
 
 
 class DatasetPredictionOptionsHandler(BaseHandler):
@@ -100,9 +101,10 @@ class DatasetPredictionOptionsHandler(BaseHandler):
 
     # only use common metadata across all datasets
     pred_pairs = sorted(set.intersection(*pred_pairs))
-    strat_pairs = sorted(set.intersection(*strat_pairs))
-    return self.render('_predictions.html', pred_pairs=pred_pairs,
-                       strat_pairs=strat_pairs)
+    if pred_pairs:
+      strat_pairs = sorted(set.intersection(*strat_pairs))
+      self.render('_predictions.html', pred_pairs=pred_pairs,
+                  strat_pairs=strat_pairs)
 
 
 class DatasetClassificationOptionsHandler(BaseHandler):
@@ -113,7 +115,8 @@ class DatasetClassificationOptionsHandler(BaseHandler):
     pairs = [set(ds.metadata_names((LookupMetadata, BooleanMetadata)))
              for ds in all_ds]
     pairs = sorted(set.intersection(*pairs))
-    return self.render('_classifications.html', meta_pairs=pairs)
+    if pairs:
+      return self.render('_classifications.html', meta_pairs=pairs)
 
 
 class DatasetSearchOptionsHandler(BaseHandler):
