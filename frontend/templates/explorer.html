@@ -74,10 +74,10 @@ function load_ds_filters() {
       // make the query prep interactive
       var query_table = $('#query_prep>table', srch_options);
       query_table.find('tr').slice(0,3).find('select,input').change(function(){
-        do_baseline(query_table);
+        SingleSpectrum.baseline(query_table);
       });
       var pp_watcher = new MutationObserver(function(){
-        do_pp(collect_pp_args(query_table));
+        SingleSpectrum.preprocess(query_table);
       });
       pp_watcher.observe(query_table.find('.pp_staging')[0],
                          {childList: true, subtree: true});

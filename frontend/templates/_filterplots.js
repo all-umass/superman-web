@@ -25,14 +25,14 @@ var Plot = (function() {
         color_line_ratio: child_vals("td.color.line_ratio"),
         color_computed: $("td.color.computed").children().val(),
         chan_mask: +$("#chan_mask").is(":checked"),
-        pp: collect_pp_args($('#pp_options')),
+        pp: GetArgs.pp($('#pp_options')),
         ds_kind: ds_info.kind,
         ds_name: ds_info.name,
         fignum: fig.id,
       };
-      add_plot_args(post_data);
-      add_resample_args($('#resample_options'), post_data);
-      add_baseline_args($('#blr_options'), post_data);
+      GetArgs.plot(post_data);
+      GetArgs.resample($('#resample_options'), post_data);
+      GetArgs.baseline($('#blr_options'), post_data);
 
       var err_span = $(btn).next('.err_msg');
       var wait = $('.wait', btn).show();

@@ -11,7 +11,7 @@ var Classify = (function() {
         ds_name: ds_info.name,
         ds_kind: ds_info.kind,
         fignum: fig.id,
-        pp: collect_pp_args($('#pp_options')),
+        pp: GetArgs.pp($('#pp_options')),
         pred_var: pred_var,
         model_kind: $('.model_kind', container).val(),
         knn_k: +$('.knn_k', container).val(),
@@ -23,8 +23,8 @@ var Classify = (function() {
         cv_min_logC: +$('.cv_min_C', container).val(),
         cv_max_logC: +$('.cv_max_C', container).val(),
     };
-    add_resample_args($('#resample_options'), post_data);
-    add_baseline_args($('#blr_options'), post_data);
+    GetArgs.resample($('#resample_options'), post_data);
+    GetArgs.baseline($('#blr_options'), post_data);
     if (do_train !== null) {
       post_data['do_train'] = +do_train;
     }

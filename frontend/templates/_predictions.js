@@ -6,7 +6,7 @@ var Regress = (function() {
         ds_name: ds_info.name,
         ds_kind: ds_info.kind,
         fignum: fig.id,
-        pp: collect_pp_args($('#pp_options')),
+        pp: GetArgs.pp($('#pp_options')),
         pls_comps: +$('.pls_comps', container).val(),
         lasso_alpha: +$('.lasso_alpha', container).val(),
         lars_num_channels: +$('.lars_num_channels', container).val(),
@@ -20,8 +20,8 @@ var Regress = (function() {
         cv_min_chans: +$('.cv_min_chans', container).val(),
         cv_max_chans: +$('.cv_max_chans', container).val(),
     };
-    add_resample_args($('#resample_options'), post_data);
-    add_baseline_args($('#blr_options'), post_data);
+    GetArgs.resample($('#resample_options'), post_data);
+    GetArgs.baseline($('#blr_options'), post_data);
     if (do_train !== null) {
       post_data['do_train'] = +do_train;
     }
@@ -127,11 +127,11 @@ var Regress = (function() {
           ds_name: ds_info.name,
           ds_kind: ds_info.kind,
           fignum: fig.id,
-          pp: collect_pp_args($('#pp_options')),
+          pp: GetArgs.pp($('#pp_options')),
       };
-      add_resample_args($('#resample_options'), post_data);
-      add_baseline_args($('#blr_options'), post_data);
-      add_plot_args(post_data);
+      GetArgs.resample($('#resample_options'), post_data);
+      GetArgs.baseline($('#blr_options'), post_data);
+      GetArgs.plot(post_data);
       var wait = $('.wait', btn).show();
       var err_span = $(btn).next('.err_msg').empty();
       $.ajax({

@@ -4,7 +4,9 @@
 <div class="flow">
   Select a spectrum:
   <select onchange="if(this.value.length>0){
-    $('#upload').hide(); get_dataset(this.value); $('#selector').show();
+    $('#upload').hide();
+    SingleSpectrum.select(this.value);
+    $('#selector').show();
   } else {
     $('#selector,#upload').toggle();
   }">
@@ -16,7 +18,7 @@
 
   <div id='upload' class="flow">
     or upload your own:
-    <input type="file" name="query" onchange="do_upload(this);"/>
+    <input type="file" name="query" onchange="SingleSpectrum.upload(this);"/>
     <span class="err_msg"></span>
     <span id="upload_messages"></span>
   </div>

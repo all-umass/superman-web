@@ -5,7 +5,7 @@
 <script type="text/javascript">
 // XXX hacks! Overwrite generic functions for peakfit-specific logic.
 var ds_name, ds_kind,
-    old_get_dataset = get_dataset;
+    old_select = SingleSpectrum.select;
 upload_cbs['success'] = function(data, status) {
   var msg = $('#upload_messages');
   msg.text(msg.text() + " " + status + ".").delay(3000).fadeOut();
@@ -14,9 +14,9 @@ upload_cbs['success'] = function(data, status) {
     autofill_peakfit_params();
   }
 };
-get_dataset = function(info) {
+SingleSpectrum.select = function(info) {
   if (info == '') return;
-  old_get_dataset(info);
+  old_select(info);
   var parts = info.split(',');
   ds_name = parts[0];
   ds_kind = parts[1];
@@ -141,11 +141,11 @@ $(document).ready(function(){
   // make the blr/pp interactive
   var table = $('#blr_pp_steps');
   table.find('tr').slice(0,3).find('select,input').change(function(){
-    do_baseline(table);
-    do_pp(collect_pp_args(table));
+    SingleSpectrum.baseline(table);
+    SingleSpectrum.preprocess(table);
   });
   var pp_watcher = new MutationObserver(function(){
-    do_pp(collect_pp_args(table));
+    SingleSpectrum.preprocess(table);
   });
   pp_watcher.observe(table.find('.pp_staging')[0],
                      {childList: true, subtree: true});

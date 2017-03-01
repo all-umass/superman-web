@@ -27,8 +27,11 @@
 <div class="flex-column" style="align-items: baseline;">
 <div class="flow">
   Select a query spectrum:
-  <select
-   onchange="v=this.value;(v.length>0)?get_dataset(v):$('#selector').empty();">
+  <select onchange="if(this.value.length>0){
+    SingleSpectrum.select(this.value);
+  } else {
+    $('#selector').empty();
+  }">
   <option value="">Choose a dataset</option>
   {% for name in ds_names %}
     <option value="{{name}},{{ds_kind}}">{{name}}</option>
@@ -38,7 +41,7 @@
 <img id='spinner' src='/loading_bar.gif' style='display:none'>
 <div id='selector'></div>
 or upload your own:
-<input type="file" name="query" onchange="do_upload(this);"/>
+<input type="file" name="query" onchange="SingleSpectrum.upload(this);"/>
 <span class="err_msg"></span>
 <span id="upload_messages"></span>
 </div>

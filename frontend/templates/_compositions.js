@@ -24,7 +24,7 @@ var Composition = (function() {
         ds_kind: ds_info.kind[0],
         ds_name: ds_info.name[0],
       };
-      add_plot_args(post_data);
+      GetArgs.plot(post_data);
 
       var wait = $('.wait', btn).show();
       $.ajax({
