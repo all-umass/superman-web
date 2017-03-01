@@ -133,7 +133,10 @@ function onready_boilerplate(ws_uri, fignum) {
   $('body').on('contextmenu', '#figure', function(e){ return false; });
   var fig_div = $('div#figure'),
       fig_width = fig_div.width(),
-      fig_height = fig_div.height();
+      fig_height = fig_div.height(),
+      em_px = parseFloat(fig_div.css('font-size')),
+      canvas_width = fig_width - 4,
+      canvas_height = fig_height - 1.8 * em_px;
   var websocket_type = mpl.get_websocket_type();
   var websocket = new websocket_type(ws_uri + fignum + "/ws");
   fig = new mpl.figure(fignum, websocket, ondownload, fig_div);
@@ -143,7 +146,9 @@ function onready_boilerplate(ws_uri, fignum) {
   var check_ready = setInterval(function(){
     if (websocket.readyState === 1) {
       clearInterval(check_ready);
-      fig.request_resize(fig_width, fig_height);
+      fig.request_resize(canvas_width, canvas_height);
+      // lock in the current size for fig_div
+      fig_div.css({width: fig_width, height: fig_height});
     }
   }, 100);
 }

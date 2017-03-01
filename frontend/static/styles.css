@@ -183,7 +183,7 @@ button.remove_row {
 #figure {
   border: 2px groove #eee;
   border-radius: 0.5em;
-  padding: 0.5em;
+  padding: 0.5em 0;
   margin: 0 auto;
   background-color: white;
   min-height: 400px;
