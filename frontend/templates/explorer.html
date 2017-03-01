@@ -193,9 +193,6 @@ section > header { font-size: large; text-align: left; }
 .ds_select > input { display: none; }
 .ds_select > input:checked + label { background-color: #e69b71; }
 
-#generic_plot_options { display: inline-flex; margin: 0 auto; }
-#generic_plot_options > div { padding: 0.5em 1em; }
-
 .aligned_table>tbody td {
   text-align: left;
   padding-bottom: 0.5em;
@@ -268,33 +265,6 @@ section > header { font-size: large; text-align: left; }
 </section>
 
 <section>
-<header>Adjust Plot Options
-<button class="collapse up_chevron"
-  onclick="toggle_collapse(this, 'div');"></button>
-</header>
-
-<div id="generic_plot_options" class="section_body">
-<div>Line/Marker Size (<span id="lw_val">{{default_lw}}</span>)<br>
-<input id="plt_lw" type="range" min=1 max=20 value={{default_lw}} step=0.5
-       onchange="$('#lw_val').text((+this.value).toFixed(2));"
-       oninput="$('#lw_val').text((+this.value).toFixed(2));"></div>
-<div>Opacity (<span id="alpha_val">1.00</span>)<br>
-<input id="plt_alpha" type="range" min=0 max=1 value=1 step=0.05
-       onchange="$('#alpha_val').text((+this.value).toFixed(2));"
-       oninput="$('#alpha_val').text((+this.value).toFixed(2));"></div>
-<div>Colormap<a
-  href="http://matplotlib.org/examples/color/colormaps_reference.html"
-  class="small">[?]</a>: <select id="plt_cmap">
-  <option value="_auto" selected>auto</option>
-{% for cmap in cmaps %}
-  <option value="{{cmap}}">{{cmap}}</option>
-{% end %}
-</select></div>
-<div><label>Show legend:<input id="plt_legend" type="checkbox" checked></label>
-</div></div>
-</section>
-
-<section>
 <header>Plot Spectra
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'div');"></button>
@@ -338,7 +308,50 @@ section > header { font-size: large; text-align: left; }
 
 <section>
 <div id="figure"></div>
-{% include '_zoom_control.html' %}
+
+<div id="figure_controls">
+<form id="zoom_control" onsubmit="do_zoom(); return false">
+  X axis: <input type="text" name="xmin" size=8>
+  to      <input type="text" name="xmax" size=8>
+  Y axis: <input type="text" name="ymin" size=8>
+  to      <input type="text" name="ymax" size=8>
+  &nbsp;&nbsp;
+  <input type="submit" class="needs_plot" disabled value="Update plot bounds">
+</form>
+
+<div>Line/Marker Size (<span id="lw_val">{{default_lw}}</span>)<br>
+<input id="plt_lw" type="range" min=1 max=20 value={{default_lw}} step=0.5
+       onchange="$('#lw_val').text((+this.value).toFixed(2));"
+       oninput="$('#lw_val').text((+this.value).toFixed(2));">
+</div>
+
+<div>Opacity (<span id="alpha_val">1.00</span>)<br>
+<input id="plt_alpha" type="range" min=0 max=1 value=1 step=0.05
+       onchange="$('#alpha_val').text((+this.value).toFixed(2));"
+       oninput="$('#alpha_val').text((+this.value).toFixed(2));">
+</div>
+
+<div>Colormap<a
+  href="http://matplotlib.org/examples/color/colormaps_reference.html"
+  class="small">[?]</a>:
+<select id="plt_cmap">
+  <option value="_auto" selected>auto</option>
+{% for cmap in cmaps %}
+  <option value="{{cmap}}">{{cmap}}</option>
+{% end %}
+</select>
+</div>
+
+<div>
+<label>Show legend:<input id="plt_legend" type="checkbox" checked></label>
+</div>
+
+<div id="bg_control">Figure background:
+  <input type="color" value="#ffffff"
+   onchange="$('#figure').css('background-color', this.value);">
+</div>
+
+</div>
 </section>
 </main>
 {% end %}
