@@ -1,6 +1,6 @@
 <table class="ds_table nofloat_ds_table aligned_table">
 <tr><td class='bold'>X axis</td>
-<td><select id="xaxis" onchange='changed(this.value, "x")'>
+<td><select id="xaxis" onchange='Plot.changed(this.value, "x")'>
   <option value='cardinal'>cardinal</option>
   <option value='default' selected>channels</option>
   <option value='metadata'>metadata</option>
@@ -29,7 +29,7 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
 </td></tr>
 
 <tr><td class='bold'>Y axis</td>
-<td><select id="yaxis" onchange='changed(this.value, "y")'>
+<td><select id="yaxis" onchange='Plot.changed(this.value, "y")'>
   <option value='cardinal'>cardinal</option>
   <option value='default' selected>intensities</option>
   <option value='metadata'>metadata</option>
@@ -54,7 +54,7 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
 </td></tr>
 
 <tr><td class='bold'>Color</td>
-<td><select id="color" onchange='changed(this.value, "color")'>
+<td><select id="color" onchange='Plot.changed(this.value, "color")'>
   <option value='default'>fixed</option>
   <option value='cycled'>cycled</option>
   <option value='metadata'>metadata</option>
@@ -81,8 +81,7 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
 </td></tr>
 
 <tr><td colspan=3>
-  <button id="plot_button" class="needs_filter"
-          onclick="do_filtered_plot(this);" disabled>
+  <button id="plot_button" class="needs_filter" onclick="Plot.plot(this);" disabled>
   Plot<span class='wait'>ting...</span></button>
   <div class="err_msg"></div>
 </td></tr>
@@ -94,6 +93,7 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
   <label><input type="radio" name="dl_type" checked>trajectory</label>
   <label><input type="radio" name="dl_type" id="dl_vector">matrix</label>
 </div>
+{% if len(metadata_names) > 0 %}
 <select id='dl_metadata' data-placeholder='with metadata' multiple>
 {% for key,name in metadata_names %}
   {% if key != '_ds' %}
@@ -101,6 +101,6 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
   {% end %}
 {% end %}
 </select>
-<button class="needs_plot" disabled onclick="download_spectrum_data()"
-        style="width:100%">Download</button>
+{% end %}
+<button class="needs_plot" disabled onclick="Plot.download()">Download</button>
 </div>
