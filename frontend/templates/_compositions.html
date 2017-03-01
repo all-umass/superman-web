@@ -35,19 +35,20 @@
 <div class="err_msg"></div>
 </div>
 
-<table id="fit_info">
-<caption>Linear fit parameters</caption>
-<tr><td>R&#0178;</td><td><span id="fit_rval"></span></td></tr>
-<tr><td>slope</td>
-    <td><span id="fit_slope"></span> &plusmn;
-        <span id="fit_slope_err"></span></td></tr>
-<tr><td>Y int.</td>
-    <td><span id="fit_yint"></span> &plusmn;
-        <span id="fit_yint_err"></span></td></tr>
-<tr><td>X int.</td>
-    <td><span id="fit_xint"></span> &plusmn;
-        <span id="fit_xint_err"></span></td></tr>
-<tr><th colspan=2>
+<table id="fit_info" class="flow">
+<caption class="bold uline">Linear fit parameters</caption>
+<tr><td class="rline">R&#0178;</td>
+    <td class="num"><span id="fit_rval"></span></td></tr>
+<tr><td class="rline">slope</td>
+    <td class="num"><span id="fit_slope"></span> &plusmn;
+                    <span id="fit_slope_err"></span></td></tr>
+<tr><td class="rline">Y int.</td>
+    <td class="num"><span id="fit_yint"></span> &plusmn;
+                    <span id="fit_yint_err"></span></td></tr>
+<tr><td class="rline">X int.</td>
+    <td class="num"><span id="fit_xint"></span> &plusmn;
+                    <span id="fit_xint_err"></span></td></tr>
+<tr><th colspan=2 style="padding-top: 0.5em">
 <button class="needs_plot" disabled onclick="Composition.download();">
 Download compositions</button></th></tr>
 </table>

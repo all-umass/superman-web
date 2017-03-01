@@ -2,15 +2,35 @@ body { padding: 0.7em; }
 body > header { display: flex; align-items: center; }
 body > header .title { font: 3em bold; padding-left: 0.1em; }
 body > header #logo { display: block; width: 100px; height: 100px; }
+input[type="number"] { width: 4em; }
 
+/* Explorer page layout */
+main { display: flex; flex-flow: column nowrap; }
+section {
+  background-color: #abe3ff;
+  text-align: center;
+  /* XXX: these depend on body padding = 0.7em */
+  padding: 0.25em 0.7em;
+  margin: 0 -0.7em;
+}
+section:nth-child(even) { background-color: #8ec0d8; }
+section > header { font-size: large; text-align: left; }
+.section_body {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+  align-items: center;
+}
+
+/* Generic utility classes */
 .uline { border-bottom: 1px solid black; }
 .oline { border-top: 1px solid black; }
 .rline { border-right: 1px solid black; }
 .vcenter { vertical-align: middle; }
 .small { font-size: 75%; vertical-align: super; }
 .bold { font-weight: bold; }
+.num { text-align: right; }
 tr:last-child button { width: 100% }
-#selector { display: inline-flex; padding-right: 1em; min-width: 5em; }
 .flow { display: inline-block; vertical-align: top; }
 .wait { display: none; }
 .err_msg { color: red; text-align: center; }
@@ -21,7 +41,105 @@ tr:last-child button { width: 100% }
   flex-flow: row wrap;
   justify-content: space-around;
 }
+.aligned_table>tbody td {
+  text-align: left;
+  padding-bottom: 0.5em;
+  padding-right: 0.5em;
+  vertical-align: middle;
+}
+.aligned_table>tbody td:first-child { text-align: right; }
+.aligned_table>tbody td:last-child { padding-right: 0; }
+button.remove_row {
+  font-size: large;
+  vertical-align: top;
+  height: 1em;
+  width: 1em;
+  line-height: 0;
+  padding: 0;
+  margin: 0;
+}
+.fake_button {
+  -moz-appearance: button;
+  -ms-appearance: button;
+  -webkit-appearance: button;
+  appearance: button;
+  padding-left: 5px;
+  display: inline-block;
+  border: 1px solid gray;
+  background-color: #dcdcdc;
+  cursor: pointer;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 
+.pp_table {
+  margin: 1em;
+  border-collapse: collapse;
+  display: inline;
+  table-layout: fixed;
+  max-width: 40em;
+}
+.pp_table th { font-weight: bold; }
+.pp_table td { text-align: center; padding: 0 0.5em; }
+
+.ds_table { float: left; margin: 0 1em 0.5em 1em; }
+.ds_table td { padding: 0.3em 1em 0.3em 1em; vertical-align: middle; text-align: center;}
+.ds_table td > * { text-align: left; }
+.ds_table td > .chosen-container { min-width: 100%; }
+.ds_table td > button { text-align: center; }
+.ds_table caption { font-weight: bold; }
+/* Hacks to disable the float: left from .ds_table */
+.nofloat_ds_table { display: inline-block; vertical-align: top; float: none; }
+
+/* Animation */
+@keyframes flash { 50% { background-color: pink; } }
+
+/* Single-spectrum dataset selector */
+#selector { display: inline-flex; padding-right: 1em; min-width: 5em; }
+
+/* Dataset selection UI (on explorer page) */
+#ds_select_container { display: flex; flex-direction: column; }
+#ds_kind_choices { list-style-type: none; }
+#ds_kind_choices > li {
+  display: inline-block;
+  padding: 5px 1em;
+  cursor: pointer;
+  font-size: larger;
+  font-weight: bold;
+  background-color: #006fa7;
+  border: 1px outset;
+}
+#ds_kind_choices > li:hover { background-color: #f2c3b2; }
+#ds_kind_choices > li.active {
+  background-color: #ee1c26;
+  cursor: default;
+  border: none;
+}
+#ds_kind_choices > li.active:hover { background-color: #ee1c26; }
+.ds_select {
+  display: none;
+  cursor: default;
+  margin: 0.25em auto;
+  max-width: 925px;
+}
+.ds_select.active {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+.ds_select > label {
+  cursor: pointer;
+  padding: 0.5em;
+  margin: 0 0.25em 0.25em 0.25em;
+  background-color: #4992c4;
+  font-weight: bold;
+}
+.ds_select > input { display: none; }
+.ds_select > input:checked + label { background-color: #e69b71; }
+
+/* Filters for dataset metadata */
 .ds_filters {
   border: 1px solid gray;
   min-width: 380px;
@@ -54,50 +172,12 @@ tr:last-child button { width: 100% }
   border: 1px solid;
 }
 
-.ds_table { float: left; margin: 0 1em 0.5em 1em; }
-.ds_table td { padding: 0.3em 1em 0.3em 1em; vertical-align: middle; text-align: center;}
-.ds_table td > * { text-align: left; }
-.ds_table td > .chosen-container { min-width: 100%; }
-.ds_table td > button { text-align: center; }
-.ds_table caption { font-weight: bold; }
-.ds_table input[type="number"] { width: 4em; }
-
-.pp_table {
-  margin: 1em;
-  border-collapse: collapse;
-  display: inline;
-  table-layout: fixed;
-  max-width: 40em;
-}
-.pp_table th { font-weight: bold; }
-.pp_table td { text-align: center; padding: 0 0.5em; }
-.pp_table input[type="number"] { width: 4em; }
-
-button.remove_row {
-  font-size: large;
-  vertical-align: top;
-  height: 1em;
-  width: 1em;
-  line-height: 0;
-  padding: 0;
-  margin: 0;
-}
-
-.fake_button {
-  -moz-appearance: button;
-  -ms-appearance: button;
-  -webkit-appearance: button;
-  appearance: button;
-  padding-left: 5px;
-  display: inline-block;
-  border: 1px solid gray;
-  background-color: #dcdcdc;
-  cursor: pointer;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
+/* Table for regress/classify model error */
+.model_error { padding: 0.25em 1em; margin: 0.25em auto; text-align: center; }
+.model_error thead { border-bottom: 1px solid black; font-weight: bold; }
+.model_error th { padding: 0 0.5em; }
+.model_error td { padding: 0 0.5em; text-align: right; }
+.model_error td:first-child { text-align: left; }
 
 /* Styles for the mpl figure */
 #figure {
