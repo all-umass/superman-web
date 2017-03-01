@@ -7,7 +7,7 @@ from backend.handlers.import_handlers import DatasetImportHandler
 
 class TestDatasetImportRoutes(unittest.TestCase):
   def setUp(self):
-    self.app = MatplotlibServer(cookie_secret='foobar')
+    self.app = MatplotlibServer([], cookie_secret='foobar')
 
   def test_csv_spectra(self):
     req = Mock(cookies=dict())

@@ -162,13 +162,15 @@ class TestUnivariateRegression(unittest.TestCase):
   def test_crossval_lasso(self):
     model_cls = REGRESSION_MODELS['lasso']['uni']
     for labels in (None, GROUPS):
-      cv_gen = model_cls.cross_validate(DATA, self._variables, num_folds=2,
-                                        labels=labels)
-      for name, x, y, yerr in cv_gen:
-        self.assertEqual(y.shape, (len(x),))
-        self.assertEqual(yerr.shape, (len(x),))
-        self.assertTrue(np.isfinite(y).all())
-        self.assertTrue(np.isfinite(yerr).all())
+      with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        cv_gen = model_cls.cross_validate(DATA, self._variables, num_folds=2,
+                                          labels=labels)
+        for name, x, y, yerr in cv_gen:
+          self.assertEqual(y.shape, (len(x),))
+          self.assertEqual(yerr.shape, (len(x),))
+          self.assertTrue(np.isfinite(y).all())
+          self.assertTrue(np.isfinite(yerr).all())
 
   def test_save_load(self):
     for kind, param in [('pls', 3), ('lasso', 0.1), ('lars', 2)]:

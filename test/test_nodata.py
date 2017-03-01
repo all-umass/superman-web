@@ -5,13 +5,13 @@ from mock import Mock
 from backend import MatplotlibServer
 from backend.handlers.page_handlers import (
     MainPage, LoginPage, DatasetsPage, DataExplorerPage, BaselinePage,
-    SearcherPage, PeakFitPage, DatasetImportPage)
+    PeakFitPage, DatasetImportPage)
 
 
 class TestNoDataPages(unittest.TestCase):
   def setUp(self):
     tpl = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'templates')
-    self.app = MatplotlibServer(cookie_secret='foobar', template_path=tpl)
+    self.app = MatplotlibServer([], cookie_secret='foobar', template_path=tpl)
 
   def test_main_page(self):
     req = Mock(cookies=dict(), headers=dict())
@@ -31,7 +31,7 @@ class TestNoDataPages(unittest.TestCase):
     # these don't require datasets to render successfully
     req = Mock(cookies=dict(), headers=dict(), arguments=dict())
     for page_cls in (DatasetsPage, DataExplorerPage, BaselinePage,
-                     SearcherPage, PeakFitPage):
+                     PeakFitPage):
       h = page_cls(self.app, req)
       h.finish = Mock()
       h.get()

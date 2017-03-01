@@ -47,7 +47,7 @@ else:
 
 class RouteTester(unittest.TestCase):
   def setUp(self):
-    self.app = MatplotlibServer(cookie_secret='foobar')
+    self.app = MatplotlibServer([], cookie_secret='foobar')
 
     # Python3 compat
     if not hasattr(self, 'assertRegex'):
