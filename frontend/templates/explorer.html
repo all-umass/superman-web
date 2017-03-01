@@ -311,12 +311,17 @@ section > header { font-size: large; text-align: left; }
 
 <div id="figure_controls">
 <form id="zoom_control" onsubmit="do_zoom(); return false">
-  X axis: <input type="text" name="xmin" size=8>
-  to      <input type="text" name="xmax" size=8>
-  Y axis: <input type="text" name="ymin" size=8>
-  to      <input type="text" name="ymax" size=8>
-  &nbsp;&nbsp;
-  <input type="submit" class="needs_plot" disabled value="Update plot bounds">
+<table class="aligned_table">
+<tr><td>X axis</td><td>
+<input type="text" name="xmin" size=8> to <input type="text" name="xmax" size=8>
+</td></tr>
+<tr><td>Y axis</td><td>
+<input type="text" name="ymin" size=8> to <input type="text" name="ymax" size=8>
+</td></tr>
+<tr><td colspan=2>
+<input type="submit" class="needs_plot" disabled value="Update plot bounds"
+        style="width: 100%">
+</td></tr></table>
 </form>
 
 <div>Line/Marker Size (<span id="lw_val">{{default_lw}}</span>)<br>
