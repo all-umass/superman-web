@@ -67,7 +67,8 @@ function get_dataset(info) {
     $('#upload_messages').text("Selecting...").fadeIn();
     $.ajax({
       url: '/_select', type: 'POST', dataType: 'json',
-      data: $.extend({name: name, idx: idx}, post_data),
+      data: {name: name, idx: idx, ds_name: parts[0], ds_kind: parts[1],
+             fignum: fig.id},
       error: upload_cbs['fail'], success: upload_cbs['success']
     });
   }
