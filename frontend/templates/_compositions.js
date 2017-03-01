@@ -3,8 +3,8 @@ var Composition = (function() {
     plot: function(btn) {
       var err_span = $(btn).next('.err_msg');
 
-      var xc = $('#x_comp_options option:selected').map(_value).toArray();
-      var yc = $('#y_comp_options option:selected').map(_value).toArray();
+      var xc = multi_val($('#x_comp_options option:selected'));
+      var yc = multi_val($('#y_comp_options option:selected'));
       if (xc.length + yc.length == 0) {
         err_span.text('Please select at least one composition to plot.').show();
         return;

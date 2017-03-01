@@ -1,8 +1,4 @@
 var Plot = (function() {
-  function _value() {
-    return this.value;
-  }
-
   function child_vals(selector){
     return "[" + $(selector).children().map(function(i,x){
       return x.value;
@@ -61,7 +57,7 @@ var Plot = (function() {
       var args = {
         ds_name: ds_info.name,
         ds_kind: ds_info.kind,
-        meta_keys: $('#dl_metadata option:selected').map(_value).toArray(),
+        meta_keys: multi_val($('#dl_metadata option:selected')),
         as_matrix: +$('#dl_vector').is(':checked'),
       };
       window.open('/'+fig.id+'/spectra.csv?' + $.param(args), '_blank');

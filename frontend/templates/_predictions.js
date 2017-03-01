@@ -1,8 +1,7 @@
 var Regress = (function() {
   function _run_model(btn, ds_info, do_train) {
     var container = $('#ds_prediction_container');
-    var pred_vars = $('.target_meta option:selected', container)
-                        .map(_value).toArray();
+    var pred_vars = multi_val($('.target_meta option:selected', container));
     var post_data = {
         ds_name: ds_info.name,
         ds_kind: ds_info.kind,
