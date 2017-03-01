@@ -1,9 +1,7 @@
 // Global variables!
 //  fig: figure number for the page's figure
-//  ds_name: name of the selected dataset ('RRUFF', 'IRUG', etc.)
-//  ds_kind: kind of the selected dataset ('Raman', 'LIBS', 'FTIR')
 //  upload_cbs: generic-ish callback functions {success: fn, fail: fn}
-var fig, ds_name, ds_kind, upload_cbs;
+var fig, upload_cbs;
 
 function update_zoom_ctrl(data) {
   $('#zoom_control input[name=xmin]').val(data[0].toPrecision(6));
@@ -13,7 +11,7 @@ function update_zoom_ctrl(data) {
   $('.needs_plot').attr('disabled', false);
 }
 
-function make_post_callbacks(msg_selector) {
+function _make_post_callbacks(msg_selector) {
   return {
     success: function(data, status) {
       var msg = $(msg_selector);
@@ -30,17 +28,16 @@ function make_post_callbacks(msg_selector) {
   };
 }
 
-upload_cbs = make_post_callbacks('#upload_messages');
+upload_cbs = _make_post_callbacks('#upload_messages');
 
 function do_upload(elt) {
+  var err_span = $(elt).next('.err_msg').empty();
   if (elt.files.length != 1) {
-    $('#upload_messages').text("Choose a file first!").fadeIn();
-    return
+    return err_span.text("Choose a file to upload");
   }
   var f = elt.files[0];
   if (f.size > 5000000) {
-    $('#upload_messages').text("File must be <5mb").fadeIn();
-    return
+    return err_span.text("File must be <5mb");
   }
   $('#upload_messages').text("Uploading...").fadeIn();
   var post_data = new FormData();
@@ -61,27 +58,27 @@ function do_upload(elt) {
   });
 }
 function get_dataset(info) {
-  var parts = info.split(',');
-  ds_name = parts[0];
-  ds_kind = parts[1];
-  var post_data = {
-    name: ds_name, kind: ds_kind, fignum: fig.id
-  };
+  if (info == '') return;
+  var parts = info.split(','),
+      post_data = {name: parts[0], kind: parts[1], fignum: fig.id},
+      spinner = $('#spinner').show(),
+      selector = $('#selector');
   function do_select(name, idx) {
     $('#upload_messages').text("Selecting...").fadeIn();
-    $.post('/_select', {
-      name: name, idx: idx, ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id
-    }, upload_cbs['success'], 'json').fail(upload_cbs['fail']);
+    $.ajax({
+      url: '/_select', type: 'POST', dataType: 'json',
+      data: $.extend({name: name, idx: idx}, post_data),
+      error: upload_cbs['fail'], success: upload_cbs['success']
+    });
   }
-  $('#spinner').show();
-  $('#selector').load('/_dataset_selector', post_data, function(){
-    $('#spinner').hide();
+  selector.load('/_dataset_selector', post_data, function(){
+    spinner.hide();
     // If we have a numeric spinner
-    $("#selector input").change(function(evt){
+    $('input', selector).change(function(evt){
       do_select(undefined, evt.target.value)
     });
     // If we have a chosen <select> dropdown
-    $("#selector .chosen-select").chosen({search_contains: true}).change(
+    $('.chosen-select', selector).chosen({search_contains: true}).change(
     function(evt){
       if (evt.target.value.length > 0) {
         do_select(evt.target.value, undefined);
@@ -111,7 +108,7 @@ function do_filter(filter_element, post_data) {
 function do_pp(pp) {
   $('#messages').text("Preprocessing...").fadeIn();
   var post_data = { pp: pp, fignum: fig.id };
-  var cbs = make_post_callbacks('#messages');
+  var cbs = _make_post_callbacks('#messages');
   $.post('/_pp', post_data, cbs['success'], 'json').fail(cbs['fail']);
 }
 function do_baseline(ctx, method) {
@@ -119,7 +116,7 @@ function do_baseline(ctx, method) {
   msg.text("Correcting baseline...").fadeIn();
   var post_data = add_baseline_args(ctx, {fignum: fig.id}, method);
   add_resample_args(ctx, post_data);
-  var cbs = make_post_callbacks('#baseline_messages');
+  var cbs = _make_post_callbacks('#baseline_messages');
   $.post('/_baseline', post_data, cbs['success']).fail(cbs['fail']);
 }
 function update_1eX(val, selector, show_e) {
@@ -153,14 +150,14 @@ function onready_boilerplate(ws_uri, fignum) {
   }, 100);
 }
 function do_zoom() {
-  var post_data = {
-    xmin: $('#zoom_control input[name=xmin]').val(),
-    xmax: $('#zoom_control input[name=xmax]').val(),
-    ymin: $('#zoom_control input[name=ymin]').val(),
-    ymax: $('#zoom_control input[name=ymax]').val(),
+  var zc = $('#zoom_control');
+  $.post('/_zoom', {
+    xmin: $('input[name=xmin]', zc).val(),
+    xmax: $('input[name=xmax]', zc).val(),
+    ymin: $('input[name=ymin]', zc).val(),
+    ymax: $('input[name=ymax]', zc).val(),
     fignum: fig.id
-  };
-  $.post('/_zoom', post_data);
+  });
 }
 function add_pp_step(ctx, name, step, input_name) {
   var table = $(ctx).closest('table');

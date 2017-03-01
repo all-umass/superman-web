@@ -3,46 +3,23 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
 <script type="text/javascript">
-// XXX hacks! Overwrites the generic get_dataset to add peakfit-specific logic.
+// XXX hacks! Overwrite generic functions for peakfit-specific logic.
+var ds_name, ds_kind,
+    old_get_dataset = get_dataset;
+upload_cbs['success'] = function(data, status) {
+  var msg = $('#upload_messages');
+  msg.text(msg.text() + " " + status + ".").delay(3000).fadeOut();
+  if (status === 'success' && data.length == 4) {
+    update_zoom_ctrl(data);
+    autofill_peakfit_params();
+  }
+};
 get_dataset = function(info) {
   if (info == '') return;
+  old_get_dataset();
   var parts = info.split(',');
   ds_name = parts[0];
   ds_kind = parts[1];
-  var post_data = {
-    name: ds_name, kind: ds_kind, fignum: fig.id
-  };
-  function do_select(name, idx) {
-    $('#upload_messages').text("Selecting...").fadeIn();
-    var data = {
-      name: name, idx: idx, ds_name: ds_name, ds_kind: ds_kind, fignum: fig.id
-    };
-    $.ajax({
-      url: '/_select', type: 'POST', data: data, dataType: 'json',
-      error: upload_cbs['fail'],
-      success: function(data, status) {
-        upload_cbs['success'](data, status);
-        autofill_peakfit_params();
-      }
-    });
-  }
-  $('#spinner').show();
-  $('#selector').load('/_dataset_selector', post_data, function(){
-    $('#spinner').hide();
-    // If we have a numeric spinner
-    $("#selector input").change(function(evt){
-      do_select(undefined, evt.target.value)
-    });
-    // If we have a chosen <select> dropdown
-    $("#selector .chosen-select").chosen({search_contains: true}).change(
-    function(evt){
-      if (evt.target.value.length > 0) {
-        do_select(evt.target.value, undefined);
-      }
-    }).next().css('width', '+=15');
-    // toggle .libs_only elements
-    $('.libs_only').toggle(ds_kind === 'LIBS');
-  });
   // also load the ds filters
   $('#ds_filter_container').load('/_dataset_filterer', {
     name: ds_name, kind: ds_kind});
