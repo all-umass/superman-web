@@ -27,24 +27,18 @@
 <div class="flex-column" style="align-items: baseline;">
 <div class="flow">
   Select a query spectrum:
-  <select onchange="if(this.value.length>0){
-    get_dataset(this.value);
-    $('#selector').show();
-  } else {
-    $('#selector').hide();
-  }">
+  <select
+   onchange="v=this.value;(v.length>0)?get_dataset(v):$('#selector').empty();">
   <option value="">Choose a dataset</option>
   {% for name in ds_names %}
     <option value="{{name}},{{ds_kind}}">{{name}}</option>
   {% end %}
   </select>
-  <img id='spinner' src='/loading_bar.gif' style='display:none'>
-  <div id='selector' style='display:none'></div>
 </div>
-<div>
-  or upload your own:
-  <input type="file" name="query" onchange="do_upload(this);"/>
-</div>
+<img id='spinner' src='/loading_bar.gif' style='display:none'>
+<div id='selector'></div>
+or upload your own:
+<input type="file" name="query" onchange="do_upload(this);"/>
 <span id="upload_messages"></span>
 </div>
 
