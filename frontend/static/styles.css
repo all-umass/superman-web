@@ -311,7 +311,7 @@ input[type=range]::-ms-thumb {
 /* Dataset table styling */
 #datasets {
   margin: 1em auto;
-  border: 1px solid black;
+  border: 2px solid gray;
 }
 #datasets td {
   vertical-align: middle;

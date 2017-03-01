@@ -36,9 +36,6 @@ $(document).ready(function(){
 </script>
 <style type="text/css">
 p { padding: 1em 0; }
-#input_table td { padding: 0.3em 1em 0.3em 1em; }
-#input_table input[type="number"] { width: 4em; }
-#input_table tr:last-child button { width: 100%; }
 .instructions {
   border-radius: 5px;
   padding: 0.5em;
@@ -60,7 +57,7 @@ Upload a new dataset by providing files for spectrum data and
 </p>
 
 <form enctype="multipart/form-data" onsubmit="return false;" class="flow">
-<table id="input_table">
+<table class="aligned_table">
 <tr><td>Dataset name</td>
     <td><input type="text" name="ds_name" required /></td></tr>
 <tr><td>Spectrum kind</td><td><select id="ds_kind">
