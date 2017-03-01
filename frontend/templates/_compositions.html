@@ -29,7 +29,7 @@
 </div>
 
 </div>
-<button class="needs_filter" onclick="plot_compositions(this);" disabled>
+<button class="needs_filter" onclick="Composition.plot(this);" disabled>
   Plot<span class="wait">ting</span> compositions<span class="wait">...</span>
 </button>
 <div class="err_msg"></div>
@@ -48,6 +48,6 @@
     <td><span id="fit_xint"></span> &plusmn;
         <span id="fit_xint_err"></span></td></tr>
 <tr><th colspan=2>
-<button class="needs_plot" disabled onclick="download_composition_data();">
+<button class="needs_plot" disabled onclick="Composition.download();">
 Download compositions</button></th></tr>
 </table>
