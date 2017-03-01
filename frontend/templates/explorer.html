@@ -49,7 +49,8 @@ function load_ds_filters() {
       srch_options = $('#ds_search_container');
   if (ds_kind !== undefined) {
     plot_options.load('/_dataset_plot_options', ds_info, function() {
-      $('#dl_metadata').css('width', '+=15').chosen({search_contains: true});
+      $('#dl_metadata').css('width', '+=15').chosen({search_contains: true,
+                                                     width: '100%'});
     });
     comp_options.load('/_dataset_comp_options', ds_info, function() {
       // if no comps are loaded, hide the "Plot Compositions" section
@@ -57,21 +58,26 @@ function load_ds_filters() {
         comp_options.prev().children('.up_chevron').click();
       } else {
         $('#x_comp_options,#y_comp_options').css('width', '+=15')
-                                            .chosen({search_contains: true});
+                                            .chosen({search_contains: true,
+                                                     width: '100%'});
       }
     });
     {% if logged_in %}
     pred_options.load('/_dataset_pred_options', ds_info, function() {
       $('.target_meta', pred_options).css('width', '+=20')
-                                     .chosen({search_contains: true});
+                                     .chosen({search_contains: true,
+                                              width: '100%'});
       $('.cv_stratify', pred_options).css('width', '+=25')
-                                     .chosen({allow_single_deselect: true});
+                                     .chosen({allow_single_deselect: true,
+                                              width: '100%'});
     });
     clas_options.load('/_dataset_classify_options', ds_info, function() {
       $('.target_meta', clas_options).css('width', '+=25')
-                                     .chosen({allow_single_deselect: true});
+                                     .chosen({allow_single_deselect: true,
+                                                     width: '100%'});
       $('.cv_stratify', clas_options).css('width', '+=25')
-                                     .chosen({allow_single_deselect: true});
+                                     .chosen({allow_single_deselect: true,
+                                              width: '100%'});
     });
     {% end %}
     srch_options.load('/_dataset_search_options', ds_info, function() {
