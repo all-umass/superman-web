@@ -228,6 +228,85 @@ input[type=range]::-ms-thumb {
   background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAMAAAC6V+0/AAAAq1BMVEUAAADQ0ND////l5eV0dHT///99fX1qamrg4OB4eHjq6uqGhoaoqKjd3d14eHiGhob19fWTk5P5+fn6+vrt7e1ra2uSkpKenp74+Pj///9qamr///////93d3eenp6oqKj///+FhYWoqKj///+FhYWSkpL///////9qamqFhYV3d3eSkpJeXl6fn59lZWXp6enT09PMzMzCwsKsrKympqaWlpaAgIBxcXFUVFSzlZM2AAAAKHRSTlMABywMaWATCfj49fXr6ejj3drRysi+t66enJyZioqBdVdRSD8zJyEVT4gb/wAAAIlJREFUGNPFzkcSgzAQRNGRRHDOOWdjMcI53P9klhAlipoD8FZdvfrgMKB2jTX5VkqpcVi4glFsdI+QO7QvVn3rPq8qpYyvT6kt7RXOIu3V49P7V49hAJpoISaPuQDY1D6I6KV9gySq+Gnnqa9+bx+Mc7PDs062uE3A4iLv3LNyOoF2GqQz4zqpPx5ZF0t9qewGAAAAAElFTkSuQmCC);
 }
 
+/* Dataset table styling */
+#datasets {
+  margin: 1em auto;
+  border: 1px solid black;
+}
+#datasets td {
+  vertical-align: middle;
+  background-color: #f7d3b2;
+  border-right: 1px solid black;
+  text-align: center;
+  padding: 6px;
+  word-wrap: break-word;
+}
+#datasets tr.private td {
+  background-color: #f78382;
+}
+#datasets td.ds_title {
+  font-weight: bold;
+  text-align: left;
+}
+#datasets td.ds_title form {
+  float: right;
+}
+#datasets td.ds_title a {
+  color: black;
+}
+#datasets td.numeric {
+  text-align: right;
+}
+#datasets th {
+  background-color: #6E9297;
+  border: 1px solid black;
+  text-align:center;
+  font-weight:bold;
+  padding: 0.5em;
+  cursor: pointer;
+}
+#datasets tr.extra td {
+  background-color: lightgray;
+  text-align: left;
+  width: 1px;  /* HACK: prevent extra row from resizing table width */
+  padding: 0;
+  border: none;
+}
+#datasets tr.extra .hideme {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+#datasets tr.extra .explore_btn {
+  -webkit-appearance: button;
+  -moz-appearance: button;
+  appearance: button;
+  color: initial;
+  text-decoration: none;
+  text-align: center;
+  margin: 0 0.5em;
+  padding: 1em 0.5em;
+  flex: 0 0 auto;
+}
+#datasets tr.extra .ds_info {
+  padding: 0.25em 0;
+}
+#datasets tr.extra .ds_info .metadata {
+  display: inline;
+  list-style: none;
+}
+#datasets tr.extra .ds_info .metadata li {
+  display: inline;
+  white-space: nowrap;
+}
+#datasets tr.extra .ds_info .metadata li:after {
+  content: ", ";
+}
+#datasets tr.extra .ds_info .metadata li:last-child:after {
+  content: "";
+}
+
 /* Silly things */
 #easter_egg {
   position: absolute;
