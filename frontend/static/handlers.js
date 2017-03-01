@@ -62,7 +62,7 @@ function get_dataset(info) {
   var parts = info.split(','),
       post_data = {name: parts[0], kind: parts[1], fignum: fig.id},
       spinner = $('#spinner').show(),
-      selector = $('#selector');
+      selector = $('#selector').empty();
   function do_select(name, idx) {
     $('#upload_messages').text("Selecting...").fadeIn();
     $.ajax({
