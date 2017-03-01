@@ -16,7 +16,7 @@ upload_cbs['success'] = function(data, status) {
 };
 get_dataset = function(info) {
   if (info == '') return;
-  old_get_dataset();
+  old_get_dataset(info);
   var parts = info.split(',');
   ds_name = parts[0];
   ds_kind = parts[1];
