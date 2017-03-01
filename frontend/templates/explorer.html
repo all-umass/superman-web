@@ -49,16 +49,12 @@ function load_ds_filters() {
       srch_options = $('#ds_search_container');
   if (ds_kind !== undefined) {
     plot_options.load('/_dataset_plot_options', ds_info, function() {
-      $('#dl_metadata').css('width', '+=15').chosen({search_contains: true});
+      $('#dl_metadata', plot_options).css('width', '+=15')
+                                     .chosen({search_contains: true});
     });
     comp_options.load('/_dataset_comp_options', ds_info, function() {
-      // if no comps are loaded, hide the "Plot Compositions" section
-      if ($('#x_comp_options option').length === 0) {
-        comp_options.prev().children('.up_chevron').click();
-      } else {
-        $('#x_comp_options,#y_comp_options').css('width', '+=15')
-                                            .chosen({search_contains: true});
-      }
+      $('#x_comp_options,#y_comp_options', comp_options)
+        .css('width', '+=15').chosen({search_contains: true});
     });
     {% if logged_in %}
     pred_options.load('/_dataset_pred_options', ds_info, function() {

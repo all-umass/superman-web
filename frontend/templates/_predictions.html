@@ -1,3 +1,4 @@
+{% if len(pred_pairs) > 0 %}
 <table class="aligned_table">
 <tr><td class="bold">Predicted<br>variable</td><td>
 <select class="target_meta" data-placeholder="select variable(s)" multiple>
@@ -97,3 +98,6 @@ Download</button>
   <option value="csv">coefficients (text file)</option>
 </select>
 </div>
+{% else %}
+No numeric variables to predict.
+{% end %}

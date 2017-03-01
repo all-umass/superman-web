@@ -1,3 +1,4 @@
+{% if len(meta_pairs) > 0 %}
 <table class="aligned_table">
 <tr><td class="bold">Class label</td><td>
 <select class="target_meta" data-placeholder="select variable">
@@ -84,3 +85,6 @@ Download</button>
   <option value="bin" class="for_knn" style="display: none;">model (binary file)</option>
 </select>
 </div>
+{% else %}
+No classes to predict.
+{% end %}

@@ -1,3 +1,4 @@
+{% if len(comp_pairs) > 0 %}
 <div class="flex-column" style="padding-right: 1em;">
 <div class="flex-row">
 
@@ -52,3 +53,6 @@
 <button class="needs_plot" disabled onclick="Composition.download();">
 Download compositions</button></th></tr>
 </table>
+{% else %}
+No composition data.
+{% end %}
