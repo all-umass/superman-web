@@ -234,9 +234,9 @@ class TestMultivariateRegression(unittest.TestCase):
       m.train(DATA, self._variables)
     ws, cs = m.coefficients()
     assert_array_almost_equal(ws[0], [1000])
-    assert_array_almost_equal(ws[1], [614.285714, 118.367347])
+    assert_array_almost_equal(ws[1], [853.061224, 118.367347, 210.204082])
     assert_array_almost_equal(cs[0], [0.013281])
-    assert_array_almost_equal(cs[1], [0.038361, 0.01679])
+    assert_array_almost_equal(cs[1], [0.025562, 0.026936, 0.002654])
 
   def test_coefficients_lars(self):
     m = REGRESSION_MODELS['lars']['multi'](2, 'NIR', WAVE)
@@ -246,7 +246,7 @@ class TestMultivariateRegression(unittest.TestCase):
     ws, cs = m.coefficients()
     assert_array_almost_equal(ws, [[1000, 100], [1000, 853.061224]])
     assert_array_almost_equal(cs, [[0.020408, -0.007075],
-                                   [0.000461, 0.050277]])
+                                   [-0.3075, 0.3675]])
 
   def test_crossval_pls(self):
     model_cls = REGRESSION_MODELS['pls']['multi']
