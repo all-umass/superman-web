@@ -8,7 +8,7 @@ from matplotlib.ticker import NullLocator
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from threading import Thread
 from tornado.escape import xhtml_escape
-from six import BytesIO, string_types, text_type
+from six import BytesIO, string_types
 
 from superman.dataset import (
     VectorDataset, TrajDataset, NumericMetadata, BooleanMetadata, DateMetadata,
@@ -264,7 +264,7 @@ def _get_filter_html(m, key, full_key):
   else:
     uniques = m.uniques
   lines = (u'<option value="%s">%s</option>' % (x, xhtml_escape(x))
-           for x in map(text_type, uniques))
+           for x in uniques)
   html += u'\n'.join(lines) + u'</select>'
   return html
 
