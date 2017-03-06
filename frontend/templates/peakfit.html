@@ -57,7 +57,7 @@ function do_batch_download() {
   window.open(url, '_blank');
 }
 function fmt_number(x) {
-  if (x === undefined) {
+  if (x == null) {
     return 'N/A';
   }
   var s = x.toFixed(2);
