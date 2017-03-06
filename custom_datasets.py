@@ -4,7 +4,6 @@ import logging
 import numpy as np
 import os.path
 import pandas as pd
-import re
 from numbers import Number
 from six.moves import xrange
 
@@ -13,68 +12,12 @@ from superman.dataset import (
     NumericMetadata, BooleanMetadata, PrimaryKeyMetadata, LookupMetadata,
     CompositionMetadata, TagMetadata, DateMetadata)
 
-
-def _generic_traj_loader(meta_mapping):
-  """Creates a loader function for a standard HDF5 file representing a
-  trajectory dataset. The HDF5 structure is expected to be:
-   - /meta/pkey : an array of keys, used to address individual spectra
-   - /spectra/[pkey] : a (n,2) trajectory spectrum
-   - /meta/foobar : (optional) metadata, specified by the meta_mapping
-  """
-  def _load(ds, filepath):
-    data = _try_load(filepath, str(ds))
-    if data is None:
-      return False
-    meta = data['/meta']
-    kwargs = {}
-    for key, cls, display_name in meta_mapping:
-      if key not in meta:
-        continue
-      m = meta[key]
-      if cls is DateMetadata:
-        m = pd.to_datetime(np.array(m))
-      safe_key = re.sub(r'[^a-z0-9_-]', '', key, flags=re.I)
-      kwargs[safe_key] = cls(m, display_name=display_name)
-    ds.set_data(meta['pkey'], data['/spectra'], **kwargs)
-    return True
-  return _load
-
-
-def _generic_vector_loader(meta_mapping):
-  """Creates a loader function for a standard HDF5 file representing a
-  vector dataset. The HDF5 structure is expected to be:
-   - /meta/waves : length-d array of wavelengths
-   - /spectra : (n,d) array of spectra
-   - /meta/foobar : (optional) metadata, specified by the meta_mapping
-   - /composition/[name] : (optional) composition metadata
-  """
-  def _load(ds, filepath):
-    data = _try_load(filepath, str(ds))
-    if data is None:
-      return False
-    meta = data['/meta']
-    kwargs = {}
-    for key, cls, display_name in meta_mapping:
-      if key not in meta:
-        continue
-      if cls is PrimaryKeyMetadata:
-        kwargs['pkey'] = cls(meta[key])
-      elif cls is DateMetadata:
-        kwargs[key] = cls(pd.to_datetime(np.array(meta[key])),
-                          display_name=display_name)
-      else:
-        kwargs[key] = cls(meta[key], display_name=display_name)
-    if '/composition' in data:
-      comp_meta = {name: NumericMetadata(arr, display_name=name) for name, arr
-                   in data['/composition'].items()}
-      kwargs['Composition'] = CompositionMetadata(comp_meta)
-    ds.set_data(meta['waves'], data['/spectra'], **kwargs)
-    return True
-  return _load
+# Helper function for loading HDF5 or NPZ files.
+from backend.dataset_loaders import try_load
 
 
 def load_mhc_multipower(ds, filepath, with_blr=False):
-  data = _try_load(filepath, str(ds))
+  data = try_load(filepath, str(ds))
   if data is None:
     return False
   kind = 'preprocessed' if with_blr else 'formatted'
@@ -169,7 +112,7 @@ def load_mars_big(ds, msl_ccs_dir, pred_file, mixed_pred_file,
 
 
 def load_usda(ds, filepath):
-  usda = _try_load(filepath, str(ds))
+  usda = try_load(filepath, str(ds))
   if usda is None:
     return False
   filenames, keys = usda['key'].T
@@ -187,7 +130,7 @@ def load_usda(ds, filepath):
 
 
 def load_corn(ds, filepath):
-  data = _try_load(filepath, str(ds))
+  data = try_load(filepath, str(ds))
   if data is None:
     return False
   # band info given by: http://www.eigenvector.com/data/Corn/index.html
@@ -204,7 +147,7 @@ def load_corn(ds, filepath):
 
 
 def load_mhc_hydrogen(ds, filepath):
-  hdf5 = _try_load(filepath, str(ds))
+  hdf5 = try_load(filepath, str(ds))
   if hdf5 is None:
     return False
   powers = hdf5['/meta/powers']
@@ -274,8 +217,10 @@ def load_mhc_raman(ds, data_dir, meta_file):
 
   def _utolower(array):
     return [spec.lower() if spec is not None else None for spec in array]
+
   def str_to_none(field):
     return [mix if isinstance(mix, Number) else None for mix in field]
+
   ds.set_data(pkey, hdf5['/spectra'],
               vial=LookupMetadata(meta['vial_name'], 'Vial Name'),
               Instrument=LookupMetadata(meta['instrument']),
@@ -335,19 +280,3 @@ def load_mhc_mossbauer(ds, data_dir, meta_file):
                                     display_name='Owner/Source'),
               )
   return True
-
-
-def _try_load(filepath, data_name):
-  logging.info('Loading %s data...' % data_name)
-  if not os.path.exists(filepath):
-    logging.warning('Data file for %s not found.' % data_name)
-    return None
-
-  load_fn = (np.load if filepath.endswith('.npz') else
-             lambda f: h5py.File(f, mode='r'))
-  try:
-    return load_fn(filepath)
-  except IOError as e:
-    logging.warning('Failed to load %s data!' % data_name)
-    logging.warning(str(e))
-    return None

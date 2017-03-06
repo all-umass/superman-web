@@ -2,8 +2,8 @@
 # Datasets are organized by spectrum type, then dataset name.
 
 # Default loader functions are provided for the common cases of standard-format
-#   hdf5 files (see dataset_loaders.py).
-# Custom loader functions are looked up by name in dataset_loaders.py.
+#   hdf5 files (see backend/dataset_loaders.py).
+# Custom loader functions are looked up by name in custom_datasets.py.
 # Arguments to the loader function are given by `file` or `files`.
 # Metadata entries are triplets of [key, kind, display_name],
 #   where the key refers to hdf5:/meta/key
@@ -11,7 +11,7 @@
 # Default field values are:
 #   vector: false
 #   public: true
-#   loader: (default, given metadata)
+#   loader: (generic loader function)
 Raman:
   RRUFF:
     file: /srv/nfs/common/spectra/Raman/rruff-spectra.hdf5

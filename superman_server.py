@@ -10,10 +10,11 @@ import yaml
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 from backend import MatplotlibServer, all_routes, BaseHandler
-from backend.web_datasets import (
-    DATASETS, WebLIBSDataset, WebVectorDataset, WebTrajDataset)
-import backend.web_datasets
-import dataset_loaders
+from backend.web_datasets import DATASETS
+from backend.dataset_loaders import load_datasets
+
+# User-supplied dataset loader functions
+import custom_datasets
 
 
 def main():
@@ -40,7 +41,7 @@ def main():
   ds_config = config.get('datasets', 'datasets.yml')
   password = config.get('password', None)
   with open(os.path.join(webserver_dir, ds_config)) as datasets_fh:
-    load_datasets(datasets_fh, public_only=(password is None))
+    load_datasets(datasets_fh, custom_datasets, public_only=(password is None))
 
   if args.debug:
     return debug()
@@ -68,47 +69,6 @@ def debug():
   import IPython
   IPython.embed(header=('Note: Datasets are still loading asynchronously.\n'
                         'They will appear in DATASETS: %s' % DATASETS))
-
-
-def load_datasets(config_fh, public_only=False):
-  config = yaml.safe_load(config_fh)
-
-  for kind, entries in config.items():
-    for name, info in entries.items():
-      # skip this entry if it shouldn't be included
-      is_public = info.get('public', True)
-      if public_only and not is_public:
-        continue
-
-      if 'files' in info:
-        files = info['files']
-      else:
-        files = [info['file']]
-
-      if 'loader' in info:
-        # look up the loader function from the module namespace
-        loader_fn = getattr(dataset_loaders, info['loader'])
-      else:
-        # construct a loader from the meta_mapping and the default template
-        meta_mapping = [(k, getattr(backend.web_datasets, cls), mname)
-                        for k, cls, mname in info.get('metadata', [])]
-        if info.get('vector', False):
-          loader_fn = dataset_loaders._generic_vector_loader(meta_mapping)
-        else:
-          loader_fn = dataset_loaders._generic_traj_loader(meta_mapping)
-
-      if kind == 'LIBS':
-        ds = WebLIBSDataset(name, loader_fn, *files)
-      elif info.get('vector', False):
-        ds = WebVectorDataset(name, kind, loader_fn, *files)
-      else:
-        ds = WebTrajDataset(name, kind, loader_fn, *files)
-
-      if 'description' in info:
-        ds.description = info['description']
-      if 'urls' in info:
-        ds.urls = info['urls']
-      ds.is_public = is_public
 
 
 if __name__ == '__main__':
