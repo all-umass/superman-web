@@ -145,6 +145,9 @@ class DatasetImportHandler(BaseHandler):
                                ': %d.' % wave.shape[0]))
       return False
 
+    # make sure there's no whitespace sticking to the pkeys
+    pkey = np.char.strip(pkey)
+
     if len(meta_pkeys) > 0 and not np.array_equal(meta_pkeys, pkey):
       if len(meta_pkeys) != len(pkey):
         self.visible_error(415, 'Spectrum and metadata names mismatch.',
