@@ -90,6 +90,8 @@ class UploadHandler(BaseHandler):
         query = parse_spectrum(fh)
       except Exception:
         logging.exception('Spectrum parse failed.')
+        # XXX: save failed uploads for debugging purposes
+        open('logs/badupload-'+fname, 'w').write(f['body'])
         return self.visible_error(415, 'Spectrum upload failed.')
     ds = UploadedSpectrumDataset(fname, query)
     fig_data.set_selected(ds.view(), title=fname)
