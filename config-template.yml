@@ -19,7 +19,7 @@ logfile: logs/server.log
 # and won't load any private datasets.
 # NOTE: change this from the default password,
 # or your "private" data will not be!
-password: superman
+password: mypassword123
 
 # Random string for encrypting cookie data.
 # If not provided, the server will generate a new secret on startup.
