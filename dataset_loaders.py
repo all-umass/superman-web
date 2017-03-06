@@ -5,6 +5,7 @@ import numpy as np
 import os.path
 import pandas as pd
 import re
+from numbers import Number
 from six.moves import xrange
 
 from superman.dana import dana_class_names
@@ -273,7 +274,8 @@ def load_mhc_raman(ds, data_dir, meta_file):
 
   def _utolower(array):
     return [spec.lower() if spec is not None else None for spec in array]
-
+  def str_to_none(field):
+    return [mix if isinstance(mix, Number) else None for mix in field]
   ds.set_data(pkey, hdf5['/spectra'],
               vial=LookupMetadata(meta['vial_name'], 'Vial Name'),
               Instrument=LookupMetadata(meta['instrument']),
@@ -284,9 +286,12 @@ def load_mhc_raman(ds, data_dir, meta_file):
                                       display_name='Species B'),
               SpeciesC=LookupMetadata(_utolower(meta['conf_species_C']),
                                       display_name='Species C'),
-              AmountA=NumericMetadata(meta['#_in_mix_A'], display_name='%A'),
-              AmountB=NumericMetadata(meta['#_in_mix_B'], display_name='%B'),
-              AmountC=NumericMetadata(meta['#_in_mix_C'], display_name='%C'),
+              AmountA=NumericMetadata(str_to_none(meta['#_in_mix_A']),
+                                      display_name='%A'),
+              AmountB=NumericMetadata(str_to_none(meta['#_in_mix_B']),
+                                      display_name='%B'),
+              AmountC=NumericMetadata(str_to_none(meta['#_in_mix_C']),
+                                      display_name='%C')
               )
   return True
 
