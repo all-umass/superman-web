@@ -189,7 +189,7 @@ function onready_boilerplate(ws_uri, fignum) {
       clearInterval(check_ready);
       fig.request_resize(canvas_width, canvas_height);
       // lock in the current size for fig_div
-      fig_div.css({width: fig_width, height: fig_height});
+      fig_div.css({width: fig_width, 'min-height': fig_height});
     }
   }, 100);
 }
