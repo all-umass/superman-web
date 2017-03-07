@@ -157,15 +157,6 @@ FTIR:
       works of art, architecture, and archaeological materials.
     urls:
       - http://www.irug.org/
-  USGS:
-    file: /srv/nfs/common/spectra/FTIR/USGS.hdf5
-    metadata:
-      - [ids, LookupMetadata, Sample ID]
-    description: >-
-      U.S. Geological Survey database including minerals,
-      organic and volatile compounds, vegetation, and man-made materials.
-    urls:
-      - http://speclab.cr.usgs.gov/spectral-lib.html
   USDA:
     loader: load_usda
     vector: true
@@ -219,6 +210,21 @@ NIR:
       - [date, DateMetadata, Date]
   NEA/Mars-Crosser Asteroids:
     file: /srv/nfs/common/spectra/misc/nea_marscrosser.hdf5
+  USGS:
+    file: /srv/nfs/common/spectra/misc/usgs_full.hdf5
+    metadata:
+      - [group, LookupMetadata, Group]
+      - [name, LookupMetadata, Name]
+      - [location, LookupMetadata, Location]
+      - [composition_analysis, LookupMetadata, Compositional Analysis]
+      - [sample_id, LookupMetadata, Sample ID]
+      - [type, LookupMetadata, Type]
+      - [subtype, LookupMetadata, Subtype]
+    description: >-
+      U.S. Geological Survey database including minerals,
+      organic and volatile compounds, vegetation, and man-made materials.
+    urls:
+      - http://speclab.cr.usgs.gov/spectral-lib.html
 XRD:
   RRUFF:
     file: /srv/nfs/common/spectra/misc/rruff-xrd.hdf5
