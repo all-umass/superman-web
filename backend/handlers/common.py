@@ -10,6 +10,8 @@ from tornado.escape import json_encode
 
 from ..web_datasets import DATASETS
 
+__all__ = ['BLR_KWARGS', 'BaseHandler', 'MultiDatasetHandler']
+
 
 def _make_blr_kwargs():
   def compute_step(lb, ub, kind):
@@ -105,7 +107,7 @@ class BaseHandler(tornado.web.RequestHandler):
              if lb or ub or step]
 
     # initialize the baseline correction object
-    bl_obj = BL_CLASSES[method]() if method else NullBaseline()
+    bl_obj = BL_CLASSES[method]() if method else _NullBaseline()
     params = {}
     for key in bl_obj.param_ranges():
       param = ast.literal_eval(self.get_argument('blr_' + key, 'None'))
@@ -152,7 +154,7 @@ class MultiDatasetHandler(BaseHandler):
 
 
 # A do-nothing baseline, for consistency
-class NullBaseline(Baseline):
+class _NullBaseline(Baseline):
   def _fit_many(self, bands, intensities):
     return 0
 
