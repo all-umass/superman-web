@@ -5,7 +5,7 @@ from .baseline_handlers import routes as baseline_routes
 from .classify_handlers import routes as classify_routes
 from .composition_handlers import routes as composition_routes
 from .dataset_handlers import routes as dataset_routes
-from .handlers import routes as generic_routes
+from .generic import routes as generic_routes
 from .import_handlers import routes as import_routes
 from .model_handlers import routes as generic_model_routes
 from .page_handlers import routes as page_routes

@@ -9,7 +9,7 @@ from superman.dataset import LookupMetadata
 from tornado import gen
 from threading import Thread
 
-from .base import BaseHandler, MultiDatasetHandler
+from .common import BaseHandler, MultiDatasetHandler
 
 
 class SearchHandler(MultiDatasetHandler):

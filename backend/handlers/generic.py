@@ -5,7 +5,7 @@ import numpy as np
 from io import BytesIO, StringIO
 from superman.file_io import parse_spectrum
 
-from .base import BaseHandler
+from .common import BaseHandler
 from ..web_datasets import UploadedSpectrumDataset
 
 

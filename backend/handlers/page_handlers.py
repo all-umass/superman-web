@@ -8,7 +8,7 @@ from collections import defaultdict
 from superman.baseline import BL_CLASSES
 from matplotlib import cm, rcParams
 
-from .base import BaseHandler
+from .common import BaseHandler
 
 MPL_JS = sorted(os.listdir(os.path.join(matplotlib.__path__[0],
                                         'backends/web_backend/jquery/js')))

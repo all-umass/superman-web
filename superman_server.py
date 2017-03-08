@@ -9,7 +9,8 @@ import uuid
 import yaml
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
-from backend import MatplotlibServer, all_routes, BaseHandler
+from backend import MatplotlibServer, all_routes
+from backend.handlers.common import BaseHandler
 from backend.web_datasets import DATASETS
 from backend.dataset_loaders import load_datasets
 

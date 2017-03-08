@@ -13,7 +13,7 @@ from six.moves import xrange
 from threading import Thread
 from tornado import gen
 
-from .base import MultiDatasetHandler
+from .common import MultiDatasetHandler
 
 # old matplotlib used a different key
 if 'axes.prop_cycle' not in rcParams:

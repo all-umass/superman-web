@@ -7,7 +7,7 @@ from superman.peaks.bump_fit import fit_single_peak, fit_composite_peak
 from threading import Thread
 from tornado import gen
 
-from .base import BaseHandler
+from .common import BaseHandler
 
 
 class PeakHandler(BaseHandler):

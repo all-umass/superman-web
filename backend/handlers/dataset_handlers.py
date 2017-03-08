@@ -4,7 +4,7 @@ import tornado.web
 from tornado import gen
 from threading import Thread
 
-from .base import BaseHandler
+from .common import BaseHandler
 from .page_handlers import blr_kwargs
 from ..web_datasets import (
     DATASETS, CompositionMetadata, NumericMetadata, LookupMetadata,

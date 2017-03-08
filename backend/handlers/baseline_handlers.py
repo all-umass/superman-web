@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import os
 
-from .base import BaseHandler
+from .common import BaseHandler
 
 
 class BaselineHandler(BaseHandler):

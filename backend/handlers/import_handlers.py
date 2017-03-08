@@ -8,7 +8,7 @@ from superman.file_io import parse_spectrum
 from tornado.escape import url_escape
 from zipfile import is_zipfile, ZipFile
 
-from .base import BaseHandler
+from .common import BaseHandler
 from ..web_datasets import (
     WebTrajDataset, WebVectorDataset, WebLIBSDataset, DATASETS,
     PrimaryKeyMetadata, NumericMetadata, BooleanMetadata, LookupMetadata)

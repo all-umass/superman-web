@@ -5,7 +5,7 @@ import os
 from io import BytesIO
 from threading import Thread
 
-from .base import BaseHandler, MultiDatasetHandler
+from .common import BaseHandler, MultiDatasetHandler
 from ..models import GenericModel, REGRESSION_MODELS
 
 __all__ = [

@@ -5,7 +5,7 @@ import numpy as np
 import scipy.stats
 from scipy import odr
 
-from .base import BaseHandler
+from .common import BaseHandler
 
 
 class CompositionPlotHandler(BaseHandler):
