@@ -34,8 +34,6 @@ class SelectHandler(BaseHandler):
                                   idx, ds)
       name = 'Spectrum %d' % idx
     else:
-      # XXX: hack to match dtype of pkey
-      name = np.array(name, dtype=ds.pkey.keys.dtype).item()
       idx = ds.pkey.key2index(name)
 
     fig_data.set_selected(ds.view(mask=[idx]), title=str(name))
