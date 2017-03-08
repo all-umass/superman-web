@@ -1,0 +1,55 @@
+# Default values for each dataset:
+#   vector: false
+#   public: true
+#   loader: (generic loader function)
+#   description: (none)
+#   urls: (empty list)
+---
+
+# Datasets are organized by spectrum type, then dataset name.
+NIR:
+  # This would thus show up as "Asteroids [NIR]" in the listing of datasets.
+  Asteroids:
+    # This indicates that the spectra in this dataset are sampled at different
+    # wavelengths, so each one keeps its x-axis information separately.
+    vector: false
+    # If you provide a standard format HDF5 file and don't specify a "loader",
+    # the default loader function will be used.
+    # See backend/dataset_loaders.py for more information on the format.
+    file: /path/to/asteroids.hdf5
+    # Metadata entries are triplets of [key, kind, display_name],
+    #   where the key refers to hdf5:/meta/<key>
+    metadata:
+      - [id, LookupMetadata, ID]
+      - [name, LookupMetadata, Name]
+      - [type, LookupMetadata, Type]
+      - [size, NumericMetadata, Size (mm)]
+      - [date, DateMetadata, Collection Date]
+
+  Corn:
+    # This custom loader function is looked up in custom_datasets.py
+    # It receives arguments specified in the 'file'/'files' fields.
+    loader: load_corn
+    # This means that all the data is sampled on a common x-axis.
+    vector: true
+    file: /path/to/corn.hdf5
+    # The description field is free-form, and shows up in the dataset listing.
+    description: >-
+      Corn spectra measured on 3 different NIR spectrometers with metadata
+      on moisture, oil, protein and starch values. Data was originally taken
+      at Cargill by Mike Blackburn and distributed by Eigenvector Research Inc.
+    # Any number of citation/reference URLs can be specified.
+    urls:
+      - http://www.eigenvector.com/data/Corn/
+
+LIBS:
+  My Secret Dataset:
+    loader: load_my_secret_dataset
+    vector: true
+    # This dataset won't show up unless the user is logged in.
+    public: false
+    # Multiple files/directories can be specified when using a custom loader.
+    files:
+      - /path/to/secret_spectra.npz
+      - /path/to/secret_metadata.npz
+      - /path/to/secret_dir/

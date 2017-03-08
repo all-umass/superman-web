@@ -34,6 +34,9 @@ An example config file is provided at `config-template.yml`.
 Copy this to `config.yml` and edit as needed.
 Any values left commented-out or not included will use reasonable defaults.
 
+In the same way, copy `datasets-template.yml` to `datasets.yml`
+and update the listings to match your local datasets.
+
 
 ### 3: Add Datasets
 
