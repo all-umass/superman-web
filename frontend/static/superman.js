@@ -129,7 +129,7 @@ var SingleSpectrum = (function(){
           }
         }).next().css('width', '+=15');
         // toggle .libs_only elements
-        $('.libs_only').toggle(ds_kind === 'LIBS');
+        $('.libs_only').toggle(parts[1] === 'LIBS');
       });
     },
     preprocess: function(ctx) {
