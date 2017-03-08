@@ -46,7 +46,7 @@ function load_ds_filters() {
       comp_options = $('#ds_compositions_container'),
       pred_options = $('#ds_prediction_container'),
       clas_options = $('#ds_classification_container'),
-      srch_options = $('#ds_search_container');
+      mtch_options = $('#ds_matching_container');
   if (ds_kind !== undefined) {
     plot_options.load('/_plot_options', ds_info, function() {
       $('#dl_metadata', plot_options).css('width', '+=15')
@@ -70,9 +70,9 @@ function load_ds_filters() {
                                      .chosen({allow_single_deselect: true});
     });
     {% end %}
-    srch_options.load('/_matching_options', ds_info, function() {
+    mtch_options.load('/_matching_options', ds_info, function() {
       // make the query prep interactive
-      var query_table = $('#query_prep>table', srch_options);
+      var query_table = $('#query_prep>table', mtch_options);
       query_table.find('tr').slice(0,3).find('select,input').change(function(){
         SingleSpectrum.baseline(query_table);
       });
@@ -91,7 +91,7 @@ function load_ds_filters() {
     window.history.pushState(kind, '', fragment);
   } else {
     $([plot_options, comp_options, pred_options, clas_options,
-       srch_options]).empty();
+       mtch_options]).empty();
     window.history.pushState('', '', 'explorer');
   }
 }
@@ -120,7 +120,7 @@ function change_blr_method(option) {
   {% include '_predictions.js' %}
   {% include '_classifications.js' %}
 {% end %}
-{% include '_search.js' %}
+{% include '_matching.js' %}
 
 $(document).ready(function(){
   onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
@@ -210,7 +210,7 @@ $(document).ready(function(){
 <button class="collapse up_chevron"
   onclick="toggle_collapse(this, 'div');"></button>
 </header>
-<div id="ds_search_container" class="section_body"></div>
+<div id="ds_matching_container" class="section_body"></div>
 </section>
 
 <section>

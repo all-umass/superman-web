@@ -1,4 +1,4 @@
-var Search = (function() {
+var Matching = (function() {
   return {
     search: function(btn) {
       var err_span = $(btn).next('.err_msg');
@@ -6,9 +6,9 @@ var Search = (function() {
         err_span.text('Choose a query spectrum.');
         return;
       }
-      // make sure we run the final pp before searching
+      // make sure we run the final pp before matching
       SingleSpectrum.preprocess($('#query_prep>table'));
-      // collect search params
+      // collect params
       var ds_info = collect_ds_info();
       var post_data = {
         ds_name: ds_info.name,
@@ -23,7 +23,7 @@ var Search = (function() {
       };
       GetArgs.resample($('#resample_options'), post_data);
       GetArgs.baseline($('#blr_options'), post_data);
-      // search
+      // match
       var res = $('#wsm_results').fadeOut(),
           wait = $('.wait', btn).show();
       $.ajax({

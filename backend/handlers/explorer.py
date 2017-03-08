@@ -125,7 +125,7 @@ class MatchOptionsHandler(BaseHandler):
     ds_kind, = ds_kinds
     logging.info('Generating matching options HTML for %s', ds_kind)
     ds_names = sorted(DATASETS[ds_kind])
-    return self.render('_search.html', ds_kind=ds_kind, ds_names=ds_names,
+    return self.render('_matching.html', ds_kind=ds_kind, ds_names=ds_names,
                        **BLR_KWARGS)
 
 

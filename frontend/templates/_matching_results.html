@@ -8,13 +8,13 @@
 {% end %}
 </div>
 
-<b>Search Results</b>
+<b>Whole-Spectrum Matching Results</b>
 
 <ol>
 {% for i in range(len(top_sim)) %}
   <li>
   {{'%.5f' % top_sim[i]}}
-  <a onclick="Search.compare({{top_names[i]}},'{{ds.name}}','{{ds.kind}}');">
+  <a onclick="Matching.compare({{top_names[i]}},'{{ds.name}}','{{ds.kind}}');">
   {% for n in top_names[i] %}
     <span class="match">{{n}}
     {% if top_meta[n] %}
@@ -30,4 +30,4 @@
 {% end %}
 </ol>
 
-<button onclick="Search.download()" disabled>Download search data</button>
+<button onclick="Matching.download()" disabled>Download match data</button>

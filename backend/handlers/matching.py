@@ -35,20 +35,20 @@ class SpectrumMatchingHandler(MultiDatasetHandler):
     score_pct = int(self.get_argument('score_pct'))
     kwargs = dict(num_endmembers=num_comps, num_results=num_results,
                   metric=metric, min_window=min_window, score_pct=score_pct)
-    logging.info('Search params: %r', kwargs)
+    logging.info('Whole-spectrum matching params: %r', kwargs)
 
     if query[0,0] > query[1,0]:
       query = np.flipud(query)
 
     if abs(1 - query[:,1].max()) > 0.001:
       # WSM needs max-normalization, so we force it.
-      logging.warning('Applying max-normalization to query before search')
+      logging.warning('Applying max-normalization to query before matching')
       query[:,1] = preprocess(query[:,1:2].T, 'normalize:max').ravel()
 
     # prepare the target library
     extra_kwargs = dict(nan_gap=None)
     if self.get_argument('pp', None) is None:
-      logging.warning('Applying max-normalization to library before search')
+      logging.warning('Applying max-normalization to library before matching')
       extra_kwargs['pp'] = 'normalize:max'
     all_ds_views, _ = self.prepare_ds_views(fig_data, **extra_kwargs)
     if all_ds_views is None:
@@ -57,14 +57,13 @@ class SpectrumMatchingHandler(MultiDatasetHandler):
 
     # TODO: enable searching over multiple datasets
     if len(all_ds_views) != 1:
-      self.visible_error(403, 'Can only search over one dataset.')
+      self.visible_error(403, 'Can only match against one dataset.')
       return
     ds_view, = all_ds_views
     ds = ds_view.ds
 
-    # search!
     try:
-      top_names, top_sim = yield gen.Task(_async_search, ds_view, query, kwargs)
+      top_names, top_sim = yield gen.Task(_async_wsm, ds_view, query, kwargs)
     except ValueError as e:
       logging.error('During whole_spectrum_search: %s', str(e))
       return
@@ -87,12 +86,12 @@ class SpectrumMatchingHandler(MultiDatasetHandler):
       for name, x in zip(all_names, data):
         top_meta[name][label] = x
 
-    self.render('_search_results.html', ds=ds, top_sim=top_sim,
+    self.render('_matching_results.html', ds=ds, top_sim=top_sim,
                 top_names=top_names, top_meta=top_meta,
                 query_name=query_name, query_meta=query_meta)
 
 
-def _async_search(ds_view, query, wsm_kwargs, callback=None):
+def _async_wsm(ds_view, query, wsm_kwargs, callback=None):
   t = Thread(target=lambda: callback(
       ds_view.whole_spectrum_search(query, **wsm_kwargs)))
   t.daemon = True
@@ -164,5 +163,5 @@ class CompareHandler(BaseHandler):
 routes = [
     (r'/_spectrum_matching', SpectrumMatchingHandler),
     (r'/_compare', CompareHandler),
-    (r'/([0-9]+)/search_results\.csv', CompareHandler)
+    (r'/([0-9]+)/matching_results\.csv', CompareHandler)
 ]
