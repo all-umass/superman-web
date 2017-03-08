@@ -213,7 +213,7 @@ def load_mhc_raman(ds, data_dir, meta_file):
     logging.warning('Failed to load data in %s!' % data_dir)
     logging.warning(str(e))
     return None
-  pkey = meta['spectrum_number']
+  pkey = np.array(meta['spectrum_number'], dtype=bytes)
 
   def _utolower(array):
     return [spec.lower() if spec is not None else None for spec in array]
