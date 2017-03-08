@@ -77,7 +77,7 @@ class DatasetsPage(Subpage):
 class DataExplorerPage(Subpage):
   template = 'explorer.html'
   title = 'Dataset Explorer'
-  description = 'Filter and plot datasets.'
+  description = 'Analyze, process, and plot spectra.'
   figsize = (8, 4)
 
   def initialize(self):
