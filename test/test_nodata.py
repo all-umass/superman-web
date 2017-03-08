@@ -3,7 +3,7 @@ import unittest
 from mock import Mock
 
 from backend import MatplotlibServer
-from backend.handlers.page_handlers import (
+from backend.handlers.subpages import (
     MainPage, LoginPage, DatasetsPage, DataExplorerPage, BaselinePage,
     PeakFitPage, DatasetImportPage)
 
