@@ -162,7 +162,7 @@ class CompareHandler(BaseHandler):
 
 
 routes = [
-    (r'/_search', SpectrumMatchingHandler),
+    (r'/_spectrum_matching', SpectrumMatchingHandler),
     (r'/_compare', CompareHandler),
     (r'/([0-9]+)/search_results\.csv', CompareHandler)
 ]

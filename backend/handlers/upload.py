@@ -15,7 +15,7 @@ from ..web_datasets import (
     PrimaryKeyMetadata, NumericMetadata, BooleanMetadata, LookupMetadata)
 
 
-class UploadHandler(BaseHandler):
+class SpectrumUploadHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
     if fig_data is None:
@@ -45,7 +45,7 @@ class UploadHandler(BaseHandler):
     return self.write_json(axlimits)
 
 
-class DatasetImportHandler(BaseHandler):
+class DatasetUploadHandler(BaseHandler):
   def post(self):
     ds_name = self.get_argument('ds_name')
     ds_kind = self.get_argument('ds_kind')
@@ -284,6 +284,6 @@ def _make_loader_function(desc, *args, **kwargs):
   return _load
 
 routes = [
-    (r'/_upload', UploadHandler),
-    (r'/_import', DatasetImportHandler),
+    (r'/_upload_spectrum', SpectrumUploadHandler),
+    (r'/_upload_dataset', DatasetUploadHandler),
 ]

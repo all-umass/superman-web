@@ -11,7 +11,7 @@ function upload_dataset() {
   post_data.append('ds_kind', $('#ds_kind',form).find('option:selected').val());
   var wait = $('.wait', form).show();
   $.ajax({
-    url: '/_import',
+    url: '/_upload_dataset',
     data: post_data,
     processData: false,
     contentType: false,

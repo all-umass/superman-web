@@ -2,7 +2,7 @@ import unittest
 from mock import Mock
 
 from backend import MatplotlibServer
-from backend.handlers.upload import DatasetImportHandler
+from backend.handlers.upload import DatasetUploadHandler
 
 
 class TestDatasetImportRoutes(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestDatasetImportRoutes(unittest.TestCase):
     req = Mock(cookies=dict())
     req.arguments = dict(ds_name=['test'], ds_kind=['Raman'], desc=['foobar'])
     req.files = dict(spectra=[dict(body='wave,foo,bar\n2,4,3\n3,4,4\n')])
-    h = DatasetImportHandler(self.app, req)
+    h = DatasetUploadHandler(self.app, req)
     h.write = Mock()
     h.finish = Mock()
     h.post()

@@ -87,7 +87,7 @@ var SingleSpectrum = (function(){
       post_data.append('fignum', fig.id);
       post_data.append('query', f);
       $.ajax({
-        url: '/_upload',
+        url: '/_upload_spectrum',
         data: post_data,
         processData: false,
         contentType: false,
@@ -115,7 +115,7 @@ var SingleSpectrum = (function(){
           error: upload_cbs['fail'], success: upload_cbs['success']
         });
       }
-      selector.load('/_dataset_selector', post_data, function(){
+      selector.load('/_spectrum_selector', post_data, function(){
         spinner.hide();
         // If we have a numeric spinner
         $('input', selector).change(function(evt){

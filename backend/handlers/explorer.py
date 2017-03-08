@@ -132,9 +132,9 @@ class MatchOptionsHandler(BaseHandler):
 routes = [
     (r'/_filter', FilterHandler),
     (r'/_dataset_filterer', FilterBoxHandler),
-    (r'/_dataset_plot_options', PlotOptionsHandler),
-    (r'/_dataset_comp_options', CompositionOptionsHandler),
-    (r'/_dataset_pred_options', PredictionOptionsHandler),
-    (r'/_dataset_classify_options', ClassificationOptionsHandler),
-    (r'/_dataset_search_options', MatchOptionsHandler),
+    (r'/_plot_options', PlotOptionsHandler),
+    (r'/_comp_options', CompositionOptionsHandler),
+    (r'/_pred_options', PredictionOptionsHandler),
+    (r'/_classify_options', ClassificationOptionsHandler),
+    (r'/_matching_options', MatchOptionsHandler),
 ]

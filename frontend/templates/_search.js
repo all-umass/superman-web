@@ -27,7 +27,7 @@ var Search = (function() {
       var res = $('#wsm_results').fadeOut(),
           wait = $('.wait', btn).show();
       $.ajax({
-        url: '/_search',
+        url: '/_spectrum_matching',
         type: 'POST',
         data: post_data,
         success: function(data) {

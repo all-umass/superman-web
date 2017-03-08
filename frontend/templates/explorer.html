@@ -48,29 +48,29 @@ function load_ds_filters() {
       clas_options = $('#ds_classification_container'),
       srch_options = $('#ds_search_container');
   if (ds_kind !== undefined) {
-    plot_options.load('/_dataset_plot_options', ds_info, function() {
+    plot_options.load('/_plot_options', ds_info, function() {
       $('#dl_metadata', plot_options).css('width', '+=15')
                                      .chosen({search_contains: true});
     });
-    comp_options.load('/_dataset_comp_options', ds_info, function() {
+    comp_options.load('/_comp_options', ds_info, function() {
       $('#x_comp_options,#y_comp_options', comp_options)
         .css('width', '+=15').chosen({search_contains: true});
     });
     {% if logged_in %}
-    pred_options.load('/_dataset_pred_options', ds_info, function() {
+    pred_options.load('/_pred_options', ds_info, function() {
       $('.target_meta', pred_options).css('width', '+=20')
                                      .chosen({search_contains: true});
       $('.cv_stratify', pred_options).css('width', '+=25')
                                      .chosen({allow_single_deselect: true});
     });
-    clas_options.load('/_dataset_classify_options', ds_info, function() {
+    clas_options.load('/_classify_options', ds_info, function() {
       $('.target_meta', clas_options).css('width', '+=25')
                                      .chosen({allow_single_deselect: true});
       $('.cv_stratify', clas_options).css('width', '+=25')
                                      .chosen({allow_single_deselect: true});
     });
     {% end %}
-    srch_options.load('/_dataset_search_options', ds_info, function() {
+    srch_options.load('/_matching_options', ds_info, function() {
       // make the query prep interactive
       var query_table = $('#query_prep>table', srch_options);
       query_table.find('tr').slice(0,3).find('select,input').change(function(){

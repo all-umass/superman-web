@@ -186,6 +186,6 @@ def _manual_peak_area(spectrum, bounds, base_type='region'):
 
 
 routes = [
-    (r'/_peak', PeakHandler),
+    (r'/_peakfit', PeakHandler),
     (r'/([0-9]+)/peak_area\.csv', PeakHandler),
 ]

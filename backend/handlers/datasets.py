@@ -40,6 +40,6 @@ class RemovalHandler(BaseHandler):
 
 
 routes = [
-    (r'/_dataset_remover', RemovalHandler),
+    (r'/_remove_dataset', RemovalHandler),
     (r'/refresh', RefreshHandler),
 ]

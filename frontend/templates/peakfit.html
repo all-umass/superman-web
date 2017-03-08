@@ -93,7 +93,7 @@ function do_peakfit(alg) {
   var table = $('#fit_result').hide();
   var err_span = $('.err_msg').hide();
   $.ajax({
-    url: '/_peak',
+    url: '/_peakfit',
     type: 'POST',
     data: post_data,
     dataType: 'json',

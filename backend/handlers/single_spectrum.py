@@ -106,7 +106,7 @@ class BaselineHandler(BaseHandler):
 
 
 routes = [
-    (r'/_dataset_selector', SelectorHandler),
+    (r'/_spectrum_selector', SelectorHandler),
     (r'/_select', SelectHandler),
     (r'/_pp', PreprocessHandler),
     (r'/_baseline', BaselineHandler),
