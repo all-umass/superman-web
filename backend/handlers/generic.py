@@ -6,6 +6,15 @@ import numpy as np
 from .common import BaseHandler
 
 
+class SpectrumSelectorHandler(BaseHandler):
+  def post(self):
+    ds = self.request_one_ds('kind', 'name')
+    if ds is None:
+      return self.visible_error(404, 'Dataset not found.')
+    logging.info('Generating selector for dataset: %s', ds)
+    return self.render('_spectrum_selector.html', ds=ds)
+
+
 class SelectHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
