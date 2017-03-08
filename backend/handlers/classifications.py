@@ -5,7 +5,7 @@ import os
 from sklearn.metrics import confusion_matrix
 from tornado import gen
 
-from .model_handlers import GenericModelHandler, async_crossval
+from .generic_models import GenericModelHandler, async_crossval
 from ..models import CLASSIFICATION_MODELS
 
 

@@ -4,7 +4,7 @@ import numpy as np
 import os
 from tornado import gen
 
-from .model_handlers import GenericModelHandler, async_crossval, axes_grid
+from .generic_models import GenericModelHandler, async_crossval, axes_grid
 from ..models import REGRESSION_MODELS
 
 

@@ -4,8 +4,7 @@ import tornado.web
 from tornado import gen
 from threading import Thread
 
-from .common import BaseHandler
-from .page_handlers import blr_kwargs
+from .common import BaseHandler, BLR_KWARGS
 from ..web_datasets import (
     DATASETS, CompositionMetadata, NumericMetadata, LookupMetadata,
     BooleanMetadata
@@ -129,7 +128,7 @@ class DatasetSearchOptionsHandler(BaseHandler):
     logging.info('Generating search options HTML for %s', ds_kind)
     ds_names = sorted(DATASETS[ds_kind])
     return self.render('_search.html', ds_kind=ds_kind, ds_names=ds_names,
-                       **blr_kwargs)
+                       **BLR_KWARGS)
 
 
 class DatasetRemovalHandler(BaseHandler):

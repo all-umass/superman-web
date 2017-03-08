@@ -11,6 +11,21 @@ from tornado.escape import json_encode
 from ..web_datasets import DATASETS
 
 
+def _make_blr_kwargs():
+  def compute_step(lb, ub, kind):
+    if kind == 'integer':
+      return 1
+    if kind == 'log':
+      lb, ub = np.log10((lb, ub))
+    return (ub - lb) / 100.
+  return dict(
+    bl_classes=sorted((key, bl()) for key, bl in BL_CLASSES.items()),
+    compute_step=compute_step, log10=np.log10)
+
+# make a singleton for use in various page handlers
+BLR_KWARGS = _make_blr_kwargs()
+
+
 class BaseHandler(tornado.web.RequestHandler):
   is_private = True
 

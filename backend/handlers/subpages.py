@@ -1,33 +1,15 @@
 from __future__ import absolute_import
 import datetime
 import matplotlib
-import numpy as np
 import os
 import tornado.web
 from collections import defaultdict
-from superman.baseline import BL_CLASSES
 from matplotlib import cm, rcParams
 
-from .common import BaseHandler
+from .common import BaseHandler, BLR_KWARGS
 
 MPL_JS = sorted(os.listdir(os.path.join(matplotlib.__path__[0],
                                         'backends/web_backend/jquery/js')))
-bad_cmaps = set(('gist_gray', 'gist_yarg', 'binary'))
-cmaps = sorted(
-    [m for m in cm.cmap_d if not m.endswith('_r') and m not in bad_cmaps],
-    key=lambda x: x.lower())
-
-
-def compute_step(lb, ub, kind):
-  if kind == 'integer':
-    return 1
-  if kind == 'log':
-    lb, ub = np.log10((lb, ub))
-  return (ub - lb) / 100.
-
-blr_kwargs = dict(
-    bl_classes=sorted((key, bl()) for key, bl in BL_CLASSES.items()),
-    compute_step=compute_step, log10=np.log10)
 
 
 class MainPage(BaseHandler):
@@ -98,6 +80,12 @@ class DataExplorerPage(Subpage):
   description = 'Filter and plot datasets.'
   figsize = (8, 4)
 
+  def initialize(self):
+    bad_cmaps = set(('gist_gray', 'gist_yarg', 'binary'))
+    self.cmaps = sorted(
+        [m for m in cm.cmap_d if not m.endswith('_r') and m not in bad_cmaps],
+        key=lambda x: x.lower())
+
   def get(self):
     ds_tree = defaultdict(dict)
     for ds in self.all_datasets():
@@ -106,8 +94,8 @@ class DataExplorerPage(Subpage):
     self.render(ds_tree=ds_tree, logged_in=(self.current_user is not None),
                 ds_kind=self.get_argument('ds_kind', ''),
                 ds_name=self.get_argument('ds_name', ''),
-                cmaps=cmaps, default_cmap=rcParams['image.cmap'],
-                default_lw=rcParams['lines.linewidth'], **blr_kwargs)
+                cmaps=self.cmaps, default_cmap=rcParams['image.cmap'],
+                default_lw=rcParams['lines.linewidth'], **BLR_KWARGS)
 
 
 class BaselinePage(Subpage):
@@ -123,7 +111,7 @@ class BaselinePage(Subpage):
     fig = fig_data.figure
     ax1 = fig.add_subplot(211)
     fig.add_subplot(212, sharex=ax1)
-    self.render(datasets=self.all_datasets(), fig_id=fignum, **blr_kwargs)
+    self.render(datasets=self.all_datasets(), fig_id=fignum, **BLR_KWARGS)
 
 
 class PeakFitPage(Subpage):
@@ -133,7 +121,7 @@ class PeakFitPage(Subpage):
   figsize = (8, 4)
 
   def get(self):
-    self.render(datasets=self.all_datasets(), **blr_kwargs)
+    self.render(datasets=self.all_datasets(), **BLR_KWARGS)
 
 
 class DatasetImportPage(Subpage):
