@@ -205,9 +205,9 @@ def load_mhc_libs(ds, data_dir, master_file):
 
 def load_mhc_raman(ds, data_dir, meta_file):
   logging.info('Loading MHC Raman data...')
-  data_file = os.path.join(data_dir, 'raman.%03d.hdf5')
+  data_file = os.path.join(data_dir, 'raman.hdf5')
   try:
-    hdf5 = h5py.File(data_file, driver='family', mode='r')
+    hdf5 = h5py.File(data_file, mode='r')
     meta = np.load(meta_file)
   except IOError as e:
     logging.warning('Failed to load data in %s!' % data_dir)
@@ -243,10 +243,10 @@ def load_mhc_raman(ds, data_dir, meta_file):
 
 def load_mhc_mossbauer(ds, data_dir, meta_file):
   logging.info('Loading MHC Mossbauer data...')
-  data_file = os.path.join(data_dir, 'mossbauer.%03d.hdf5')
+  data_file = os.path.join(data_dir, 'mossbauer.hdf5')
   chan_file = os.path.join(data_dir, 'channels.npy')
   try:
-    hdf5 = h5py.File(data_file, driver='family', mode='r')
+    hdf5 = h5py.File(data_file, mode='r')
     meta = np.load(meta_file)
     bands = np.load(chan_file)
   except IOError as e:
