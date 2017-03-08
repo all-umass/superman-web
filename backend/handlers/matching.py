@@ -12,7 +12,7 @@ from threading import Thread
 from .common import BaseHandler, MultiDatasetHandler
 
 
-class SearchHandler(MultiDatasetHandler):
+class SpectrumMatchingHandler(MultiDatasetHandler):
   @gen.coroutine
   def post(self):
     fig_data = self.get_fig_data()
@@ -162,7 +162,7 @@ class CompareHandler(BaseHandler):
 
 
 routes = [
-    (r'/_search', SearchHandler),
+    (r'/_search', SpectrumMatchingHandler),
     (r'/_compare', CompareHandler),
     (r'/([0-9]+)/search_results\.csv', CompareHandler)
 ]

@@ -1,12 +1,11 @@
 from __future__ import absolute_import
-import ast
 import logging
 import numpy as np
 
 from .common import BaseHandler
 
 
-class SpectrumSelectorHandler(BaseHandler):
+class SelectorHandler(BaseHandler):
   def post(self):
     ds = self.request_one_ds('kind', 'name')
     if ds is None:
@@ -46,35 +45,6 @@ class SelectHandler(BaseHandler):
     return self.write_json(axlimits)
 
 
-class FilterHandler(BaseHandler):
-  def post(self):
-    fig_data = self.get_fig_data()
-    if fig_data is None:
-      return self.visible_error(403, 'Broken connection to server.')
-
-    ds_name = self.get_argument('ds_name')
-    ds_kind = self.get_argument('ds_kind')
-    ds = self.get_dataset(ds_kind, ds_name)
-    if ds is None:
-      msg = "Can't find dataset: %s [%s]" % (ds_name, ds_kind)
-      return self.visible_error(404, msg)
-
-    params = {k: ast.literal_eval(self.get_argument(k)) for k in ds.metadata}
-    if ds.pkey is not None:
-      params['pkey'] = ast.literal_eval(self.get_argument('pkey'))
-    logging.info('Filtering %s with args: %s', ds, params)
-
-    mask = ds.filter_metadata(params)
-    fig_data.filter_mask[ds] = mask
-    num_spectra = np.count_nonzero(mask)
-    logging.info('Filtered to %d spectra', num_spectra)
-
-    # blow away any cached explorer data
-    fig_data.clear_explorer_cache()
-
-    return self.write(str(num_spectra))
-
-
 class PreprocessHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
@@ -104,10 +74,8 @@ class ZoomFigureHandler(BaseHandler):
 
 
 routes = [
-    # For selecting a single spectrum from a dataset
+    (r'/_dataset_selector', SelectorHandler),
     (r'/_select', SelectHandler),
-    # For selecting >1 spectra from a dataset
-    (r'/_filter', FilterHandler),
     (r'/_pp', PreprocessHandler),
     (r'/_zoom', ZoomFigureHandler),
 ]
