@@ -3,15 +3,46 @@ import logging
 import numpy as np
 import os
 import pandas as pd
-from io import BytesIO
+from io import BytesIO, StringIO
 from superman.file_io import parse_spectrum
 from tornado.escape import url_escape
 from zipfile import is_zipfile, ZipFile
 
 from .common import BaseHandler
 from ..web_datasets import (
+    UploadedSpectrumDataset,
     WebTrajDataset, WebVectorDataset, WebLIBSDataset, DATASETS,
     PrimaryKeyMetadata, NumericMetadata, BooleanMetadata, LookupMetadata)
+
+
+class UploadHandler(BaseHandler):
+  def post(self):
+    fig_data = self.get_fig_data()
+    if fig_data is None:
+      return self.visible_error(403, 'Broken connection to server.')
+
+    if not self.request.files:
+      return self.visible_error(403, 'No file uploaded.')
+
+    f = self.request.files['query'][0]
+    fname = f['filename']
+    logging.info('Parsing file: %s', fname)
+    fh = BytesIO(f['body'])
+    try:
+      query = parse_spectrum(fh)
+    except Exception:
+      try:
+        fh = StringIO(f['body'].decode('utf-8', 'ignore'), newline=None)
+        query = parse_spectrum(fh)
+      except Exception:
+        logging.exception('Spectrum parse failed.')
+        # XXX: save failed uploads for debugging purposes
+        open('logs/badupload-'+fname, 'w').write(f['body'])
+        return self.visible_error(415, 'Spectrum upload failed.')
+    ds = UploadedSpectrumDataset(fname, query)
+    fig_data.set_selected(ds.view(), title=fname)
+    axlimits = fig_data.plot()
+    return self.write_json(axlimits)
 
 
 class DatasetImportHandler(BaseHandler):
@@ -253,5 +284,6 @@ def _make_loader_function(desc, *args, **kwargs):
   return _load
 
 routes = [
+    (r'/_upload', UploadHandler),
     (r'/_import', DatasetImportHandler),
 ]
