@@ -56,12 +56,10 @@ def main():
     logging.info('Using fresh cookie_secret: %s', cookie_secret)
 
   logging.info('Starting server...')
-  routes = all_routes + [
-      (r'/(\S+\.(?:png|gif|css|js|ico))', tornado.web.StaticFileHandler,
-       dict(path=os.path.join(webserver_dir, 'frontend', 'static')))]
   server = MatplotlibServer(
-      routes, password=password, login_url=r'/login',
+      all_routes, password=password, login_url=r'/login',
       template_path=os.path.join(webserver_dir, 'frontend', 'templates'),
+      static_path=os.path.join(webserver_dir, 'frontend', 'static'),
       cookie_secret=cookie_secret)
   server.run_forever(int(config.get('port', 54321)))
 

@@ -5,18 +5,18 @@
 <link rel="stylesheet" href="_static/css/boilerplate.css" type="text/css">
 <link rel="stylesheet" href="_static/css/fbm.css" type="text/css">
 <link rel="stylesheet" href="_static/jquery/css/themes/base/jquery-ui.min.css" type="text/css">
-<link rel="stylesheet" type="text/css" href="styles.css">
+<link rel="stylesheet" type="text/css" href="{{ static_url('styles.css') }}">
 {% for src in mpl_js %}
   <script src="_static/jquery/js/{{src}}"></script>
 {% end %}
-<script src="jquery.ui.touch-punch.min.js"></script>
-<script src="mpl.js"></script>
-<script src="superman.js"></script>
+<script src="{{ static_url('jquery.ui.touch-punch.min.js') }}"></script>
+<script src="/mpl.js"></script>
+<script src="{{ static_url('superman.js') }}"></script>
 <title>{{ page_title }}</title>
 {% block head_matter %}{% end %}
 </head><body>
 <header>
- <a href="/"><img id="logo" src="logo.png"/></a>
+ <a href="/"><img id="logo" src="{{ static_url('logo.png') }}"/></a>
  <span class="title">{{ page_title }}</span>
 </header>
 

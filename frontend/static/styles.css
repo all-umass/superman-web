@@ -192,7 +192,7 @@ button.remove_row {
 }
 #figure .ui-dialog-titlebar { display: none; }
 #figure .ui-icon {
-  background-image: url("_static/jquery/css/themes/base/images/ui-icons_222222_256x240.png");
+  background-image: url("/_static/jquery/css/themes/base/images/ui-icons_222222_256x240.png");
 }
 #figure>div>div:last-child { text-align: left; }
 #figure .mpl-message { padding-left: 1em; }

@@ -35,7 +35,7 @@ function load_ds_filters() {
   // load a filter box for each dataset
   var ds_kind = ds_info.kind[0];
   ds_info.name.forEach(function(ds_name){
-    var placeholder = $('<div><img src="/loading_bar.gif"></div>')
+    var placeholder = $('<div><img src="/static/loading_bar.gif"></div>')
                         .appendTo(container);
     $.post('/_dataset_filterer', {name:ds_name, kind:ds_kind}, function(filt){
       placeholder.replaceWith(filt);
