@@ -6,6 +6,7 @@ import tornado.web
 from itertools import izip_longest
 from superman.baseline import BL_CLASSES
 from superman.baseline.common import Baseline
+from superman.dataset import MultiDatasetView
 from tornado.escape import json_encode
 
 from ..web_datasets import DATASETS
@@ -133,24 +134,16 @@ class MultiDatasetHandler(BaseHandler):
   def prepare_ds_views(self, fig_data, max_num_spectra=99999,
                        **extra_view_kwargs):
     all_ds = self.request_many_ds()
-
-    if not all_ds:
-      logging.warning('No dataset(s) found')
-      return None, 0
-
-    num_spectra = sum(np.count_nonzero(fig_data.filter_mask[ds])
-                      for ds in all_ds)
-
-    if not 0 < num_spectra <= max_num_spectra:
-      logging.warning('Too many spectra chosen: %d > %d', num_spectra,
-                      max_num_spectra)
-      return None, num_spectra
-
-    # set up the dataset view objects
     trans = self.ds_view_kwargs(**extra_view_kwargs)
     all_ds_views = [ds.view(mask=fig_data.filter_mask[ds], **trans)
                     for ds in all_ds]
-    return all_ds_views, num_spectra
+    mdv = MultiDatasetView(all_ds_views)
+
+    if 0 < mdv.num_spectra() <= max_num_spectra:
+      return mdv
+    else:
+      logging.warning('Bad number of spectra chosen: %d', mdv.num_spectra())
+      return None
 
 
 # A do-nothing baseline, for consistency

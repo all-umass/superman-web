@@ -17,16 +17,13 @@ class ClassificationModelHandler(GenericModelHandler):
       self.write('Oops, something went wrong. Try again?')
       return
 
-    all_ds = self.request_many_ds()
-    if not all_ds:
-      self.write('No datasets selected.')
+    ds_views = self.prepare_ds_views(fig_data)
+    if ds_views is None:
+      self.write('No datasets selected / too many spectra.')
       return
 
     # collect primary keys for row labels
-    all_pkeys = []
-    for ds in all_ds:
-      dv = ds.view(mask=fig_data.filter_mask[ds])
-      all_pkeys.extend(dv.get_primary_keys())
+    all_pkeys = ds_views.get_primary_keys()
 
     # TODO: just re-run the classifier
     model = fig_data.classify_model
@@ -49,9 +46,9 @@ class ClassificationModelHandler(GenericModelHandler):
       self.visible_error(403, "Broken connection to server.")
       return
 
-    all_ds_views, _ = self.prepare_ds_views(fig_data, nan_gap=None)
-    if all_ds_views is None:
-      self.visible_error(404, "Failed to look up dataset(s).")
+    ds_views = self.prepare_ds_views(fig_data, nan_gap=None)
+    if ds_views is None:
+      self.visible_error(404, "Invalid dataset selection.")
       return
 
     model_kind = self.get_argument('model_kind')
@@ -59,23 +56,17 @@ class ClassificationModelHandler(GenericModelHandler):
     params = dict(knn=int(self.get_argument('knn_k')),
                   logistic=float(self.get_argument('logistic_C')))
     pred_key = self.get_argument('pred_var')
-    variables = self.collect_variables(all_ds_views, (pred_key,))
+    variables = self.collect_variables(ds_views, (pred_key,))
 
     if model_kind == 'knn':
       # TODO: detect case where collect_spectra would work,
       #  and use vectors then instead of forcing trajectory format
-      ds_kind, wave, X = None, None, []
-      for dv in all_ds_views:
-        X.extend(np.array(t, dtype=np.float32, order='C')
-                 for t in dv.get_trajectories())
-        if ds_kind is None:
-          ds_kind = dv.ds.kind
-        elif ds_kind != dv.ds.kind:
-          self.visible_error(400, "Mismatching dataset types.",
-                             "Mismatching ds_kind: %s != %s", dv.ds, ds_kind)
-          return
+      ds_kind = ds_views.ds_kind
+      wave = None
+      X = [np.array(t, dtype=np.float32, order='C')
+           for t in ds_views.get_trajectories()]
     else:
-      ds_kind, wave, X = self.collect_spectra(all_ds_views)
+      ds_kind, wave, X = self.collect_spectra(ds_views)
       if X is None:
         # self.visible_error has already been called in collect_spectra
         return
@@ -86,7 +77,7 @@ class ClassificationModelHandler(GenericModelHandler):
       folds = int(self.get_argument('cv_folds'))
       stratify_meta = self.get_argument('cv_stratify', '')
       if stratify_meta:
-        vals, _ = self.collect_one_variable(all_ds_views, stratify_meta)
+        vals, _ = self.collect_one_variable(ds_views, stratify_meta)
         _, stratify_labels = np.unique(vals, return_inverse=True)
       else:
         stratify_labels = None

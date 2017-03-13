@@ -50,20 +50,13 @@ class SpectrumMatchingHandler(MultiDatasetHandler):
     if self.get_argument('pp', None) is None:
       logging.warning('Applying max-normalization to library before matching')
       extra_kwargs['pp'] = 'normalize:max'
-    all_ds_views, _ = self.prepare_ds_views(fig_data, **extra_kwargs)
-    if all_ds_views is None:
-      self.visible_error(404, 'Failed to look up dataset(s).')
+    ds_views = self.prepare_ds_views(fig_data, **extra_kwargs)
+    if ds_views is None:
+      self.visible_error(404, 'Invalid library selection.')
       return
-
-    # TODO: enable searching over multiple datasets
-    if len(all_ds_views) != 1:
-      self.visible_error(403, 'Can only match against one dataset.')
-      return
-    ds_view, = all_ds_views
-    ds = ds_view.ds
 
     try:
-      top_names, top_sim = yield gen.Task(_async_wsm, ds_view, query, kwargs)
+      top_names, top_sim = yield gen.Task(_async_wsm, ds_views, query, kwargs)
     except ValueError as e:
       logging.error('During whole_spectrum_search: %s', str(e))
       return
@@ -74,26 +67,43 @@ class SpectrumMatchingHandler(MultiDatasetHandler):
                   in _lookup_metas(fig_data._ds_view)}
 
     # get any LookupMetadata associated with the matches
-    all_names = set([n for names in top_names for n in names])
-    if ds.pkey is None:
-      ds_view.mask = np.array([int(n.rsplit(' ', 1)[1]) for n in all_names],
-                              dtype=int)
-    else:
-      ds_view.mask, = np.nonzero(ds.filter_metadata(dict(pkey=all_names)))
-    all_names = ds_view.get_primary_keys()
+    top_pkeys_uniq = np.array(list(set([p for pkeys in top_names
+                                        for p in pkeys])))
+    all_pkeys = ds_views.get_primary_keys()
+    # find lookup metas for each top_pkeys_uniq
+    overall_mask = np.in1d(all_pkeys, top_pkeys_uniq, assume_unique=True)
+    dv_submasks = ds_views.split_across_views(overall_mask)
+    dv_pkeys = ds_views.split_across_views(all_pkeys)
     top_meta = defaultdict(dict)
-    for data, label in _lookup_metas(ds_view):
-      for name, x in zip(all_names, data):
-        top_meta[name][label] = x
+    for dv, submask, pkeys in zip(ds_views.ds_views, dv_submasks, dv_pkeys):
+      names = pkeys[submask]
+      for data, label in _lookup_metas(dv):
+        for name, x in zip(names, data[submask]):
+          top_meta[name][label] = x
 
-    self.render('_matching_results.html', ds=ds, top_sim=top_sim,
-                top_names=top_names, top_meta=top_meta,
+    if ds_views.num_datasets > 1:
+      # figure out which ds each match came from
+      top_ds_names = ds_views.dataset_name_metadata()[overall_mask]
+      ds_name_mapping = dict(zip(top_pkeys_uniq, top_ds_names))
+      ds_names = [ds_name_mapping[kk[0]] for kk in top_names]
+      # fix up pkeys; they've had "ds_name: " prefixes added
+      top_pkeys = []
+      for kk, ds_name in zip(top_names, ds_names):
+        prefix_len = len(ds_name) + 2
+        top_pkeys.append([k[prefix_len:] for k in kk])
+    else:
+      ds_names = [ds_views.ds_views[0].ds.name] * len(top_names)
+      top_pkeys = top_names
+
+    self.render('_matching_results.html',
+                ds_kind=ds_views.ds_kind, ds_names=ds_names, top_sim=top_sim,
+                top_names=top_names, top_pkeys=top_pkeys, top_meta=top_meta,
                 query_name=query_name, query_meta=query_meta)
 
 
-def _async_wsm(ds_view, query, wsm_kwargs, callback=None):
+def _async_wsm(ds_views, query, wsm_kwargs, callback=None):
   t = Thread(target=lambda: callback(
-      ds_view.whole_spectrum_search(query, **wsm_kwargs)))
+      ds_views.whole_spectrum_search(query, **wsm_kwargs)))
   t.daemon = True
   t.start()
 

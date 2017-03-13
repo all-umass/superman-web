@@ -103,61 +103,37 @@ class GenericModelHandler(MultiDatasetHandler):
       self.visible_error(403, "Broken connection to server.")
       return
 
-    all_ds_views, _ = self.prepare_ds_views(fig_data, nan_gap=None)
-    if all_ds_views is None:
-      self.visible_error(404, "Failed to look up dataset(s).")
+    ds_views = self.prepare_ds_views(fig_data, nan_gap=None)
+    if ds_views is None:
+      self.visible_error(404, "Invalid dataset selection.")
       return
 
-    ds_kind, wave, X = self.collect_spectra(all_ds_views)
+    ds_kind, wave, X = self.collect_spectra(ds_views)
     if X is None:
       # self.visible_error has already been called in collect_spectra
       return
-    return fig_data, all_ds_views, ds_kind, wave, X
+    return fig_data, ds_views, ds_kind, wave, X
 
-  def collect_spectra(self, all_ds_views):
-    '''collect vector-format data from all datasets'''
-    ds_kind, wave, X = None, None, []
-    for dv in all_ds_views:
-      try:
-        w, x = dv.get_vector_data()
-      except ValueError as e:
-        self.visible_error(400, e.message,
-                           "Couldn't get vector data from %s: %s", dv.ds,
-                           e.message)
-        return ds_kind, wave, None
-      if wave is None:
-        wave = w
-        ds_kind = dv.ds.kind
-      else:
-        if wave.shape != w.shape or not np.allclose(wave, w):
-          self.visible_error(400, "Mismatching wavelength data in %s." % dv.ds)
-          return ds_kind, wave, None
-        if ds_kind != dv.ds.kind:
-          self.visible_error(400, "Mismatching dataset types.",
-                             "Mismatching ds_kind: %s not in %s",
-                             dv.ds, ds_kind)
-          return ds_kind, wave, None
-      X.append(x)
-    return ds_kind, wave, np.vstack(X)
+  def collect_spectra(self, ds_views):
+    '''collect vector-format data from all datasets.'''
+    try:
+      wave, X = ds_views.get_vector_data()
+    except ValueError as e:
+      logging.exception("Failed to get vector data from %s", ds_views.ds_views)
+      self.visible_error(400, e.message)
+      return None, None, None
+    return ds_views.ds_kind, wave, X
 
   @classmethod
-  def collect_variables(cls, all_ds_views, meta_keys):
+  def collect_variables(cls, ds_views, meta_keys):
     '''Collect metadata variables to predict from all loaded datasets.
     Returns a dict of {key: (array, display_name)}
     '''
-    variables = {}
-    for key in meta_keys:
-      yy, name = [], None
-      for dv in all_ds_views:
-        y, name = dv.get_metadata(key)
-        yy.append(y)
-      variables[key] = (np.concatenate(yy), name)
-    return variables
+    return {key: ds_views.get_metadata(key) for key in meta_keys}
 
   @classmethod
-  def collect_one_variable(cls, all_ds_views, meta_key):
-    tmp = cls.collect_variables(all_ds_views, (meta_key,))
-    return tmp[meta_key]
+  def collect_one_variable(cls, ds_views, meta_key):
+    return ds_views.get_metadata(meta_key)
 
 
 def async_crossval(fig_data, model_cls, num_vars, cv_args, cv_kwargs,

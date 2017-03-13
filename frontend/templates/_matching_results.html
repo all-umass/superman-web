@@ -14,7 +14,7 @@
 {% for i in range(len(top_sim)) %}
   <li>
   {{'%.5f' % top_sim[i]}}
-  <a onclick="Matching.compare({{top_names[i]}},'{{ds.name}}','{{ds.kind}}');">
+  <a onclick="Matching.compare({{json_encode(top_pkeys[i])}}, '{{ds_names[i]}}', '{{ds_kind}}');">
   {% for n in top_names[i] %}
     <span class="match">{{n}}
     {% if top_meta[n] %}

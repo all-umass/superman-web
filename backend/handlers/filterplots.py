@@ -45,20 +45,16 @@ class FilterPlotHandler(MultiDatasetHandler):
     if fig_data.explorer_data is None or fig_data.last_plot != 'filterplot':
       self.write('No plotted data to download.')
       return
-    all_ds = self.request_many_ds()
-    if not all_ds:
-      self.write('No datasets selected.')
+    ds_views = self.prepare_ds_views(fig_data)
+    if ds_views is None:
+      self.write('Invalid data selection.')
       return
-    all_ds_views = [ds.view(mask=fig_data.filter_mask[ds]) for ds in all_ds]
-
-    pkeys = []
-    for dv in all_ds_views:
-      pkeys.extend(map(_sanitize_csv, dv.get_primary_keys()))
 
     as_matrix = bool(int(self.get_argument('as_matrix', '0')))
+    pkeys = map(_sanitize_csv, ds_views.get_primary_keys())
 
     if download_type == 'metadata':
-      meta_rows = self._prep_metadata(pkeys, all_ds_views)
+      meta_rows = self._prep_metadata(pkeys, ds_views)
     elif download_type == 'spectra':
       if as_matrix:
         try:
@@ -115,25 +111,20 @@ class FilterPlotHandler(MultiDatasetHandler):
     ints = np.vstack(ints)
     return bands, ints
 
-  def _prep_metadata(self, pkeys, all_ds_views):
+  def _prep_metadata(self, pkeys, ds_views):
     header = ['pkey']
     meta_columns = [pkeys]
 
     # make a dataset column, if there are multiple datasets
-    if len(all_ds_views) > 1:
+    if ds_views.num_datasets > 1:
       header.append('Dataset')
-      ds_names = [str(dv.ds) for dv in all_ds_views]
-      counts = [np.count_nonzero(dv.mask) for dv in all_ds_views]
-      meta_columns.append(np.repeat(ds_names, counts))
+      meta_columns.append(ds_views.dataset_name_metadata())
 
     # collect the requested meta info
     for meta_key in self.get_arguments('meta_keys[]'):
-      data = []
-      for dv in all_ds_views:
-        x, label = dv.get_metadata(meta_key)
-        data.append(x)
+      data, label = ds_views.get_metadata(meta_key)
       header.append(label)
-      meta_columns.append(np.concatenate(data))
+      meta_columns.append(data)
 
     # transpose into rows
     rows = [header]
@@ -158,8 +149,8 @@ class FilterPlotHandler(MultiDatasetHandler):
         lw=float(self.get_argument('line_width')),
     )
 
-    all_ds_views, num_spectra = self.prepare_ds_views(fig_data)
-    if all_ds_views is None:
+    ds_views = self.prepare_ds_views(fig_data)
+    if ds_views is None:
       # not an error, just nothing to do
       self.write('{}')
       return
@@ -167,7 +158,7 @@ class FilterPlotHandler(MultiDatasetHandler):
     # check to see if anything changed since the last view we had
     view_params = [(k, self.get_argument(k)) for k in self.request.arguments
                    if k.startswith('blr_')]
-    trans = all_ds_views[0].transformations
+    trans = ds_views.ds_views[0].transformations
     for k in ['chan_mask', 'pp', 'crop']:
       view_params.append((k, trans[k]))
     view_params = tuple(sorted(view_params))
@@ -177,18 +168,11 @@ class FilterPlotHandler(MultiDatasetHandler):
       fig_data.explorer_view_params = view_params
 
     # get individual line/point labels (TODO: cache this)
-    if len(all_ds_views) == 1:
-      pkeys = all_ds_views[0].get_primary_keys()
-    else:
-      pkeys = []
-      for dv in all_ds_views:
-        dv_name = dv.ds.name
-        for k in dv.get_primary_keys():
-          pkeys.append('%s: %s' % (dv_name, k))
+    pkeys = ds_views.get_primary_keys()
 
     # get the plot data (trajs or scatter points), possibly cached
     if xaxis != fig_data.explorer_xaxis or yaxis != fig_data.explorer_yaxis:
-      plot_data = self._get_plot_data(all_ds_views, xaxis, yaxis)
+      plot_data = self._get_plot_data(ds_views, xaxis, yaxis)
       if plot_data is None:
         # self.visible_error has already been called by _get_plot_data
         return
@@ -200,7 +184,7 @@ class FilterPlotHandler(MultiDatasetHandler):
 
     # get the color data, possibly cached
     if caxis != fig_data.explorer_caxis:
-      color_data = _get_color_data(all_ds_views, caxis)
+      color_data = _get_color_data(ds_views, caxis)
       fig_data.explorer_caxis = caxis
       fig_data.explorer_color = color_data
     else:
@@ -248,26 +232,22 @@ class FilterPlotHandler(MultiDatasetHandler):
       raise ValueError('Invalid color type: %s' % ctype)
     return AxisInfo(type=ctype, argument=argument)
 
-  def _get_plot_data(self, all_ds_views, xaxis, yaxis):
+  def _get_plot_data(self, ds_views, xaxis, yaxis):
     logging.info('Getting new plot data: %s, %s', xaxis, yaxis)
     if xaxis.type == 'default' and yaxis.type == 'default':
-      trajs, xlabels = [], set()
-      for dv in all_ds_views:
-        xlabels.add(dv.ds.x_axis_units())
-        try:
-          tt = dv.get_trajectories()
-        except ValueError as e:
-          logging.exception('Failed to get data from %s', dv.ds)
-          self.visible_error(400, e.message)
-          return None
-        else:
-          trajs.extend(tt)
-      return PlotData(scatter=False, trajs=trajs, xlabel=' & '.join(xlabels),
-                      ylabel='Intensity', xticks=None, yticks=None)
+      try:
+        trajs = ds_views.get_trajectories()
+      except ValueError as e:
+        logging.exception('Failed to get trajectories')
+        self.visible_error(400, e.message)
+        return None
+      return PlotData(scatter=False, trajs=trajs,
+                      xlabel=ds_views.x_axis_units(), ylabel='Intensity',
+                      xticks=None, yticks=None)
     # scatter
     try:
-      xdata, xlabel, xticks = _get_axis_data(all_ds_views, xaxis)
-      ydata, ylabel, yticks = _get_axis_data(all_ds_views, yaxis)
+      xdata, xlabel, xticks = _get_axis_data(ds_views, xaxis)
+      ydata, ylabel, yticks = _get_axis_data(ds_views, yaxis)
     except Exception as e:
       logging.exception('Failed to get axis data.')
       self.visible_error(400, e.message)
@@ -301,9 +281,9 @@ def _async_draw_plot(fig_data, plot_data, color_data, plot_kwargs, do_legend,
   t.start()
 
 
-def _get_color_data(all_ds_views, caxis):
+def _get_color_data(ds_views, caxis):
   logging.info('Getting new color data: %s', caxis)
-  color, label, names = _get_axis_data(all_ds_views, caxis)
+  color, label, names = _get_axis_data(ds_views, caxis)
   return ColorData(color=color, label=label, names=names,
                    needs_cbar=(names is None and label is not None),
                    is_categorical=(names is not None and label is not None))
@@ -403,43 +383,34 @@ def _sanitize_csv(s):
   return s
 
 
-def _get_axis_data(all_ds_views, axis):
+def _get_axis_data(ds_views, axis):
   label, tick_names = None, None
   if axis.type == 'default':
     data = axis.argument
   elif axis.type == 'metadata':
-    data, label, tick_names = _get_all_metadata(all_ds_views, axis.argument)
+    data, label, tick_names = _get_all_metadata(ds_views, axis.argument)
   elif axis.type == 'line_ratio':
-    data, label = _compute_line_ratios(all_ds_views, axis.argument)
+    data, label = _compute_line_ratios(ds_views, axis.argument)
   elif axis.type == 'cardinal':
-    n = sum(np.count_nonzero(dv.mask) for dv in all_ds_views)
-    data = np.arange(n)
+    data = np.arange(ds_views.num_spectra())
     label = ''  # TODO: find a reasonable label for this
   elif axis.type == 'computed':
-    data, label = _compute_expr(all_ds_views, axis.argument)
+    data, label = _compute_expr(ds_views, axis.argument)
   elif axis.type == 'cycled':
     # use the default color cycle from matplotlib
     data = COLOR_CYCLE
-    if all(dv.ds.pkey is not None for dv in all_ds_views):
-      tick_names = np.concatenate([dv.ds.pkey.index2key(dv.mask)
-                                   for dv in all_ds_views])
+    tick_names = ds_views.get_primary_keys()
   return data, label, tick_names
 
 
-def _get_all_metadata(all_ds_views, meta_key):
+def _get_all_metadata(ds_views, meta_key):
   # semi-hack: this is hard-coded for the "color-by-dataset" case
   if meta_key == '_ds':
-    tick_names = [dv.ds.name for dv in all_ds_views]
-    counts = [np.count_nonzero(dv.mask) for dv in all_ds_views]
-    data = np.repeat(np.arange(len(counts)), counts)
+    data = ds_views.dataset_name_metadata()
     label = 'Dataset'
-    return data, 'Dataset', tick_names
-  # normal metadata lookup
-  data = []
-  for dv in all_ds_views:
-    x, label = dv.get_metadata(meta_key)
-    data.append(x)
-  data = np.concatenate(data)
+  else:
+    data, label = ds_views.get_metadata(meta_key)
+
   if not np.issubdtype(data.dtype, np.number):
     # Categorical case
     tick_names, data = np.unique(data, return_inverse=True)
@@ -448,32 +419,28 @@ def _get_all_metadata(all_ds_views, meta_key):
   return data, label, tick_names
 
 
-def _compute_line_ratios(all_ds_views, lines):
-  # TODO: use existing plot data here, instead of recomputing it
-  data = np.concatenate([dv.compute_line(lines) for dv in all_ds_views])
-  if len(lines) == 4:
-    label = '(%g to %g) / (%g to %g)' % tuple(lines)
+def _compute_line_ratios(ds_views, bounds):
+  if len(bounds) == 4:
+    label = '(%g to %g) / (%g to %g)' % tuple(bounds)
   else:
-    label = '%g to %g' % tuple(lines)
+    label = '%g to %g' % tuple(bounds)
+  # TODO: use existing plot data here, instead of recomputing it
+  data = ds_views.compute_line(bounds)
   return data, label
 
 
-def _compute_expr(all_ds_views, expr):
-  # get all the trajectories without NaN gapping
-  trajs = []
-  for dv in all_ds_views:
-    nan_gap = dv.transformations.get('nan_gap', None)
-    dv.transformations['nan_gap'] = None
-    trajs.extend(dv.get_trajectories())
-    dv.transformations['nan_gap'] = nan_gap
-
+def _compute_expr(ds_views, expr):
   logging.info('Compiling user expression: %r', expr)
   expr_code = compile(expr, '<string>', 'eval')
 
   def _expr_eval(t):
     res = eval(expr_code, np.__dict__, dict(x=t[:,0],y=t[:,1]))
     return float(res)
-  return np.array(list(map(_expr_eval, trajs))), expr
+
+  computed = []
+  for traj in ds_views.get_trajectories(avoid_nan_gap=True):
+    computed.append(_expr_eval(traj))
+  return np.array(computed), expr
 
 
 routes = [
