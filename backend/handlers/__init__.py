@@ -11,6 +11,7 @@ from .generic_models import routes as model_routes
 from .matching import routes as matching_routes
 from .peakfit import routes as peak_routes
 from .predictions import routes as predict_routes
+from .search import routes as search_routes
 from .single_spectrum import routes as spectrum_routes
 from .subpages import routes as page_routes
 from .upload import routes as upload_routes
@@ -19,5 +20,5 @@ all_routes = list(itertools.chain(
     page_routes, dataset_routes, matching_routes, explorer_routes,
     figure_routes, spectrum_routes, filterplot_routes, peak_routes,
     composition_routes, predict_routes, upload_routes, model_routes,
-    classify_routes
+    classify_routes, search_routes
 ))

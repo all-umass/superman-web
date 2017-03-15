@@ -1,0 +1,77 @@
+{% extends "_common.html" %}
+{% block head_matter %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
+<script type="text/javascript">
+function do_search() {
+  var result_div = $('#search_result').empty();
+  var form = $('form')[0];
+  var post_data = {
+    name_query: form.name_query.value,
+    text_query: form.text_query.value,
+    case_sensitive: +form.case_sensitive.checked,
+    include_pkey: +form.include_pkey.checked,
+    ds_kind: multi_val($('#ds_kind option:selected')),
+  };
+  var wait = $('.wait', form).show();
+  $.ajax({
+    url: '/_search_metadata',
+    data: post_data,
+    type: 'POST',
+    error: function(jqXHR, textStatus, errorThrown) {
+      wait.hide();
+      result_div.text(jqXHR.responseText);
+    },
+    success: function(data) {
+      wait.hide();
+      result_div.text(data);
+    }
+  });
+}
+$(document).ready(function(){
+  $('#ds_kind').chosen();
+});
+</script>
+<style type="text/css">
+form {
+  display: flex;
+  flex-flow: column;
+  padding: 1em 0;
+}
+form>div { padding-bottom: 1em; }
+#ds_kind { padding-right: 3em; }
+</style>
+{% end %}
+{% block body_matter %}
+<form onsubmit="return false;">
+
+<div><label>Metadata name includes:
+<input type="text" name="name_query" placeholder="mineral OR dana">
+</label></div>
+
+<div><label>Metadata text includes:
+<input type="text" name="text_query" placeholder='"Mineral mixture"'>
+</label></div>
+
+<div><label>Case sensitive:
+<input type="checkbox" name="case_sensitive">
+</label></div>
+
+<div><label>Include primary keys:
+<input type="checkbox" name="include_pkey">
+</label></div>
+
+<div><label>Spectrum kind:
+<select id="ds_kind" multiple data-placeholder="any">
+{% for kind in ds_kinds %}
+  <option value="{{kind}}">{{kind}}</option>
+{% end %}
+</select></label></div>
+
+<button onclick="do_search();">
+  Search<span class="wait">ing...</span>
+</button>
+</form>
+
+<div id="search_result"></div>
+{% end %}

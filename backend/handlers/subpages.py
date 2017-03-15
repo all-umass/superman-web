@@ -135,6 +135,15 @@ class DatasetImportPage(Subpage):
     self.render(ds_kinds=self.dataset_kinds())
 
 
+class SearchPage(Subpage):
+  template = 'search.html'
+  title = 'Spectrum Search'
+  description = 'Find data by searching across datasets.'
+
+  def get(self):
+    self.render(ds_kinds=self.dataset_kinds())
+
+
 class DebugPage(BaseHandler):
   @tornado.web.authenticated
   def get(self):
@@ -151,5 +160,6 @@ routes = [
     (r'/peakfit', PeakFitPage),
     (r'/login', LoginPage),
     (r'/import', DatasetImportPage),
+    (r'/search', SearchPage),
     (r'/debug', DebugPage),
 ]
