@@ -264,7 +264,11 @@ class DatasetUploadHandler(BaseHandler):
         m = LookupMetadata(x, display_name=name)
       # use a JS-friendly string key
       meta_kwargs['k%d' % i] = m
-    return meta_kwargs, meta.pkey.values
+
+    # make sure there's no whitespace sticking to the pkeys
+    meta_pkeys = np.array(meta.pkey.values, dtype='U', copy=False)
+    meta_pkeys = np.char.strip(meta_pkeys)
+    return meta_kwargs, meta_pkeys
 
 
 def _maybe_float(x, default=None):
