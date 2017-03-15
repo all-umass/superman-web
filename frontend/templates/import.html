@@ -8,7 +8,7 @@ function upload_dataset() {
     return;
   }
   var post_data = new FormData(form);
-  post_data.append('ds_kind', $('#ds_kind',form).find('option:selected').val());
+  post_data.append('ds_kind', $('#ds_kind option:selected', form).val());
   var wait = $('.wait', form).show();
   $.ajax({
     url: '/_upload_dataset',
