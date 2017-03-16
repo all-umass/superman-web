@@ -4,7 +4,6 @@
 <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
 <script type="text/javascript">
 function do_search() {
-  var result_div = $('#search_result').empty();
   var form = $('form')[0];
   var post_data = {
     name_query: form.name_query.value,
@@ -13,18 +12,21 @@ function do_search() {
     include_pkey: +form.include_pkey.checked,
     ds_kind: multi_val($('#ds_kind option:selected')),
   };
-  var wait = $('.wait', form).show();
+  var result_div = $('#search_result'),
+      err_span = $('.err_msg', form).empty(),
+      wait = $('.wait', form).show();
   $.ajax({
     url: '/_search_metadata',
     data: post_data,
     type: 'POST',
     error: function(jqXHR, textStatus, errorThrown) {
       wait.hide();
-      result_div.text(jqXHR.responseText);
+      result_div.empty();
+      err_span.text(jqXHR.responseText);
     },
     success: function(data) {
       wait.hide();
-      result_div.text(data);
+      result_div.html(data);
     }
   });
 }
@@ -33,6 +35,7 @@ $(document).ready(function(){
 });
 </script>
 <style type="text/css">
+#wrapper { width: 100%; max-width: 1000px; }
 form {
   display: flex;
   flex-flow: column;
@@ -40,9 +43,22 @@ form {
 }
 form>div { padding-bottom: 1em; }
 #ds_kind { padding-right: 3em; }
+#search_result { padding: 1em 0 0 1em; }
+.no_results { font-style: italic; }
+table { border: 1px solid black; }
+tr { border-bottom: 1px solid black; }
+thead { background-color: #6E9297; }
+tbody { background-color: #f7d3b2; }
+td, th {
+  border-right: 1px solid black;
+  padding: 0.1em 0.5em;
+  vertical-align: middle;
+}
+td.pkey { text-align: center; }
 </style>
 {% end %}
 {% block body_matter %}
+<div id="wrapper" class="flex-row">
 <form onsubmit="return false;">
 
 <div><label>Metadata name includes:
@@ -71,7 +87,9 @@ form>div { padding-bottom: 1em; }
 <button onclick="do_search();">
   Search<span class="wait">ing...</span>
 </button>
+<span class="err_msg"></span>
 </form>
 
 <div id="search_result"></div>
+</div>
 {% end %}

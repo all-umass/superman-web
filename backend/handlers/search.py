@@ -27,29 +27,36 @@ class SearchMetadataHandler(BaseHandler):
     results = []
     for kind in ds_kinds:
       for ds in DATASETS[kind].values():
-        ds_results = {}
+        res = _search_dataset(ds, name_query, text_query, include_pkey)
+        if res:
+          results.append((ds, res))
 
-        if include_pkey and ds.pkey is not None and text_query is not None:
-          if any(text_query(k) for k in ds.pkey.keys):
-            ds_results['pkey'] = True
+    results.sort(key=lambda t: (t[0].kind, t[0].name))
+    self.render('_search_results.html', results=results)
 
-        name_res, text_res = [], []
-        for key, m in ds.metadata.items():
-          name = m.display_name(key)
 
-          if name_query is not None and name_query(name):
-            name_res.append(name)
-          if text_query is not None and _search_text(m, text_query):
-            text_res.append(name)
+def _search_dataset(ds, name_query, text_query, include_pkey):
+  ds_results = {}
 
-        if name_res:
-          ds_results['meta_name'] = name_res
-        if text_res:
-          ds_results['meta_text'] = text_res
-      if ds_results:
-        results.append((ds, ds_results))
+  if include_pkey and ds.pkey is not None and text_query is not None:
+    if any(text_query(k) for k in ds.pkey.keys):
+      ds_results['pkey'] = True
 
-    self.write(repr(results))
+  name_res, text_res = [], []
+  for key, m in ds.metadata.items():
+    name = m.display_name(key)
+
+    if name_query is not None and name_query(name):
+      name_res.append(name)
+    if text_query is not None and _search_text(m, text_query):
+      text_res.append(name)
+
+  if name_res:
+    ds_results['meta_name'] = name_res
+  if text_res:
+    ds_results['meta_text'] = text_res
+
+  return ds_results
 
 
 def _search_text(meta, query):
@@ -69,7 +76,7 @@ def _parse_query(query, case_sensitive=False):
   for lexeme, expr_type in [(u'AND', AndExpr), (u'OR', OrExpr)]:
     while True:
       idxs = [i for i, x in enumerate(tokens)
-              if not isinstance(x, QueryExpr) and x.upper() == u'AND']
+              if not isinstance(x, QueryExpr) and x.upper() == lexeme]
       if not idxs:
         break
       idx = idxs[0]
@@ -85,6 +92,7 @@ def _parse_query(query, case_sensitive=False):
 
   # get a matcher function from the root
   root, = tokens
+  logging.info('Parsed query: %r', root)
   return _matcher(root, case_sensitive)
 
 

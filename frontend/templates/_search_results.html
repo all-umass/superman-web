@@ -1,0 +1,20 @@
+{% if not results %}
+<div class="no_results">No datasets found.</div>
+{% else %}
+<table>
+<thead>
+<tr class="bold"><th rowspan=2>Dataset</th><th colspan=3>Match reason</th></tr>
+<tr><th>Primary Key</th><th>Metadata name</th><th>Metadata text</th></tr>
+</thead>
+<tbody>
+{% for ds, res in results %}
+  <tr><td><a
+ href="/explorer?ds_kind={{url_escape(ds.kind)}}&ds_name={{url_escape(ds.name)}}"
+  >{{str(ds)}}</a></td>
+  <td clas="pkey">{% if 'pkey' in res %}&#x2714;{% end %}</td>
+  <td>{% if 'meta_name' in res %}{{', '.join(res['meta_name'])}}{% end %}</td>
+  <td>{% if 'meta_text' in res %}{{', '.join(res['meta_text'])}}{% end %}</td>
+  </tr>
+{% end %}
+</tbody></table>
+{% end %}
