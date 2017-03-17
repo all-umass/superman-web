@@ -35,7 +35,13 @@ $(document).ready(function(){
 });
 </script>
 <style type="text/css">
-#wrapper { width: 100%; max-width: 1000px; }
+#wrapper {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1000px;
+}
 form {
   display: flex;
   flex-flow: column;
@@ -58,7 +64,7 @@ td.pkey { text-align: center; }
 </style>
 {% end %}
 {% block body_matter %}
-<div id="wrapper" class="flex-row">
+<div id="wrapper">
 <form onsubmit="return false;">
 
 <div><label>Metadata name includes:
