@@ -11,7 +11,7 @@
   <tr><td><a
  href="/explorer?ds_kind={{url_escape(ds.kind)}}&ds_name={{url_escape(ds.name)}}"
   >{{str(ds)}}</a></td>
-  <td clas="pkey">{% if 'pkey' in res %}&#x2714;{% end %}</td>
+  <td class="pkey">{% if 'pkey' in res %}&#x2714;{% end %}</td>
   <td>{% if 'meta_name' in res %}{{', '.join(res['meta_name'])}}{% end %}</td>
   <td>{% if 'meta_text' in res %}{{', '.join(res['meta_text'])}}{% end %}</td>
   </tr>
