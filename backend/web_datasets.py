@@ -220,17 +220,13 @@ def _get_filter_js(m, full_key):
     collect_js = '{' + ','.join(collect_parts) + '}'
     return '\n'.join(init_parts), collect_js
   # only chosen selects remain (Lookup/PrimaryKey/Tag)
-  jq = '$("#%s_chooser")' % full_key
   # initialize the chosen dropdown, adding some width for the scrollbar
-  init_js = jq + ".css('width', '+=20').chosen({search_contains: true});"
-  prefix = ''
-  if ((isinstance(m, LookupMetadata) and
-       np.issubdtype(m.uniques.dtype, np.number)) or
-      (isinstance(m, PrimaryKeyMetadata) and
-       np.issubdtype(m.keys.dtype, np.number))):
-    prefix = '+'  # convert JS string to number
-  collect_js = jq + ('.next().find(".search-choice").map(function(){'
-                     'return %s($(this).text())}).toArray()') % prefix
+  init_js = '$("#%s_chooser").css("width", "+=20")' % full_key
+  init_js += '.chosen({search_contains: true});'
+  collect_js = 'multi_val($("#%s_chooser option:selected"))' % full_key
+  if isinstance(m, (LookupMetadata, PrimaryKeyMetadata)):
+    search_js = '$("#%s_search").val()' % full_key
+    collect_js = '{select: %s, search: %s}' % (collect_js, search_js)
   return init_js, collect_js
 
 
@@ -245,7 +241,7 @@ def _get_filter_html(m, key, full_key):
     # lazy load histogram
     if not hasattr(m, 'hist_image'):
       m.hist_image = _generate_histogram(m)
-    return ('%s: <span id="%s_label">%s to %s</span><br />'
+    return ('<div>%s: <span id="%s_label">%s to %s</span></div>'
             '<div class="slider" id="%s" style="background-image: '
             'url(data:img/png;base64,%s);"></div>') % (
                 disp, full_key, lb, ub, full_key, m.hist_image)
@@ -253,26 +249,30 @@ def _get_filter_html(m, key, full_key):
     lb, ub = map(str, np.array(m.bounds, dtype='datetime64[D]'))
     lb_input = '<input type="date" id="%s_lb" value="%s">' % (full_key, lb)
     ub_input = '<input type="date" id="%s_ub" value="%s">' % (full_key, ub)
-    return '%s:<br>%s to %s' % (disp, lb_input, ub_input)
+    return '%s:<div>%s to %s</div>' % (disp, lb_input, ub_input)
   # only chosen selects remain (Lookup/PrimaryKey/Tag)
-  html = (u'%s:<br /><select id="%s_chooser" data-placeholder="All" '
-          u'class="chosen-select" multiple>\n') % (disp, full_key)
+  html = u'%s:<select id="%s_chooser" data-placeholder="All" multiple>' % (
+      disp, full_key)
   if isinstance(m, PrimaryKeyMetadata):
     uniques = sorted(m.keys)
   elif isinstance(m, TagMetadata):
     uniques = sorted(m.tags)
   else:
     uniques = m.uniques
-  lines = (u'<option value="%s">%s</option>' % (x, xhtml_escape(x))
+  lines = (u'\n<option value="%s">%s</option>' % (x, xhtml_escape(x))
            for x in uniques)
-  html += u'\n'.join(lines) + u'</select>'
+  html += u''.join(lines) + u'\n</select>'
+  if isinstance(m, (LookupMetadata, PrimaryKeyMetadata)):
+    html += '\n<input type="text" placeholder="search" id="%s_search">' % (
+        full_key)
   return html
 
 
 def _get_composition_filter_html(m, key, full_key):
-  disp = m.display_name(key)
+  comp_name = m.display_name(key)
   html_parts = []
   for k, m in m.comps.items():
     html = _get_filter_html(m, key + '-' + k, full_key + '-' + k)
-    html_parts.append(disp + ' ' + html)
+    # HACK: insert composition name just inside the existing <div>
+    html_parts.append('%s%s %s' % (html[:5], comp_name, html[5:]))
   return html_parts

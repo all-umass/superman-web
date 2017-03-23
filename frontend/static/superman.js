@@ -122,7 +122,7 @@ var SingleSpectrum = (function(){
           do_select(undefined, evt.target.value)
         });
         // If we have a chosen <select> dropdown
-        $('.chosen-select', selector).chosen({search_contains: true}).change(
+        $('select', selector).chosen({search_contains: true}).change(
         function(evt){
           if (evt.target.value.length > 0) {
             do_select(evt.target.value, undefined);

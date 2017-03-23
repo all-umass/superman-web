@@ -1,7 +1,7 @@
 {% if ds.pkey is None %}
   Spectrum #: <input type="number" min=0 max={{ds.num_spectra()-1}} step=1>
 {% else %}
-  <select data-placeholder="Choose a spectrum" class="chosen-select">
+  <select data-placeholder="Choose a spectrum">
   <option value=""></option>
   {% for key in sorted(ds.pkey.keys) %}
     <option value="{{key}}">{{key}}</option>

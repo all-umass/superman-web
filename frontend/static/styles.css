@@ -150,12 +150,15 @@ button.remove_row {
 .ds_filters > button { width: 100%; }
 .ds_filters > .filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-flow: row wrap;
   justify-content: space-between;
   padding-bottom: 0.5em;
 }
-.ds_filters .filter { padding: 0 1em; }
-.ds_filters .filter > * { text-align: left; }
+.ds_filters .filter {
+  display: flex;
+  flex-flow: column nowrap;
+  padding: 0 1em;
+}
 .ds_filters .filter > .chosen-container { min-width: 100%; }
 .ds_filters .filter .slider {
   margin: 0.1em auto 0.5em auto;
