@@ -17,6 +17,7 @@ var Matching = (function() {
         metric: $('#wsm_metric > option:selected').val(),
         param: $('#wsm_param').text(),
         min_window: $('#wsm_min_window').text(),
+        num_results: $('#wsm_num_results').val(),
         num_comps: $('#wsm_endmembers').val(),
         score_pct: $('#wsm_score_pct').text(),
         fignum: fig.id

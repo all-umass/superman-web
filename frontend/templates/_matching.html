@@ -5,6 +5,7 @@
   align-items: center;
   padding-top: 0.5em;
 }
+#wsm_results { padding: 0 1em; }
 #wsm_results ol { text-align: left; }
 #wsm_results li { display: flex; justify-content: space-between; }
 #wsm_results li a { cursor: pointer; margin-left: 1em; }
@@ -79,11 +80,17 @@ or upload your own:
 <div>window size = <span id="wsm_min_window">0</span></div>
 </td></tr>
 
-<tr><td class="bold">Endmembers</td><td>
-<input id="wsm_endmembers" type="number" min=1 max=5 value=1 step=1>
+<tr><td class="bold"># Results</td><td>
+<input id="wsm_num_results" type="number" min=1 max=50 value=10 step=1>
 </td></tr>
 
-<tr><td class="bold">Unmixing<br>Threshold</td>
+<tr><td class="bold">Endmembers</td><td>
+<input id="wsm_endmembers" type="number" min=1 max=5 value=1 step=1
+       onchange="$('#unmix_row').toggle(this.value>1);">
+</td></tr>
+
+<tr id="unmix_row" style="display: none;">
+<td class="bold">Unmixing<br>Threshold</td>
 <td class="param_slider">
 <input type="range" min=1 max=99 value=1 step=1
        onchange="$('#wsm_score_pct').text(this.value);"
