@@ -156,8 +156,8 @@ class DatasetUploadHandler(BaseHandler):
   def _vector_ds(self, fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
                  description):
     try:
-      pkey = np.array(next(fh).strip().split(',')[1:])
-      data = np.genfromtxt(fh, dtype=np.float32, delimiter=',', unpack=True)
+      pkey = np.array(next(fh).strip().split(b',')[1:])
+      data = np.genfromtxt(fh, dtype=np.float32, delimiter=b',', unpack=True)
       wave = data[0]
       spectra = data[1:]
     except Exception:
@@ -165,9 +165,15 @@ class DatasetUploadHandler(BaseHandler):
       self.visible_error(415, 'Unable to parse spectrum data CSV.')
       return False
 
+    # cut out empty columns (where pkey is '')
+    mask = pkey != b''
+    if not mask.all():
+      pkey = pkey[mask]
+      spectra = spectra[mask]
+
     # cut out empty rows (where wave is NaN)
     mask = np.isfinite(wave)
-    if np.count_nonzero(mask) != len(mask):
+    if not mask.all():
       wave = wave[mask]
       spectra = spectra[:, mask]
 
