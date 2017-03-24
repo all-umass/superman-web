@@ -6,10 +6,9 @@
 function do_search() {
   var form = $('form')[0];
   var post_data = {
-    name_query: form.name_query.value,
-    text_query: form.text_query.value,
+    query: form.query.value,
     case_sensitive: +form.case_sensitive.checked,
-    include_pkey: +form.include_pkey.checked,
+    full_text: +form.full_text.checked,
     ds_kind: multi_val($('#ds_kind option:selected')),
   };
   var result_div = $('#search_result'),
@@ -60,27 +59,22 @@ td, th {
   padding: 0.1em 0.5em;
   vertical-align: middle;
 }
-td.pkey { text-align: center; }
 </style>
 {% end %}
 {% block body_matter %}
 <div id="wrapper">
 <form onsubmit="return false;">
 
-<div><label>Metadata name includes:
-<input type="text" name="name_query" placeholder="mineral OR dana">
-</label></div>
-
-<div><label>Metadata text includes:
-<input type="text" name="text_query" placeholder='"Mineral mixture"'>
+<div><label>Search query:
+<input type="text" name="query" placeholder='mineral OR "dana number"'>
 </label></div>
 
 <div><label>Case sensitive:
 <input type="checkbox" name="case_sensitive">
 </label></div>
 
-<div><label>Include primary keys:
-<input type="checkbox" name="include_pkey">
+<div><label>Search within metadata:
+<input type="checkbox" name="full_text">
 </label></div>
 
 <div><label>Spectrum kind:
