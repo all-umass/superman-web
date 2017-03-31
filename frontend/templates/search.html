@@ -1,7 +1,7 @@
 {% extends "_common.html" %}
 {% block head_matter %}
-<script src="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
-<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css">
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
 <script type="text/javascript">
 function do_search() {
   var form = $('form')[0];
@@ -30,7 +30,7 @@ function do_search() {
   });
 }
 $(document).ready(function(){
-  $('#ds_kind').chosen();
+  $('#ds_kind').select2();
 });
 </script>
 <style type="text/css">

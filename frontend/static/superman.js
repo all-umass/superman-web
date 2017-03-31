@@ -121,13 +121,12 @@ var SingleSpectrum = (function(){
         $('input', selector).change(function(evt){
           do_select(undefined, evt.target.value)
         });
-        // If we have a chosen <select> dropdown
-        $('select', selector).chosen({search_contains: true}).change(
-        function(evt){
+        // If we have a fancy <select> dropdown
+        $('select', selector).select2().change(function(evt){
           if (evt.target.value.length > 0) {
             do_select(evt.target.value, undefined);
           }
-        }).next().css('width', '+=15');
+        });
         // toggle .libs_only elements
         $('.libs_only').toggle(parts[1] === 'LIBS');
       });

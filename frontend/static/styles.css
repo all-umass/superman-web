@@ -87,7 +87,6 @@ button.remove_row {
 .ds_table { float: left; margin: 0 1em 0.5em 1em; }
 .ds_table td { padding: 0.3em 1em 0.3em 1em; vertical-align: middle; text-align: center;}
 .ds_table td > * { text-align: left; }
-.ds_table td > .chosen-container { min-width: 100%; }
 .ds_table td > button { text-align: center; }
 .ds_table caption { font-weight: bold; }
 /* Hacks to disable the float: left from .ds_table */
@@ -159,7 +158,6 @@ button.remove_row {
   flex-flow: column nowrap;
   padding: 0 1em;
 }
-.ds_filters .filter > .chosen-container { min-width: 100%; }
 .ds_filters .filter .slider {
   margin: 0.1em auto 0.5em auto;
   height: 36px;

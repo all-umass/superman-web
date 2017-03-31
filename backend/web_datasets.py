@@ -219,10 +219,9 @@ def _get_filter_js(m, full_key):
       collect_parts.append('"%s": %s' % (k, cjs))
     collect_js = '{' + ','.join(collect_parts) + '}'
     return '\n'.join(init_parts), collect_js
-  # only chosen selects remain (Lookup/PrimaryKey/Tag)
-  # initialize the chosen dropdown, adding some width for the scrollbar
-  init_js = '$("#%s_chooser").css("width", "+=20")' % full_key
-  init_js += '.chosen({search_contains: true});'
+  # only fancy selects remain (Lookup/PrimaryKey/Tag)
+  # initialize the dropdown, adding some width for the scrollbar
+  init_js = '$("#%s_chooser").css("width", "+=20").select2();' % full_key
   collect_js = 'multi_val($("#%s_chooser option:selected"))' % full_key
   if isinstance(m, (LookupMetadata, PrimaryKeyMetadata)):
     search_js = '$("#%s_search").val()' % full_key
@@ -250,7 +249,7 @@ def _get_filter_html(m, key, full_key):
     lb_input = '<input type="date" id="%s_lb" value="%s">' % (full_key, lb)
     ub_input = '<input type="date" id="%s_ub" value="%s">' % (full_key, ub)
     return '%s:<div>%s to %s</div>' % (disp, lb_input, ub_input)
-  # only chosen selects remain (Lookup/PrimaryKey/Tag)
+  # only fancy selects remain (Lookup/PrimaryKey/Tag)
   html = u'%s:<select id="%s_chooser" data-placeholder="All" multiple>' % (
       disp, full_key)
   if isinstance(m, PrimaryKeyMetadata):

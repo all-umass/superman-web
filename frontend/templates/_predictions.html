@@ -23,7 +23,7 @@
   <input type="number" class="cv_folds" value=5 min=2 max=100>
 </td></tr>
 <tr><td class="bold">Stratifier</td><td>
-  <select class="cv_stratify" data-placeholder="select variable">
+  <select class="cv_stratify">
     <option value="" selected></option>
   {% for key, name in strat_pairs %}
     <option value="{{key}}">{{name}}</option>
