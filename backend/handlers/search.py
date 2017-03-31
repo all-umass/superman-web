@@ -2,7 +2,6 @@ from __future__ import absolute_import
 import logging
 
 from .common import BaseHandler
-from ..web_datasets import DATASETS
 
 
 class SearchMetadataHandler(BaseHandler):
@@ -17,9 +16,9 @@ class SearchMetadataHandler(BaseHandler):
     if not query_str:
       return self.visible_error(403, 'Must supply a query.')
 
-    if not ds_kinds:
-      ds_kinds = DATASETS.keys()
-    datasets = [ds for kind in ds_kinds for ds in DATASETS[kind].values()]
+    datasets = self.all_datasets()
+    if ds_kinds:
+      datasets = [ds for ds in datasets if ds.kind in ds_kinds]
 
     results = []
     for ds in datasets:
