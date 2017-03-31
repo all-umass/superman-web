@@ -1,17 +1,15 @@
 {% if not results %}
 <div class="no_results">No datasets found.</div>
 {% else %}
-<table>
-<thead>
-<tr class="bold"><th>Dataset</th><th>Matching metadata</th></tr>
-</thead>
-<tbody>
+<div class="flex-column">
 {% for ds, meta_names in results %}
-  <tr><td><a
- href="/explorer?ds_kind={{url_escape(ds.kind)}}&ds_name={{url_escape(ds.name)}}"
-  >{{str(ds)}}</a></td>
-  <td>{{', '.join(meta_names)}}</td>
-  </tr>
+  {% set dk, dn = url_escape(ds.kind), url_escape(ds.name) %}
+  <ul class="ds_result">
+    <a href="/explorer?ds_kind={{dk}}&ds_name={{dn}}">{{str(ds)}}</a>
+  {% for name in meta_names %}
+    <li>{{name}}</li>
+  {% end %}
+  </ul>
 {% end %}
-</tbody></table>
+</div>
 {% end %}
