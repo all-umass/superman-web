@@ -151,12 +151,12 @@ button.remove_row {
   display: flex;
   flex-flow: row wrap;
   justify-content: space-between;
-  padding-bottom: 0.5em;
+  padding-bottom: 0.2em;
 }
 .ds_filters .filter {
   display: flex;
   flex-flow: column nowrap;
-  padding: 0 1em;
+  padding: 0.1em 1em;
 }
 .ds_filters .filter .slider {
   margin: 0.1em auto 0.5em auto;
