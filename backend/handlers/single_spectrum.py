@@ -36,7 +36,7 @@ class SelectHandler(BaseHandler):
     else:
       idx = ds.pkey.key2index(name)
 
-    fig_data.set_selected(ds.view(mask=[idx]), title=str(name))
+    fig_data.set_selected(ds.view(mask=[idx]), title=name)
     axlimits = fig_data.plot()
     return self.write_json(axlimits)
 

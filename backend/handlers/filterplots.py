@@ -9,6 +9,7 @@ from matplotlib import rcParams
 from matplotlib.collections import LineCollection
 from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Patch
+from six import text_type
 from six.moves import xrange
 from threading import Thread
 from tornado import gen
@@ -129,7 +130,7 @@ class FilterPlotHandler(MultiDatasetHandler):
     # transpose into rows
     rows = [header]
     for i in xrange(len(pkeys)):
-      rows.append([str(col[i]) for col in meta_columns])
+      rows.append([text_type(col[i]) for col in meta_columns])
     return rows
 
   @gen.coroutine
@@ -378,8 +379,8 @@ def _decorate_plot(fig, ax, artist, plot_data, color_data, legend, cmap):
 
 
 def _sanitize_csv(s):
-  if ',' in str(s):
-    return '"%s"' % s
+  if u',' in text_type(s):
+    return u'"%s"' % s
   return s
 
 
