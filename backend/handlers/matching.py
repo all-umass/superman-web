@@ -156,7 +156,7 @@ class CompareHandler(BaseHandler):
     # select only the comparison samples
     names = ast.literal_eval(self.get_argument('compare'))
     if ds.pkey is not None:
-      mask = ds.filter_metadata(dict(pkey=names))
+      mask = ds.filter_metadata(dict(pkey=dict(select=names, search=None)))
     else:
       mask = np.array([int(n.rsplit(' ', 1)[1]) for n in names], dtype=int)
     ds_view = ds.view(mask=mask, **trans)
