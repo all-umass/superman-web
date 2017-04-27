@@ -13,52 +13,52 @@ $(document).ready(function(){
 <style type="text/css">
 #ds_selector_wrapper { padding: 1em 0; }
 input[type="range"] {
-  width: 20em;
-  padding-right: 1em;
-  padding-bottom: 0.75em;
+  width: 17em;
+  margin-bottom: 0.75em;
   display: block;
 }
-#two_columns {
+.param { margin: auto; }
+#main_content {
   display: flex;
+  flex-flow: column;
+}
+#bl_methods_container {
+  display: inline-flex;
+  flex-flow: row wrap;
+  padding: 1em 0 0.5em 0;
+}
+#fig_container {
+  padding: 0.5em 0 1em 0;
+  width: 100%;
+  max-width: 800px;
+  align-self: center;
+}
+#bl_options {
+  display: inline-flex;
   flex-flow: row wrap;
   justify-content: space-around;
-}
-#bl_methods_column {
-  display: inline-flex;
-  flex-flow: column nowrap;
-  flex: 0 0 auto;
-  padding-right: 1em;
-  padding-bottom: 1em;
-}
-#fig_column {
-  flex: 1 0 auto;
-  padding-bottom: 50%;
-}
-.bl_options {
-  display: inline-flex;
-  flex-flow: row wrap;
-  justify-content: space-between;
+  max-width: 600px;
 }
 .bl_chunk {
   display: inline-flex;
-  justify-content: center;
+  flex-flow: column;
+  flex: 1 0 auto;
+  justify-content: flex-end;
   text-align: center;
+  margin: 0 1em 1em 0;
+  min-width: 15em;
+  padding: 3px;
+  border-radius: 6px;
+  background-color: #f5c2b2;
 }
-.bl_heading {
-  padding: 0.5em 0;
-  flex-grow: 1;
-}
-.bl_separator { height: 1em; }
 </style>
 {% end %}
 
 {% block body_matter %}
+<div id="main_content">
 {% include '_dataset_selector.html' %}
 
-<div id="two_columns">
-<div id="bl_methods_column">
-
-<div class="bl_options">
+<div id="bl_options">
 <label>Bounds:
   <input class="crop_lb" type="number" step="any" placeholder="min"> to
   <input class="crop_ub" type="number" step="any" placeholder="max">
@@ -68,10 +68,9 @@ input[type="range"] {
 <label><input type="checkbox" class="blr_flip">Flipped</label>
 </div>
 
+<div id="bl_methods_container">
 {% for key, bl in bl_classes %}
-  <div class="bl_separator"></div>
   <div class="bl_chunk">
-  <div class="flex-column">
   {% for param, (lb,ub,scale) in list(bl.param_ranges().items()) %}
     <label class="param {{key}}"}>
       {{param.replace('_', ' ').strip()}} =
@@ -91,18 +90,15 @@ input[type="range"] {
         {% end %}>
     </label>
   {% end %}
-  </div>
   <button class="needs_plot bl_heading" disabled
-          onclick="SingleSpectrum.baseline('#bl_methods_column', '{{key}}')">
+        onclick="SingleSpectrum.baseline('#bl_methods_container', '{{key}}')">
     {{bl.__class__.__name__}}
   </button>
   </div>
 {% end %}
-
-<div id="baseline_messages"></div>
 </div>
-
-<div id="fig_column">
+<div id="baseline_messages"></div>
+<div id="fig_container">
 <div id="figure"></div>
 <br />
 <button class="needs_plot" onclick="download_baseline();" disabled>
