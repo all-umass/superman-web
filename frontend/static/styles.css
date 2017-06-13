@@ -325,6 +325,9 @@ input[type=range]::-ms-thumb {
 #datasets tr.private td {
   background-color: #f78382;
 }
+#datasets tr:nth-child(4n+1) td {
+  filter: brightness(110%);
+}
 #datasets td.ds_title {
   font-weight: bold;
   text-align: left;

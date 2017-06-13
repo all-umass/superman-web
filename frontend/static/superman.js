@@ -18,6 +18,8 @@ var GetArgs = (function(){
     },
     resample: function(ctx, post_data) {
       var table = $('tbody', ctx);
+      // On the baseline page, ctx isn't a <table>
+      if (table.length == 0) { table = $(ctx); }
       post_data['crop_lb'] = multi_val(table.find('.crop_lb'));
       post_data['crop_ub'] = multi_val(table.find('.crop_ub'));
       post_data['crop_step'] = multi_val(table.find('.crop_step'));
