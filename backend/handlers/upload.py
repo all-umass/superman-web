@@ -367,7 +367,7 @@ def _save_ds(ds_kind, ds_name):
   # Update the user-uploaded dataset config with the new dataset.
   config_path = os.path.join(outdir, 'user_data.yml')
   if os.path.exists(config_path):
-    config = yaml.safe_load(config_path)
+    config = yaml.safe_load(open(config_path))
   else:
     config = {}
   if ds_kind not in config:
