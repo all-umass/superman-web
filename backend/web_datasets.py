@@ -21,7 +21,7 @@ __all__ = [
 
 # Global structure for all loaded datasets.
 DATASETS = dict(
-    Raman={}, LIBS={}, FTIR={}, NIR={}, XAS={}, XRD={}, Mossbauer={}
+    Raman={}, LIBS={}, FTIR={}, NIR={}, XAS={}, XRD={}, Mossbauer={}, XRF={}
 )
 
 # Ordering for filters of various metadata types.
@@ -67,7 +67,7 @@ class _ReloadableMixin(object):
       return 'Wavelength (nm)'
     if self.kind in ('Raman', 'FTIR'):
       return 'Wavenumber (1/cm)'
-    if self.kind == 'XAS':
+    if self.kind in ('XAS', 'XRF'):
       return 'Energy (eV)'
     if self.kind == 'XRD':
       return '2 Theta'
