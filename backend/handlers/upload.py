@@ -5,6 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 import time
+import yaml
 from io import BytesIO, StringIO
 from six.moves import xrange
 from superman.file_io import parse_spectrum
@@ -93,43 +94,6 @@ class DatasetUploadHandler(BaseHandler):
     t = Thread(target=_save_ds, args=(ds_kind, ds_name))
     t.daemon = True
     t.start()
-
-
-def _save_ds(ds_kind, ds_name):
-  # Wait for the new dataset to finish registering.
-  logging.info('Waiting for %s [%s] to register...', ds_name, ds_kind)
-  time.sleep(1)
-  for _ in xrange(100):
-    if ds_name in DATASETS[ds_kind]:
-      break
-    time.sleep(1)
-
-  # Save the new dataset to disk as a canonical hdf5.
-  ds = DATASETS[ds_kind][ds_name]
-  # XXX: this path manipulation is pretty hacky
-  outdir = os.path.normpath(os.path.join(os.path.dirname(__file__),
-                                         '../../logs'))
-  outname = os.path.join(outdir, '%s_%s.hdf5' % (ds_kind,
-                                                 ds_name.replace(' ', '_')))
-  logging.info('Writing %s to disk: %s', ds, outname)
-
-  # TODO: move this logic to superman.dataset
-  with h5py.File(outname, 'w') as fh:
-    if isinstance(ds, WebTrajDataset):
-      for key, traj in ds.traj.items():
-        fh['/spectra/'+key] = traj
-    else:
-      fh['/spectra'] = ds.intensities
-      fh['/meta/waves'] = ds.bands
-    if ds.key is not None:
-      fh['/meta/pkey'] = ds.pkey.keys
-    for key, m in ds.metadata.items():
-      try:
-        arr = m.get_array()
-      except:
-        logging.exception('Failed to get_array for %s /meta/%s', ds, key)
-      else:
-        fh['/meta/'+key] = np.array(arr)
 
 
 def _async_ds_upload(meta_file, spectra_file, ds_name, ds_kind, resample,
@@ -348,6 +312,67 @@ def _make_loader_function(desc, *args, **kwargs):
     ds.description = desc
     return True
   return _load
+
+
+def _save_ds(ds_kind, ds_name):
+  # Wait for the new dataset to finish registering.
+  time.sleep(1)
+  for _ in xrange(60):
+    if ds_name in DATASETS[ds_kind]:
+      break
+    logging.info('Waiting for %s [%s] to register...', ds_name, ds_kind)
+    time.sleep(1)
+
+  # Save the new dataset to disk as a canonical hdf5.
+  ds = DATASETS[ds_kind][ds_name]
+  # XXX: this path manipulation is pretty hacky
+  outdir = os.path.normpath(os.path.join(os.path.dirname(__file__),
+                                         '../../logs'))
+  outname = os.path.join(outdir, '%s_%s.hdf5' % (ds_kind,
+                                                 ds_name.replace(' ', '_')))
+  logging.info('Writing %s to disk: %s', ds, outname)
+
+  entry = dict(vector=isinstance(ds, WebTrajDataset),
+               file=os.path.abspath(outname),
+               description=ds.description,
+               public=ds.is_public,
+               metadata=[])
+  # TODO: move this logic to superman.dataset
+  with h5py.File(outname, 'w') as fh:
+    if isinstance(ds, WebTrajDataset):
+      for key, traj in ds.traj.items():
+        fh['/spectra/'+key] = traj
+    else:
+      fh['/spectra'] = ds.intensities
+      fh['/meta/waves'] = ds.bands
+    if ds.pkey is not None:
+      fh['/meta/pkey'] = ds.pkey.keys
+      entry['metadata'].append(('pkey', 'PrimaryKeyMetadata', None))
+    for key, m in ds.metadata.items():
+      try:
+        arr = m.get_array()
+      except:
+        logging.exception('Failed to get_array for %s /meta/%s', ds, key)
+      else:
+        fh['/meta/'+key] = np.array(arr)
+        entry['metadata'].append((key, str(type(m)), m.display_name(key)))
+  # Clean up if no metadata was added.
+  if not entry['metadata']:
+    del entry['metadata']
+
+  # Update the user-uploaded dataset config with the new dataset.
+  config_path = os.path.join(outdir, 'user_uploads.yml')
+  if os.path.exists(config_path):
+    config = yaml.safe_load(config_path)
+  else:
+    config = {}
+  if ds_kind not in config:
+    config[ds_kind] = {ds_name: entry}
+  else:
+    config[ds_kind][ds_name] = entry
+  with open(config_path, 'w') as fh:
+    yaml.dump(config, fh)
+
 
 routes = [
     (r'/_upload_spectrum', SpectrumUploadHandler),
