@@ -327,41 +327,45 @@ def _save_ds(ds_kind, ds_name):
   ds = DATASETS[ds_kind][ds_name]
   # XXX: this path manipulation is pretty hacky
   outdir = os.path.normpath(os.path.join(os.path.dirname(__file__),
-                                         '../../logs'))
+                                         '../../uploads'))
   outname = os.path.join(outdir, '%s_%s.hdf5' % (ds_kind,
                                                  ds_name.replace(' ', '_')))
   logging.info('Writing %s to disk: %s', ds, outname)
 
-  entry = dict(vector=isinstance(ds, WebTrajDataset),
-               file=os.path.abspath(outname),
-               description=ds.description,
-               public=ds.is_public,
-               metadata=[])
+  # Set up the config entry.
+  entry = dict(
+      vector=(not isinstance(ds, WebTrajDataset)),
+      file=os.path.abspath(outname),
+      description=ds.description,
+      public=ds.is_public,
+      metadata=[])
   # TODO: move this logic to superman.dataset
   with h5py.File(outname, 'w') as fh:
-    if isinstance(ds, WebTrajDataset):
-      for key, traj in ds.traj.items():
-        fh['/spectra/'+key] = traj
-    else:
+    if entry['vector']:
       fh['/spectra'] = ds.intensities
       fh['/meta/waves'] = ds.bands
+    else:
+      for key, traj in ds.traj.items():
+        fh['/spectra/'+key] = traj
     if ds.pkey is not None:
-      fh['/meta/pkey'] = ds.pkey.keys
+      fh['/meta/pkey'] = np.char.encode(ds.pkey.keys, 'utf8')
       entry['metadata'].append(('pkey', 'PrimaryKeyMetadata', None))
     for key, m in ds.metadata.items():
       try:
-        arr = m.get_array()
+        arr = np.array(m.get_array())
       except:
         logging.exception('Failed to get_array for %s /meta/%s', ds, key)
-      else:
-        fh['/meta/'+key] = np.array(arr)
-        entry['metadata'].append((key, str(type(m)), m.display_name(key)))
+        continue
+      if arr.dtype.char == 'U':
+        arr = np.char.encode(arr, 'utf8')
+      fh['/meta/'+key] = arr
+      entry['metadata'].append([key, type(m).__name__, m.display_name(key)])
   # Clean up if no metadata was added.
   if not entry['metadata']:
     del entry['metadata']
 
   # Update the user-uploaded dataset config with the new dataset.
-  config_path = os.path.join(outdir, 'user_uploads.yml')
+  config_path = os.path.join(outdir, 'user_data.yml')
   if os.path.exists(config_path):
     config = yaml.safe_load(config_path)
   else:
@@ -371,7 +375,7 @@ def _save_ds(ds_kind, ds_name):
   else:
     config[ds_kind][ds_name] = entry
   with open(config_path, 'w') as fh:
-    yaml.dump(config, fh)
+    yaml.safe_dump(config, fh, allow_unicode=True)
 
 
 routes = [

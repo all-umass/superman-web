@@ -14,7 +14,7 @@ from . import web_datasets
 from .web_datasets import WebLIBSDataset, WebVectorDataset, WebTrajDataset
 
 
-def load_datasets(config_fh, user_loaders, public_only=False):
+def load_datasets(config_fh, custom_loaders, public_only=False, user_added=False):
   config = yaml.safe_load(config_fh)
 
   for kind, entries in config.items():
@@ -31,7 +31,7 @@ def load_datasets(config_fh, user_loaders, public_only=False):
 
       if 'loader' in info:
         # look up the loader function from the module namespace
-        loader_fn = getattr(user_loaders, info['loader'])
+        loader_fn = getattr(custom_loaders, info['loader'])
       else:
         # construct a loader from the meta_mapping and the default template
         meta_mapping = [(k, getattr(web_datasets, cls), mname)
@@ -53,6 +53,7 @@ def load_datasets(config_fh, user_loaders, public_only=False):
       if 'urls' in info:
         ds.urls = info['urls']
       ds.is_public = is_public
+      ds.user_added = user_added
 
 
 def try_load(filepath, data_name):

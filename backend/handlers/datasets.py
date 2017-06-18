@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 import logging
+import os
 import tornado.web
+import yaml
 from tornado import gen
 from threading import Thread
 
@@ -37,6 +39,14 @@ class RemovalHandler(BaseHandler):
     logging.info('Removing user-added dataset: %s', ds)
     del DATASETS[ds.kind][ds.name]
     self.redirect('/datasets')
+    # Remove the dataset from user-uploaded files.
+    config_path = os.path.join(os.path.dirname(__file__),
+                               '../../uploads/user_data.yml')
+    if os.path.exists(config_path):
+      config = yaml.safe_load(open(config_path))
+      entry = config[ds.kind].pop(ds.name)
+      os.remove(entry['file'])
+      yaml.safe_dump(config, open(config_path, 'w'), allow_unicode=True)
 
 
 routes = [

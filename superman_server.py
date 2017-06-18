@@ -44,6 +44,11 @@ def main():
   with open(os.path.join(webserver_dir, ds_config)) as datasets_fh:
     load_datasets(datasets_fh, custom_datasets, public_only=(password is None))
 
+  user_datasets = os.path.join(webserver_dir, 'uploads/user_data.yml')
+  if password is not None and os.path.exists(user_datasets):
+    with open(user_datasets) as datasets_fh:
+      load_datasets(datasets_fh, None, user_added=True)
+
   if args.debug:
     return debug()
 
