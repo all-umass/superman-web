@@ -4,10 +4,13 @@ import numpy as np
 import os
 import scipy.integrate
 from superman.peaks.bump_fit import fit_single_peak, fit_composite_peak
-from threading import Thread
+from threading import Thread, Lock
 from tornado import gen
 
 from .common import BaseHandler
+
+# leastsq is not thread-safe, so we have to lock it.
+leastsq_lock = Lock()
 
 
 class PeakHandler(BaseHandler):
@@ -162,7 +165,11 @@ class PeakHandler(BaseHandler):
 
 def _async_peakfit(func, *args, **kwargs):
   callback = kwargs.pop('callback')
-  t = Thread(target=lambda: callback(func(*args, **kwargs)))
+  # Ensure all async peakfit calls have the global leastsq lock.
+  def helper():
+    with leastsq_lock:
+      return callback(func(*args, **kwargs))
+  t = Thread(target=helper)
   t.daemon = True
   t.start()
 
