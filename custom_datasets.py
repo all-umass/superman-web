@@ -300,19 +300,15 @@ def load_mhc_xrf(ds, data_file, meta_file):
       if not np.isnan(vals).all() and np.nanmin(vals) < np.nanmax(vals):
         elem = key.lstrip('e_').replace('*', '')
         compositions[elem] = NumericMetadata(vals, display_name=elem)
-  projects = [tags.split() for tags in meta['project']]
   ds.set_data(
       pkey, hdf5['/spectra'],
       Composition=CompositionMetadata(compositions),
-      temp=NumericMetadata(meta['Ambient Temperature'],
-                           display_name='Ambient Temperature'),
-      Projects=TagMetadata(projects),
+      Projects=TagMetadata(meta['project']),
       Pellet=LookupMetadata(meta['pellet_name']),
       Filter=LookupMetadata(meta['Filter']),
-      Vacuum=NumericMetadata(meta['Vacuum']),
+      Instrument=LookupMetadata(meta['instrument']),
+      Vacuum=LookupMetadata(meta['Vacuum']),
       Duration=NumericMetadata(meta['Duration Time'],
                                display_name='Duration Time'),
-      counts=NumericMetadata(meta['Valid Accumulated Counts'],
-                             display_name='Valid Accum. Counts'),
   )
   return True
