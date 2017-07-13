@@ -203,8 +203,8 @@ def _get_filter_js(m, full_key):
   if isinstance(m, NumericMetadata):
     elt = '$("#%s")' % full_key
     lb, ub = m.bounds
-    init_js = ('%s.slider({min: %.17g, max: %.17g, step: %.17g, range: true, '
-               'values: [%.17g,%.17g], slide: function(e,ui){'
+    init_js = ('%s.slider({min: %.17f, max: %.17f, step: %.17f, range: true, '
+               'values: [%.17f,%.17f], slide: function(e,ui){'
                '$("#%s_label").text(ui.values[0]+" to "+ui.values[1]);}});') % (
                    elt, lb, ub, m.step, lb, ub, full_key)
     collect_js = elt + '.slider("values")'
