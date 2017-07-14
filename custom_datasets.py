@@ -303,7 +303,7 @@ def load_mhc_xrf(ds, data_file, meta_file):
   ds.set_data(
       pkey, hdf5['/spectra'],
       Composition=CompositionMetadata(compositions),
-      Projects=TagMetadata(meta['project']),
+      Projects=TagMetadata([tags.split() for tags in meta['project']]),
       Pellet=LookupMetadata(meta['pellet_name']),
       Filter=LookupMetadata(meta['Filter']),
       Instrument=LookupMetadata(meta['instrument']),
