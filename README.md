@@ -11,21 +11,16 @@ a few steps are required before starting the server for the first time.
 ### 1: Install Dependencies
 
 Python (2.7 or 3.4+) is the main requirement for running the server.
-Several Python packages are needed, available from PyPI with the
-`pip install` command.
+Several Python packages are needed, available from PyPI via `pip`:
 
- * `superman` (and its dependencies)
- * `matplotlib >= 1.4.0` (which is higher than the minimum for superman)
- * `tornado`
- * `pyyaml`
- * `h5py`
- * `pandas`
+    pip install --use-wheel superman matplotlib tornado pyyaml h5py pandas
 
-For running tests:
+If you're not running Linux, `superman` may require special care to install.
+See [the superman docs](https://github.com/all-umass/superman#installation) for instructions.
 
- * `pytest`
- * `mock`
- * `coverage` (optional)
+For running tests, you'll want:
+
+    pip install pytest mock coverage
 
 
 ### 2: Configure
@@ -42,9 +37,10 @@ and update the listings to match your local datasets.
 
 Datasets are the basic unit of data in the superman server.
 Add one by modifying the `datasets.yml` configuration file,
-then optionally adding a loader function to the `custom_datasets.py` module.
+optionally adding a loader function to the `custom_datasets.py` module.
 Relative paths are evaluated starting from the current working directory
-of the process running `superman_server.py`.
+of the process running `superman_server.py`,
+typically the root of this repository.
 
 
 ### 4: Run
@@ -56,11 +52,11 @@ To start (or restart) the server in the background for typical use, run:
 Use the option `--dry-run` to check what would happen without interfering
 with any currently running server.
 
-Or simply run it directly, and handle the details yourself:
+Or simply run the server directly, and handle the details yourself:
 
     python superman_server.py
 
-To stop the server without restarting it, run:
+To stop the server without restarting it, use:
 
     ./restart_server.sh --kill
 
