@@ -23,15 +23,15 @@ class GenericModel(object):
 
   @staticmethod
   def load(fh):
-    class_name = fh.readline().strip()
+    class_name = fh.readline().strip().decode('utf8')
     cls = globals().get(class_name)
     if cls is None or not issubclass(cls, GenericModel):
-      raise ValueError('Invalid model file.')
-    param = ast.literal_eval(fh.readline().strip())
-    ds_kind = fh.readline().strip()
-    var_names = ast.literal_eval(fh.readline().strip())
-    var_keys = ast.literal_eval(fh.readline().strip())
-    wave_len = int(fh.readline().strip())
+      raise ValueError('Invalid model file: class %r not found' % class_name)
+    param = _parse_literal(fh)
+    ds_kind = fh.readline().strip().decode('utf8')
+    var_names = _parse_literal(fh)
+    var_keys = _parse_literal(fh)
+    wave_len = _parse_literal(fh, parser=int)
     wave = np.fromstring(fh.read(wave_len * 8))
     model = cls(param, ds_kind, wave)
     model.var_names = var_names
@@ -42,8 +42,9 @@ class GenericModel(object):
   def save(self, fh):
     w = np.array(self.wave, dtype=float, copy=False)
     fh.write(b'%s\n%r\n%s\n%r\n%r\n%d\n' % (
-        self.__class__.__name__, self.parameter, self.ds_kind, self.var_names,
-        self.var_keys, w.shape[0]))
+        self.__class__.__name__.encode('utf8'), self.parameter,
+        self.ds_kind.encode('utf8'), self.var_names, self.var_keys,
+        w.shape[0]))
     # don't use w.tofile(fh) here, because it requires an actual file object
     fh.write(w.tobytes())
 
@@ -98,20 +99,20 @@ class Logistic(_Classifier):
     yield name, Cs, acc_mean, acc_stdv
 
   def _finish_loading(self, fh):
-    params = ast.literal_eval(fh.readline().strip())
-    classes = ast.literal_eval(fh.readline().strip())
-    coef_shape = ast.literal_eval(fh.readline().strip())
+    params = _parse_literal(fh)
+    classes = _parse_literal(fh)
+    coef_shape = _parse_literal(fh)
     self.clf = LogisticRegression().set_params(**params)
     self.clf.classes_ = np.array(classes)
     self.clf.intercept_ = 0.0
-    n = np.prod(coef_shape) * 8
+    n = int(np.prod(coef_shape)) * 8
     self.clf.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
 
   def save(self, fh):
     GenericModel.save(self, fh)
-    fh.write('%r\n%r\n%r\n' % (self.clf.get_params(),
-                               self.clf.classes_.tolist(),
-                               self.clf.coef_.shape))
+    fh.write(b'%r\n%r\n%r\n' % (self.clf.get_params(),
+                                self.clf.classes_.tolist(),
+                                self.clf.coef_.shape))
     fh.write(self.clf.coef_.tobytes())
 
 
@@ -254,7 +255,7 @@ class _UnivariateRegression(_RegressionModel):
 class _MultivariateRegression(_RegressionModel):
   def train(self, X, variables):
     self.clf = self._construct()
-    self.var_keys = variables.keys()
+    self.var_keys = list(variables.keys())
     y_cols = []
     for key in self.var_keys:
       y, name = variables[key]
@@ -304,15 +305,15 @@ class _PLS(object):
 
   @classmethod
   def _save_model(cls, pls, fh):
-    fh.write('%r\n%r\n' % (pls.get_params(), pls.coef_.shape))
+    fh.write(b'%r\n%r\n' % (pls.get_params(), pls.coef_.shape))
     fh.write(pls.x_mean_.tobytes())
     fh.write(pls.y_mean_.tobytes())
     fh.write(pls.coef_.tobytes())
 
   @classmethod
   def _load_model(cls, fh):
-    params = ast.literal_eval(fh.readline().strip())
-    coef_shape = ast.literal_eval(fh.readline().strip())
+    params = _parse_literal(fh)
+    coef_shape = _parse_literal(fh)
     pls = PLSRegression().set_params(**params)
     pls.x_mean_ = np.fromstring(fh.read(coef_shape[0] * 8))
     pls.y_mean_ = np.fromstring(fh.read(coef_shape[1] * 8))
@@ -329,17 +330,17 @@ class _Lasso(object):
 
   @classmethod
   def _save_model(cls, m, fh):
-    fh.write('%r\n%r\n%r\n' % (m.get_params(), m.active_, m.coef_.shape))
+    fh.write(b'%r\n%r\n%r\n' % (m.get_params(), m.active_, m.coef_.shape))
     fh.write(m.coef_.tobytes())
 
   @classmethod
   def _load_model(cls, fh):
-    params = ast.literal_eval(fh.readline().strip())
-    active = ast.literal_eval(fh.readline().strip())
-    coef_shape = ast.literal_eval(fh.readline().strip())
+    params = _parse_literal(fh)
+    active = _parse_literal(fh)
+    coef_shape = _parse_literal(fh)
     m = LassoLars().set_params(**params)
     m.intercept_ = 0.0
-    n = np.prod(coef_shape) * 8
+    n = int(np.prod(coef_shape)) * 8
     m.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
     m.active_ = active
     return m
@@ -355,17 +356,17 @@ class _Lars(object):
 
   @classmethod
   def _save_model(cls, m, fh):
-    fh.write('%r\n%r\n%r\n' % (m.get_params(), m.active_, m.coef_.shape))
+    fh.write(b'%r\n%r\n%r\n' % (m.get_params(), m.active_, m.coef_.shape))
     fh.write(m.coef_.tobytes())
 
   @classmethod
   def _load_model(cls, fh):
-    params = ast.literal_eval(fh.readline().strip())
-    active = ast.literal_eval(fh.readline().strip())
-    coef_shape = ast.literal_eval(fh.readline().strip())
+    params = _parse_literal(fh)
+    active = _parse_literal(fh)
+    coef_shape = _parse_literal(fh)
     m = Lars().set_params(**params)
     m.intercept_ = 0.0
-    n = np.prod(coef_shape) * 8
+    n = int(np.prod(coef_shape)) * 8
     m.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
     m.active_ = active
     return m
@@ -506,6 +507,14 @@ def _try_to_fit(model, X, y, groups=None):
       model.fit(X[mask, :], y[mask])
     else:
       model.fit(X[mask, :], y[mask], groups=groups[mask])
+
+
+def _parse_literal(fh, parser=ast.literal_eval):
+  text = fh.readline().strip().decode('utf8')
+  try:
+    return parser(text)
+  except ValueError:
+    raise ValueError('Failed to parse %r as a literal' % text)
 
 
 REGRESSION_MODELS = dict(

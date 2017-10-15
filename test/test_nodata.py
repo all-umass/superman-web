@@ -11,7 +11,8 @@ from backend.handlers.subpages import (
 class TestNoDataPages(unittest.TestCase):
   def setUp(self):
     tpl = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'templates')
-    self.app = MatplotlibServer([], cookie_secret='foobar', template_path=tpl)
+    self.app = MatplotlibServer([], cookie_secret='foobar', template_path=tpl,
+                                static_path='.')
 
   def test_main_page(self):
     req = Mock(cookies=dict(), headers=dict())

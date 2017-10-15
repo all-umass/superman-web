@@ -12,7 +12,7 @@ class TestDatasetImportRoutes(unittest.TestCase):
   def test_csv_spectra(self):
     req = Mock(cookies=dict())
     req.arguments = dict(ds_name=['test'], ds_kind=['Raman'], desc=['foobar'])
-    req.files = dict(spectra=[dict(body='wave,foo,bar\n2,4,3\n3,4,4\n')])
+    req.files = dict(spectra=[dict(body=b'wave,foo,bar\n2,4,3\n3,4,4\n')])
     h = DatasetUploadHandler(self.app, req)
     h.write = Mock()
     h.finish = Mock()
