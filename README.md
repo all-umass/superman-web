@@ -13,7 +13,7 @@ a few steps are required before starting the server for the first time.
 Python (2.7 or 3.4+) is the main requirement for running the server.
 Several Python packages are needed, available from PyPI via `pip`:
 
-    pip install --use-wheel superman matplotlib tornado pyyaml h5py pandas
+    pip install --only-binary :all: superman matplotlib tornado pyyaml h5py pandas
 
 If you're not running Linux, `superman` may require special care to install.
 See [the superman docs](https://github.com/all-umass/superman#installation) for instructions.
