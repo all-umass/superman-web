@@ -1,13 +1,16 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, division
 import ast
 import logging
 import numpy as np
 import tornado.web
-from itertools import izip_longest
 from superman.baseline import BL_CLASSES
 from superman.baseline.common import Baseline
 from superman.dataset import MultiDatasetView
 from tornado.escape import json_encode
+try:
+  from itertools import izip_longest as zip_longest
+except ImportError:
+  from itertools import zip_longest
 
 from ..web_datasets import DATASETS
 
@@ -102,9 +105,9 @@ class BaseHandler(tornado.web.RequestHandler):
 
     # collect (lb,ub,step) tuples, so long as they're not all blank
     crops = [(float(lb or '-inf'), float(ub or 'inf'), float(step or 0))
-             for lb, ub, step in izip_longest(self.get_arguments('crop_lb[]'),
-                                              self.get_arguments('crop_ub[]'),
-                                              self.get_arguments('crop_step[]'))
+             for lb, ub, step in zip_longest(self.get_arguments('crop_lb[]'),
+                                             self.get_arguments('crop_ub[]'),
+                                             self.get_arguments('crop_step[]'))
              if lb or ub or step]
 
     # initialize the baseline correction object

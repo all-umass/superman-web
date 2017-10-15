@@ -1,3 +1,4 @@
+from __future__ import absolute_import, print_function, division
 import matplotlib
 matplotlib.use('WebAgg')
 matplotlib.rc('axes', facecolor='none')
@@ -160,7 +161,7 @@ class MatplotlibServer(tornado.web.Application):
       # Every message has a "type" and a "figure_id".
       message = json.loads(message)
       # if not message['type'] == 'motion_notify':
-      #     print 'got message', message
+      #     print('got message', message)
       if message['type'] == 'supports_binary':
         self.supports_binary = message['value']
       else:
