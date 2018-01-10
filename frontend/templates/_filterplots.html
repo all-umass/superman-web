@@ -81,8 +81,13 @@ f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
 </td></tr>
 
 <tr><td colspan=3>
-  <button id="plot_button" class="needs_filter" onclick="Plot.plot(this);" disabled>
-  Plot<span class='wait'>ting...</span></button>
+  <button id="plot_button" class="needs_filter wide_button" onclick="Plot.plot(this);" disabled>
+  Plot<span class='wait'>Waiting...</span></button>
+  <div class="err_msg"></div>
+</td></tr>
+  <tr><td colspan=3>
+  <button id="ind_plot_button" class="needs_filter wide_button" onclick="Plot.plot(this);" disabled>
+  Plot Separately<span class='wait'>Waiting...</span></button>
   <div class="err_msg"></div>
 </td></tr>
 </table>

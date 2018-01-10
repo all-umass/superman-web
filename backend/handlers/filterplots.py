@@ -8,6 +8,7 @@ from itertools import cycle, islice
 from matplotlib import rcParams
 from matplotlib.collections import LineCollection
 from matplotlib.gridspec import GridSpec
+from matplotlib import pyplot
 from matplotlib.patches import Patch
 from six import text_type
 from six.moves import xrange
@@ -33,7 +34,7 @@ AxisInfo = namedtuple('AxisInfo', ('type', 'argument'))
 ColorData = namedtuple('ColorData', ('color', 'label', 'names', 'needs_cbar',
                                      'is_categorical'))
 PlotData = namedtuple('PlotData', ('trajs', 'xlabel', 'ylabel', 'xticks',
-                                   'yticks', 'scatter'))
+                                   'yticks', 'scatter', 'indp'))
 
 
 class FilterPlotHandler(MultiDatasetHandler):
@@ -94,8 +95,12 @@ class FilterPlotHandler(MultiDatasetHandler):
 
   def _prep_traj_spectra(self, fig_data):
     ax = fig_data.figure.gca()
+    if ax.get_ylabel()=="Absorption %":
+	changed_ylabel = "Intensity"
+    else:
+        changed_ylabel = ax.get_ylabel()
     xlabel = _sanitize_csv(ax.get_xlabel()) or 'x'
-    ylabel = _sanitize_csv(ax.get_ylabel()) or 'y'
+    ylabel = _sanitize_csv(changed_ylabel) or 'y'
     return fig_data.explorer_data.trajs, xlabel, ylabel
 
   def _prep_vector_spectra(self, fig_data):
@@ -119,6 +124,7 @@ class FilterPlotHandler(MultiDatasetHandler):
     # make a dataset column, if there are multiple datasets
     if ds_views.num_datasets > 1:
       header.append('Dataset')
+      logging.info("DS Name %s",ds_views.dataset_name_metadata())
       meta_columns.append(ds_views.dataset_name_metadata())
 
     # collect the requested meta info
@@ -143,6 +149,7 @@ class FilterPlotHandler(MultiDatasetHandler):
     # parse plot information from request arguments
     xaxis = self._get_axis_info('x')
     yaxis = self._get_axis_info('y')
+    plot_type = self.get_argument('figindp')
     caxis = self._get_color_info()
     plot_kwargs = dict(
         cmap=self.get_argument('cmap'),
@@ -167,12 +174,12 @@ class FilterPlotHandler(MultiDatasetHandler):
     if view_params != fig_data.explorer_view_params:
       fig_data.clear_explorer_cache()
       fig_data.explorer_view_params = view_params
-
+    
     # get individual line/point labels (TODO: cache this)
     pkeys = ds_views.get_primary_keys()
 
     # get the plot data (trajs or scatter points), possibly cached
-    if xaxis != fig_data.explorer_xaxis or yaxis != fig_data.explorer_yaxis:
+    if xaxis != fig_data.explorer_xaxis or yaxis != fig_data.explorer_yaxis or plot_type != fig_data.explorer_data.indp:
       plot_data = self._get_plot_data(ds_views, xaxis, yaxis)
       if plot_data is None:
         # self.visible_error has already been called by _get_plot_data
@@ -196,12 +203,18 @@ class FilterPlotHandler(MultiDatasetHandler):
 
     # generate, decorate, and draw the plot
     do_legend = bool(int(self.get_argument('legend')))
-    ax = yield gen.Task(_async_draw_plot, fig_data, plot_data, color_data,
+    if plot_data.indp:
+      ax = draw_independent_plots(fig_data,plot_data,pkeys)
+      xmin, xmax = ax.get_xlim()
+      ymin, ymax = ax.get_ylim()
+      self.write_json([xmin, xmax, ymin, ymax])
+    else:
+      ax = yield gen.Task(_async_draw_plot, fig_data, plot_data, color_data,
                         plot_kwargs, do_legend, pkeys)
-    # return the axis limits
-    xmin,xmax = ax.get_xlim()
-    ymin,ymax = ax.get_ylim()
-    self.write_json([xmin,xmax,ymin,ymax])
+      # return the axis limits
+      xmin,xmax = ax.get_xlim()
+      ymin,ymax = ax.get_ylim()
+      self.write_json([xmin,xmax,ymin,ymax])
 
   def _get_axis_info(self, ax_char):
     atype = self.get_argument(ax_char + 'axis')
@@ -235,6 +248,7 @@ class FilterPlotHandler(MultiDatasetHandler):
 
   def _get_plot_data(self, ds_views, xaxis, yaxis):
     logging.info('Getting new plot data: %s, %s', xaxis, yaxis)
+    is_indp = self._get_plot_type()
     if xaxis.type == 'default' and yaxis.type == 'default':
       try:
         trajs = ds_views.get_trajectories()
@@ -244,7 +258,7 @@ class FilterPlotHandler(MultiDatasetHandler):
         return None
       return PlotData(scatter=False, trajs=trajs,
                       xlabel=ds_views.x_axis_units(), ylabel='Intensity',
-                      xticks=None, yticks=None)
+                      xticks=None, yticks=None, indp=is_indp)
     # scatter
     try:
       xdata, xlabel, xticks = _get_axis_data(ds_views, xaxis)
@@ -263,11 +277,51 @@ class FilterPlotHandler(MultiDatasetHandler):
     return PlotData(scatter=True, trajs=trajs, xlabel=xlabel, ylabel=ylabel,
                     xticks=xticks, yticks=yticks)
 
+  def _get_plot_type(self):
+    return self.get_argument('figindp') == 'true'
+
+def draw_independent_plots(fig_data, plot_data, pkeys):
+  fig = fig_data.figure
+  total_plots = len(plot_data.trajs)
+  index = 1
+  col_lim = 6
+  height = (total_plots / col_lim) * 10
+  fig.set_figheight(height)
+  for i,arr in enumerate(plot_data.trajs):
+    ax1 = fig.add_subplot(total_plots, col_lim, index)  
+    #Swapping the y axis label only in plots not in download of data  
+    if plot_data.ylabel=='Intensity':
+    	max_y = np.amax(arr[:,1])
+	arr_y =  [(1 - (x / max_y))*100 for x in arr[:,1]]
+	ax1.set_ylabel("Absorption %")
+    else:
+	arr_y = arr[:,1]
+	ax1.set_ylabel(plot_data.ylabel)
+
+    ax1.plot(arr[:,0],arr_y)
+    ax1.set_xlabel(plot_data.xlabel)
+    ax1.set_title(pkeys[i])
+
+    if plot_data.xticks is not None:
+      ax1.set_xticks(np.arange(len(plot_data.xticks)))
+      ax1.set_xticklabels(plot_data.xticks)
+    if plot_data.yticks is not None:
+      ax1.set_yticks(np.arange(len(plot_data.yticks)))
+      ax1.set_yticklabels(plot_data.yticks)
+
+    ax1.set_ylim(ax1.get_ylim()[::-1])
+    ax1.ticklabel_format(style="sci", axis="y")
+    ax1.autoscale_view()
+    index += 1
+  fig.tight_layout()
+  fig_data.manager.canvas.draw()
+  fig_data.last_plot = 'filterplot'
+  return fig.gca()
 
 def _async_draw_plot(fig_data, plot_data, color_data, plot_kwargs, do_legend,
                      pkeys, callback=None):
   fig = fig_data.figure
-
+  fig.set_figheight(5) #dirty fix when plot types change
   def helper():
     ax = fig.gca()
     artist = _add_plot(fig, ax, plot_data, color_data, pkeys, **plot_kwargs)
@@ -315,6 +369,7 @@ def _add_plot(fig, ax, plot_data, color_data, pkeys, lw=1, cmap='_auto',
       artist = LineCollection(trajs, linewidths=lw, cmap=cmap)
       artist.set_array(colors)
     else:
+      logging.info("X Axis %s", plot_data.trajs)
       artist = LineCollection(plot_data.trajs, linewidths=lw, cmap=cmap)
       artist.set_color(colors)
     artist.set_alpha(alpha)
@@ -350,7 +405,6 @@ def _decorate_plot(fig, ax, artist, plot_data, color_data, legend, cmap):
   if plot_data.yticks is not None:
     ax.set_yticks(np.arange(len(plot_data.yticks)))
     ax.set_yticklabels(plot_data.yticks)
-
   if color_data.needs_cbar:
     cbar = fig.colorbar(artist)
     cbar.set_label(color_data.label)

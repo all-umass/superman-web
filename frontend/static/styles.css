@@ -30,7 +30,7 @@ section > header { font-size: large; text-align: left; }
 .small { font-size: 75%; vertical-align: super; }
 .bold { font-weight: bold; }
 .num { text-align: right; }
-tr:last-child button { width: 100% }
+tr button { width: 100% }
 .flow { display: inline-block; vertical-align: top; }
 .wait { display: none; }
 .err_msg { color: red; text-align: center; }
@@ -390,6 +390,9 @@ input[type=range]::-ms-thumb {
 #datasets tr.extra .ds_info .metadata li:last-child:after {
   content: "";
 }
+
+/*Aish*/
+.wide_button{width:100%}
 
 /* Silly things */
 #easter_egg {

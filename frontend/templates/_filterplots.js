@@ -9,6 +9,7 @@ var Plot = (function() {
 
   return {
     plot: function(btn) {
+      var is_fig_indp = btn.id=="ind_plot_button" ? true : false;
       var ds_info = collect_ds_info();
       var post_data = {
         xaxis: $("#xaxis").val(),
@@ -29,6 +30,7 @@ var Plot = (function() {
         ds_kind: ds_info.kind,
         ds_name: ds_info.name,
         fignum: fig.id,
+        figindp: is_fig_indp
       };
       GetArgs.plot(post_data);
       GetArgs.resample($('#resample_options'), post_data);
@@ -48,6 +50,7 @@ var Plot = (function() {
         },
         error: function(jqXHR, textStatus, errorThrown) {
           wait.hide();
+          alert(errorThrown)
           err_span.text(jqXHR.responseText).show();
         }
       });
