@@ -8,7 +8,6 @@ from itertools import cycle, islice
 from matplotlib import rcParams
 from matplotlib.collections import LineCollection
 from matplotlib.gridspec import GridSpec
-from matplotlib import pyplot
 from matplotlib.patches import Patch
 from six import text_type
 from six.moves import xrange

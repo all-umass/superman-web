@@ -9,7 +9,6 @@ var Plot = (function() {
 
   return {
     plot: function(btn) {
-      var is_fig_indp = btn.id=="ind_plot_button" ? true : false;
       var ds_info = collect_ds_info();
       var post_data = {
         xaxis: $("#xaxis").val(),
@@ -30,7 +29,7 @@ var Plot = (function() {
         ds_kind: ds_info.kind,
         ds_name: ds_info.name,
         fignum: fig.id,
-        figindp: is_fig_indp
+        figindp: $("#ind_plt_option").is(":checked")
       };
       GetArgs.plot(post_data);
       GetArgs.resample($('#resample_options'), post_data);
