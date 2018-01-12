@@ -49,7 +49,6 @@ var Plot = (function() {
         },
         error: function(jqXHR, textStatus, errorThrown) {
           wait.hide();
-          alert(errorThrown)
           err_span.text(jqXHR.responseText).show();
         }
       });
