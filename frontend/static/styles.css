@@ -391,9 +391,6 @@ input[type=range]::-ms-thumb {
   content: "";
 }
 
-/*Aish*/
-.wide_button{width:100%}
-
 /* Silly things */
 #easter_egg {
   position: absolute;
