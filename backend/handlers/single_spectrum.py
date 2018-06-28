@@ -58,7 +58,7 @@ class BaselineHandler(BaseHandler):
     fig_data = self.get_fig_data(int(fignum))
     if fig_data is None:
       return self.write('Oops, something went wrong. Try again?')
-    spectrum = fig_data.get_trajectory('upload')
+    spectrum = fig_data.get_trajectory('baseline-corrected')
     bl = fig_data.baseline
     if bl is None:
       bl = np.zeros(spectrum.shape[0])
@@ -66,7 +66,7 @@ class BaselineHandler(BaseHandler):
     self.set_header('Content-Type', 'text/plain')
     self.set_header('Content-Disposition', 'attachment; filename='+fname)
     for (x,y),b in zip(spectrum, bl):
-      self.write('%g\t%g\t%g\t%g\n' % (x, y, b, y-b))
+      self.write('%g\t%g\t%g\t%g\n' % (x, y + b, b, y))
     self.finish()
 
   def post(self):
