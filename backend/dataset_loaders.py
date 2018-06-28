@@ -91,6 +91,9 @@ def _generic_traj_loader(meta_mapping):
       m = meta[key]
       if cls is DateMetadata:
         m = pd.to_datetime(np.array(m))
+      elif cls is PrimaryKeyMetadata:
+        assert key == 'pkey'
+        continue
       safe_key = re.sub(r'[^a-z0-9_-]', '', key, flags=re.I)
       kwargs[safe_key] = cls(m, display_name=display_name)
     ds.set_data(meta['pkey'], data['/spectra'], **kwargs)
