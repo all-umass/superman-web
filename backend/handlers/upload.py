@@ -154,6 +154,10 @@ def _load_metadata_csv(f=None):
 
 def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
              description):
+  # sanity check before doing the hard work
+  if resample is None and ds_kind == 'LIBS':
+    return (415, 'Failed: LIBS data must be sampled on a common x-axis')
+
   zf = ZipFile(fh)
   traj_data = {}
   for subfile in zf.infolist():
