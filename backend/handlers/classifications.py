@@ -25,16 +25,24 @@ class ClassificationModelHandler(GenericModelHandler):
     # collect primary keys for row labels
     all_pkeys = ds_views.get_primary_keys()
 
-    # TODO: just re-run the classifier
+    # collect data and variables to predict
     model = fig_data.classify_model
-    actuals = [None] * len(all_pkeys)
-    preds = actuals
+    ds_kind, wave, X = self.collect_spectra(ds_views)
+    if X is None:
+      # self.visible_error has already been called in collect_spectra
+      return
+    variables = self.collect_variables(ds_views, model.var_keys)
+    actuals, var_name = variables[model.var_keys[0]]
+
+    # re-run the classifier
+    pred_dict = model.predict(X, variables)
+    preds = pred_dict[model.var_keys[0]].ravel()
 
     fname = os.path.basename(self.request.path)
     self.set_header('Content-Type', 'text/plain')
     self.set_header('Content-Disposition',
                     'attachment; filename='+fname)
-    self.write('Spectrum,%s,Predicted\n' % model.var_names[0])
+    self.write('Spectrum,%s,Predicted\n' % var_name)
     for row in zip(all_pkeys, actuals, preds):
       self.write('%s,%s,%s\n' % row)
     self.finish()

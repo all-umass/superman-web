@@ -119,8 +119,14 @@ var Classify = (function() {
       var dl_url = '/'+fig.id+'/classifier_';
       if (dl_type === 'preds') {
         var ds_info = collect_ds_info();
-        dl_url += 'predictions.csv?' + $.param({ds_name: ds_info.name,
-                                                ds_kind: ds_info.kind});
+        var post_data = {
+            ds_name: ds_info.name,
+            ds_kind: ds_info.kind,
+            pp: GetArgs.pp($('#pp_options')),
+        };
+        GetArgs.resample($('#resample_options'), post_data);
+        GetArgs.baseline($('#blr_options'), post_data);
+        dl_url += 'predictions.csv?' + $.param(post_data);
       } else {
         dl_url += 'model.' + dl_type;
       }
