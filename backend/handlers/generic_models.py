@@ -114,6 +114,11 @@ class GenericModelHandler(MultiDatasetHandler):
       return
     return fig_data, ds_views, ds_kind, wave, X
 
+  def collect_trajectories(self, ds_views):
+    '''collect traj-format data from all datasets.'''
+    trajs = ds_views.get_trajectories(avoid_nan_gap=True)
+    return ds_views.ds_kind, trajs
+
   def collect_spectra(self, ds_views):
     '''collect vector-format data from all datasets.'''
     try:

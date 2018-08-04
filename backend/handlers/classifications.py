@@ -6,7 +6,7 @@ from sklearn.metrics import confusion_matrix
 from tornado import gen
 
 from .generic_models import GenericModelHandler, async_crossval
-from ..models import CLASSIFICATION_MODELS
+from ..models import CLASSIFICATION_MODELS, KNN
 
 
 class ClassificationModelHandler(GenericModelHandler):
@@ -22,17 +22,23 @@ class ClassificationModelHandler(GenericModelHandler):
       self.write('No datasets selected / too many spectra.')
       return
 
+    # load the model from the session data
+    model = fig_data.classify_model
+
     # collect primary keys for row labels
     all_pkeys = ds_views.get_primary_keys()
 
     # collect data and variables to predict
-    model = fig_data.classify_model
-    ds_kind, wave, X = self.collect_spectra(ds_views)
-    if X is None:
-      # self.visible_error has already been called in collect_spectra
-      return
     variables = self.collect_variables(ds_views, model.var_keys)
     actuals, var_name = variables[model.var_keys[0]]
+
+    if isinstance(model, KNN):
+      ds_kind, X = self.collect_trajectories(ds_views)
+    else:
+      ds_kind, _, X = self.collect_spectra(ds_views)
+      if X is None:
+        # self.visible_error has already been called in collect_spectra
+        return
 
     # re-run the classifier
     pred_dict = model.predict(X, variables)
