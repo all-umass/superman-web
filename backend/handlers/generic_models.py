@@ -156,6 +156,16 @@ def async_crossval(fig_data, model_cls, num_vars, cv_args, cv_kwargs,
       axes[i].set_title(name)
       axes[i].errorbar(x, y, yerr=yerr, lw=2, fmt='k-', ecolor='r',
                        elinewidth=1, capsize=0)
+      if ylabel == 'MSE':
+        idx = np.argmin(y)
+        axes[i].annotate('RMSE: %.3f' % np.sqrt(y[idx]), xy=(x[idx], y[idx]),
+                         xycoords='data', xytext=(0.5, 0.95),
+                         textcoords='axes fraction',
+                         horizontalalignment='center',
+                         verticalalignment='top',
+                         arrowprops=dict(
+                             arrowstyle='->',
+                             connectionstyle='arc3'))
 
     fig_data.manager.canvas.draw()
     fig_data.last_plot = '%s_crossval' % model_cls.__name__
