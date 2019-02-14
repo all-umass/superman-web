@@ -40,7 +40,9 @@ class FilterHandler(BaseHandler):
 
     params = {k: ast.literal_eval(self.get_argument(k)) for k in ds.metadata}
     if ds.pkey is not None:
-      params['pkey'] = ast.literal_eval(self.get_argument('pkey'))
+      pkey_arg = self.get_argument('pkey', None)
+      if pkey_arg:
+        params['pkey'] = ast.literal_eval(pkey_arg)
     logging.info('Filtering %s with args: %s', ds, params)
 
     mask = ds.filter_metadata(params)
