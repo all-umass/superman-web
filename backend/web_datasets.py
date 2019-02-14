@@ -82,7 +82,8 @@ class _ReloadableMixin(object):
     # Get HTML+JS for filters
     metas = sorted(self.metadata.items(),
                    key=lambda t: (FILTER_ORDER[type(t[1])], t[0]))
-    if self.pkey is not None:
+    # Add the primary key, unless it's massive.
+    if self.pkey is not None and self.pkey.size() < 10000:
       metas.insert(0, ('pkey', self.pkey))
     # Collect all the fragments
     init_js, collect_js, filter_htmls = [], [], []
