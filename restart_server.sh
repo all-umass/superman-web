@@ -12,7 +12,7 @@ function find_server_pid() {
 
 function start_server() {
   echo "Starting new server..."
-  nohup python superman_server.py &>logs/errors.out &
+  nohup python3 superman_server.py &>logs/errors.out &
   $follow_log || echo "Use 'tail -f logs/server.log' to check on it"
   sleep 1
   if [[ -z "$(find_server_pid)" ]]; then

@@ -54,14 +54,12 @@
             plot_options.load('/_plot_options', ds_info, function () {
                 $('#dl_metadata', plot_options).css('width', '+=15').select2();
             });
-            if (ds_info.name.length == 1) {
+            if (ds_info.name.length == 1)
                 comp_options.load('/_comp_options', ds_info, function () {
                     $('#x_comp_options,#y_comp_options', comp_options)
                         .css('width', '+=15').select2();
                 });
-            }
-            {%
-                if logged_in %}
+            {% if logged_in %}
             pred_options.load('/_pred_options', ds_info, function () {
                 $('.target_meta', pred_options).css('width', '+=20').select2();
                 $('.cv_stratify', pred_options).css('width', '+=25')
@@ -72,9 +70,7 @@
                 $('.cv_stratify', clas_options).css('width', '+=25')
                     .select2({allowClear: true, placeholder: 'select variable'});
             });
-            {%
-                end %
-            }
+            {% end %}
             mtch_options.load('/_matching_options', ds_info, function () {
                 // make the query prep interactive
                 var query_table = $('#query_prep>table', mtch_options);
@@ -123,49 +119,21 @@
         }
     }
 
-    {%
-        include
-        '_filterplots.js' %
-    }
-    {%
-        include
-        '_compositions.js' %
-    }
-    {%
-        if logged_in %}
-    {%
-        include
-        '_predictions.js' %
-    }
-    {%
-        include
-        '_classifications.js' %
-    }
-    {%
-        end %
-    }
-    {%
-        include
-        '_matching.js' %
-    }
+    {% include '_filterplots.js' %}
+    {% include '_compositions.js' %}
+    {% if logged_in %}
+    {% include '_predictions.js' %}
+    {% include '_classifications.js' %}
+    {% end %}
+    {% include '_matching.js' %}
 
     $(document).ready(function () {
-        onready_boilerplate("{{ ws_uri }}", {
-        {
-            fig_id
-        }
-    })
-        ;
-        {%
-            if ds_kind and
-            ds_name %
-        }
-        $('.ds_select.{{ds_kind}} input[value="{{ds_name}},{{ds_kind}}"]'
-        ).prop('checked', true);
+        onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
+        {% if ds_kind and ds_name %}
+        $('.ds_select.{{ds_kind}} input[value="{{ds_name}},{{ds_kind}}"]')
+	.prop('checked', true);
         load_ds_filters();
-        {%
-            end %
-        }
+        {% end %}
     });
 </script>
 {% end %}

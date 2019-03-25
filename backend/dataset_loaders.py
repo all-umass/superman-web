@@ -18,42 +18,43 @@ def load_datasets(config_fh, custom_loaders, public_only=False, user_added=False
   config = yaml.safe_load(config_fh)
 
   for kind, entries in config.items():
-    for name, info in entries.items():
-      # skip this entry if it shouldn't be included
-      is_public = info.get('public', True)
-      if public_only and not is_public:
-        continue
+    if entries:
+      for name, info in entries.items():
+        # skip this entry if it shouldn't be included
+        is_public = info.get('public', True)
+        if public_only and not is_public:
+          continue
 
-      if 'files' in info:
-        files = info['files']
-      else:
-        files = [info['file']]
-
-      if 'loader' in info:
-        # look up the loader function from the module namespace
-        loader_fn = getattr(custom_loaders, info['loader'])
-      else:
-        # construct a loader from the meta_mapping and the default template
-        meta_mapping = [(k, getattr(web_datasets, cls), mname)
-                        for k, cls, mname in info.get('metadata', [])]
-        if info.get('vector', False):
-          loader_fn = _generic_vector_loader(meta_mapping)
+        if 'files' in info:
+          files = info['files']
         else:
-          loader_fn = _generic_traj_loader(meta_mapping)
+          files = [info['file']]
 
-      if kind == 'LIBS':
-        ds = WebLIBSDataset(name, loader_fn, *files)
-      elif info.get('vector', False):
-        ds = WebVectorDataset(name, kind, loader_fn, *files)
-      else:
-        ds = WebTrajDataset(name, kind, loader_fn, *files)
+        if 'loader' in info:
+          # look up the loader function from the module namespace
+          loader_fn = getattr(custom_loaders, info['loader'])
+        else:
+          # construct a loader from the meta_mapping and the default template
+          meta_mapping = [(k, getattr(web_datasets, cls), mname)
+                          for k, cls, mname in info.get('metadata', [])]
+          if info.get('vector', False):
+            loader_fn = _generic_vector_loader(meta_mapping)
+          else:
+            loader_fn = _generic_traj_loader(meta_mapping)
 
-      if 'description' in info:
-        ds.description = info['description']
-      if 'urls' in info:
-        ds.urls = info['urls']
-      ds.is_public = is_public
-      ds.user_added = user_added
+        if kind == 'LIBS':
+          ds = WebLIBSDataset(name, loader_fn, *files)
+        elif info.get('vector', False):
+          ds = WebVectorDataset(name, kind, loader_fn, *files)
+        else:
+          ds = WebTrajDataset(name, kind, loader_fn, *files)
+
+        if 'description' in info:
+          ds.description = info['description']
+        if 'urls' in info:
+          ds.urls = info['urls']
+        ds.is_public = is_public
+        ds.user_added = user_added
 
 
 def try_load(filepath, data_name):
