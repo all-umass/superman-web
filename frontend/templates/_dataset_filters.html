@@ -1,21 +1,28 @@
 <fieldset class="ds_filters">
-<legend align="center">{{ds.name}}</legend>
-<div class="filters">
-{% for td in html_parts %}
-  <div class="filter">{% raw td %}</div>
-{% end %}
-</div>
-<button onclick='do_filter(this,{ds_name:"{{ds.name}}",ds_kind:"{{ds.kind}}",
-        {% for name, js in collect_js %}
-          {{name}}: JSON.stringify({% raw js %}),
-        {% end %} } );'>
-  Filter<span class='ing'></span>
-</button>
+    <legend align="center">{{ds.name}}</legend>
+    <div class="filters">
+        {% for td in html_parts %}
+        <div class="filter">{% raw td %}</div>
+        {% end %}
+    </div>
+    <button onclick='do_filter(this,{ds_name:"{{ds.name}}",ds_kind:"{{ds.kind}}",
+    {% for name, js in collect_js %}
+      {{name}}: JSON.stringify({% raw js %}),
+    {% end %} } );'
+    >
+        Filter<span class='ing'></span>
+    </button>
 </fieldset>
 
 <script type="text/javascript">
-// Initialize filters
-{% for js in init_js %}
-  {% raw js %}
-{% end %}
+    // Initialize filters
+    {%
+        for js in init_js %}
+    {%
+        raw
+        js %
+    }
+    {%
+        end %
+    }
 </script>

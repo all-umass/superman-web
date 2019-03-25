@@ -2,14 +2,14 @@
 <div class="no_results">No datasets found.</div>
 {% else %}
 <div class="flex-column">
-{% for ds, meta_names in results %}
-  {% set dk, dn = url_escape(ds.kind), url_escape(ds.name) %}
-  <ul class="ds_result">
-    <a href="/explorer?ds_kind={{dk}}&ds_name={{dn}}">{{str(ds)}}</a>
-  {% for name in meta_names %}
-    <li>{{name}}</li>
-  {% end %}
-  </ul>
-{% end %}
+    {% for ds, meta_names in results %}
+    {% set dk, dn = url_escape(ds.kind), url_escape(ds.name) %}
+    <ul class="ds_result">
+        <a href="/explorer?ds_kind={{dk}}&ds_name={{dn}}">{{str(ds)}}</a>
+        {% for name in meta_names %}
+        <li>{{name}}</li>
+        {% end %}
+    </ul>
+    {% end %}
 </div>
 {% end %}

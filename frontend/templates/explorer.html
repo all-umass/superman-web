@@ -1,134 +1,172 @@
 {% extends "_common.html" %}
 {% block head_matter %}
 <link rel="stylesheet" href="//code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css">
-<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet"/>
 <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
 <script type='text/javascript'>
-function toggle_collapse(elt, selectors) {
-  $(elt).parent().nextAll(selectors).toggle();
-  $(elt).toggleClass('up_chevron down_chevron');
-}
-function click_ds_kind(elt) {
-  var nav = $(elt);
-  if (nav.hasClass('active')) return;
-  nav.siblings('.active').removeClass('active');
-  nav.addClass('active');
-  var kind = nav.text();
-  $('.ds_select.active').removeClass('active');
-  $('.ds_select.' + kind).addClass('active');
-}
-function collect_ds_info() {
-  var ds_info = {name: [], kind: []};
-  $('.ds_select.active > input:checked').each(function(i,x){
-    var parts = x.value.split(',');
-    ds_info.name.push(parts[0]);
-    ds_info.kind.push(parts[1]);
-  });
-  return ds_info;
-}
-function load_ds_filters() {
-  var ds_info = collect_ds_info();
-  // clear any existing filters
-  var container = $('#ds_filters_container').empty();
-  // deselect any selected datasets in other ds_kinds
-  $('.ds_select:not(.active) > input:checked').click();
-  // load a filter box for each dataset
-  var ds_kind = ds_info.kind[0];
-  ds_info.name.forEach(function(ds_name){
-    var placeholder = $('<div><img src="/static/loading_bar.gif"></div>')
-                        .appendTo(container);
-    $.post('/_dataset_filterer', {name:ds_name, kind:ds_kind}, function(filt){
-      placeholder.replaceWith(filt);
-    });
-  });
-  // load/unload tool sections below
-  var plot_options = $('#ds_plotting_container'),
-      comp_options = $('#ds_compositions_container'),
-      pred_options = $('#ds_prediction_container'),
-      clas_options = $('#ds_classification_container'),
-      mtch_options = $('#ds_matching_container');
-  if (ds_kind !== undefined) {
-    plot_options.load('/_plot_options', ds_info, function() {
-      $('#dl_metadata', plot_options).css('width', '+=15').select2();
-    });
-    if (ds_info.name.length == 1) {
-      comp_options.load('/_comp_options', ds_info, function() {
-        $('#x_comp_options,#y_comp_options', comp_options)
-          .css('width', '+=15').select2();
-      });
+    function toggle_collapse(elt, selectors) {
+        $(elt).parent().nextAll(selectors).toggle();
+        $(elt).toggleClass('up_chevron down_chevron');
     }
-    {% if logged_in %}
-    pred_options.load('/_pred_options', ds_info, function() {
-      $('.target_meta', pred_options).css('width', '+=20').select2();
-      $('.cv_stratify', pred_options).css('width', '+=25')
-        .select2({allowClear: true, placeholder: 'select variable'});
-    });
-    clas_options.load('/_classify_options', ds_info, function() {
-      $('.target_meta', clas_options).css('width', '+=25').select2();
-      $('.cv_stratify', clas_options).css('width', '+=25')
-        .select2({allowClear: true, placeholder: 'select variable'});
-    });
-    {% end %}
-    mtch_options.load('/_matching_options', ds_info, function() {
-      // make the query prep interactive
-      var query_table = $('#query_prep>table', mtch_options);
-      query_table.find('tr').slice(0,3).find('select,input').change(function(){
-        SingleSpectrum.baseline(query_table);
-      });
-      var pp_watcher = new MutationObserver(function(){
-        SingleSpectrum.preprocess(query_table);
-      });
-      pp_watcher.observe(query_table.find('.pp_staging')[0],
-                         {childList: true, subtree: true});
-    });
-    // update the URL bar
-    var kind = ds_info.kind[0];
-    var fragment = 'explorer?ds_kind=' + kind;
-    if (ds_info.name.length == 1) {
-      fragment += '&ds_name=' + encodeURIComponent(ds_info.name[0]);
+
+    function click_ds_kind(elt) {
+        var nav = $(elt);
+        if (nav.hasClass('active')) return;
+        nav.siblings('.active').removeClass('active');
+        nav.addClass('active');
+        var kind = nav.text();
+        $('.ds_select.active').removeClass('active');
+        $('.ds_select.' + kind).addClass('active');
     }
-    window.history.pushState(kind, '', fragment);
-  } else {
-    $([plot_options, comp_options, pred_options, clas_options,
-       mtch_options]).empty();
-    window.history.pushState('', '', 'explorer');
-  }
-}
-function clear_resample_row(btn) {
-  $(btn).closest('tr').find('input').val('');
-}
-function add_resample_row(btn) {
-  var table = $(btn).closest('table')
-  table.find('thead>tr:last-child').clone().show()
-       .appendTo(table.find('tbody'));
-}
-function del_resample_row(btn) {
-  $(btn).closest('tr').remove();
-}
-function change_blr_method(option) {
-  var table = $(option).closest('table');
-  table.find('td.param').hide();
-  if (option.value) {
-    table.find('td.param.'+option.value).show();
-  }
-}
 
-{% include '_filterplots.js' %}
-{% include '_compositions.js' %}
-{% if logged_in %}
-  {% include '_predictions.js' %}
-  {% include '_classifications.js' %}
-{% end %}
-{% include '_matching.js' %}
+    function collect_ds_info() {
+        var ds_info = {name: [], kind: []};
+        $('.ds_select.active > input:checked').each(function (i, x) {
+            var parts = x.value.split(',');
+            ds_info.name.push(parts[0]);
+            ds_info.kind.push(parts[1]);
+        });
+        return ds_info;
+    }
 
-$(document).ready(function(){
-  onready_boilerplate("{{ ws_uri }}", {{ fig_id }});
-  {% if ds_kind and ds_name %}
-    $('.ds_select.{{ds_kind}} input[value="{{ds_name}},{{ds_kind}}"]'
-      ).prop('checked', true);
-    load_ds_filters();
-  {% end %}
-});
+    function load_ds_filters() {
+        var ds_info = collect_ds_info();
+        // clear any existing filters
+        var container = $('#ds_filters_container').empty();
+        // deselect any selected datasets in other ds_kinds
+        $('.ds_select:not(.active) > input:checked').click();
+        // load a filter box for each dataset
+        var ds_kind = ds_info.kind[0];
+        ds_info.name.forEach(function (ds_name) {
+            var placeholder = $('<div><img src="/static/loading_bar.gif"></div>')
+                .appendTo(container);
+            $.post('/_dataset_filterer', {name: ds_name, kind: ds_kind}, function (filt) {
+                placeholder.replaceWith(filt);
+            });
+        });
+        // load/unload tool sections below
+        var plot_options = $('#ds_plotting_container'),
+            comp_options = $('#ds_compositions_container'),
+            pred_options = $('#ds_prediction_container'),
+            clas_options = $('#ds_classification_container'),
+            mtch_options = $('#ds_matching_container');
+        if (ds_kind !== undefined) {
+            plot_options.load('/_plot_options', ds_info, function () {
+                $('#dl_metadata', plot_options).css('width', '+=15').select2();
+            });
+            if (ds_info.name.length == 1) {
+                comp_options.load('/_comp_options', ds_info, function () {
+                    $('#x_comp_options,#y_comp_options', comp_options)
+                        .css('width', '+=15').select2();
+                });
+            }
+            {%
+                if logged_in %}
+            pred_options.load('/_pred_options', ds_info, function () {
+                $('.target_meta', pred_options).css('width', '+=20').select2();
+                $('.cv_stratify', pred_options).css('width', '+=25')
+                    .select2({allowClear: true, placeholder: 'select variable'});
+            });
+            clas_options.load('/_classify_options', ds_info, function () {
+                $('.target_meta', clas_options).css('width', '+=25').select2();
+                $('.cv_stratify', clas_options).css('width', '+=25')
+                    .select2({allowClear: true, placeholder: 'select variable'});
+            });
+            {%
+                end %
+            }
+            mtch_options.load('/_matching_options', ds_info, function () {
+                // make the query prep interactive
+                var query_table = $('#query_prep>table', mtch_options);
+                query_table.find('tr').slice(0, 3).find('select,input').change(function () {
+                    SingleSpectrum.baseline(query_table);
+                });
+                var pp_watcher = new MutationObserver(function () {
+                    SingleSpectrum.preprocess(query_table);
+                });
+                pp_watcher.observe(query_table.find('.pp_staging')[0],
+                    {childList: true, subtree: true});
+            });
+            // update the URL bar
+            var kind = ds_info.kind[0];
+            var fragment = 'explorer?ds_kind=' + kind;
+            if (ds_info.name.length == 1) {
+                fragment += '&ds_name=' + encodeURIComponent(ds_info.name[0]);
+            }
+            window.history.pushState(kind, '', fragment);
+        } else {
+            $([plot_options, comp_options, pred_options, clas_options,
+                mtch_options]).empty();
+            window.history.pushState('', '', 'explorer');
+        }
+    }
+
+    function clear_resample_row(btn) {
+        $(btn).closest('tr').find('input').val('');
+    }
+
+    function add_resample_row(btn) {
+        var table = $(btn).closest('table')
+        table.find('thead>tr:last-child').clone().show()
+            .appendTo(table.find('tbody'));
+    }
+
+    function del_resample_row(btn) {
+        $(btn).closest('tr').remove();
+    }
+
+    function change_blr_method(option) {
+        var table = $(option).closest('table');
+        table.find('td.param').hide();
+        if (option.value) {
+            table.find('td.param.' + option.value).show();
+        }
+    }
+
+    {%
+        include
+        '_filterplots.js' %
+    }
+    {%
+        include
+        '_compositions.js' %
+    }
+    {%
+        if logged_in %}
+    {%
+        include
+        '_predictions.js' %
+    }
+    {%
+        include
+        '_classifications.js' %
+    }
+    {%
+        end %
+    }
+    {%
+        include
+        '_matching.js' %
+    }
+
+    $(document).ready(function () {
+        onready_boilerplate("{{ ws_uri }}", {
+        {
+            fig_id
+        }
+    })
+        ;
+        {%
+            if ds_kind and
+            ds_name %
+        }
+        $('.ds_select.{{ds_kind}} input[value="{{ds_name}},{{ds_kind}}"]'
+        ).prop('checked', true);
+        load_ds_filters();
+        {%
+            end %
+        }
+    });
 </script>
 {% end %}
 
@@ -136,133 +174,143 @@ $(document).ready(function(){
 <div id="easter_egg" onclick="$('body,section').toggleClass('darby');"></div>
 
 <main>
-<section>
-<header>Select Data
-<button class="collapse up_chevron"
-  onclick="toggle_collapse(this, 'ul,div');"></button>
-</header>
-<div id="ds_select_container">
-<ul id="ds_kind_choices">
-{% for kind in sorted(ds_tree) %}
-  <li {% if kind == ds_kind %}class='active'{% end %}
-      onclick='click_ds_kind(this);'>{{kind}}</li>
-{% end %}
-</ul>
-{% for kind, k_dict in ds_tree.items() %}
-  <div class="ds_select {{kind}}{% if kind == ds_kind %} active{% end %}">
-    {% for name, (cbid, is_traj) in sorted(k_dict.items()) %}
-      <input type="checkbox" id="{{cbid}}" value="{{name}},{{kind}}">
-      <label for="{{cbid}}">{{name}}<sup>{% if is_traj %}&dagger;{% end %}</sup>
-      </label>
+    <section>
+        <header>Select Data
+            <button class="collapse up_chevron"
+                    onclick="toggle_collapse(this, 'ul,div');"></button>
+        </header>
+        <div id="ds_select_container">
+            <ul id="ds_kind_choices">
+                {% for kind in sorted(ds_tree) %}
+                <li {% if kind== ds_kind %}class='active' {% end %}
+                    onclick='click_ds_kind(this);'>{{kind}}
+                </li>
+                {% end %}
+            </ul>
+            {% for kind, k_dict in ds_tree.items() %}
+            <div class="ds_select {{kind}}{% if kind == ds_kind %} active{% end %}">
+                {% for name, (cbid, is_traj) in sorted(k_dict.items()) %}
+                <input type="checkbox" id="{{cbid}}" value="{{name}},{{kind}}">
+                <label for="{{cbid}}">{{name}}<sup>{% if is_traj %}&dagger;{% end %}</sup>
+                </label>
+                {% end %}
+                <button onclick='load_ds_filters()'>Load Dataset(s)</button>
+            </div>
+            {% end %}
+            <div id='ds_filters_container' class='section_body'></div>
+        </div>
+    </section>
+
+    <section>
+        <header>Transform Data
+            <button class="collapse up_chevron"
+                    onclick="toggle_collapse(this, 'table');"></button>
+        </header>
+        {% include '_transforms.html' %}
+    </section>
+
+    <section>
+        <header>Plot Spectra
+            <button class="collapse up_chevron"
+                    onclick="toggle_collapse(this, 'div');"></button>
+        </header>
+        <div id="ds_plotting_container" class="section_body"></div>
+    </section>
+
+    <section>
+        <header>Plot Compositions
+            <button class="collapse up_chevron"
+                    onclick="toggle_collapse(this, 'div');"></button>
+        </header>
+        <div id="ds_compositions_container" class="section_body"></div>
+    </section>
+
+    {% if logged_in %}
+    <section>
+        <header>Train Regression Models
+            <button class="collapse up_chevron"
+                    onclick="toggle_collapse(this, 'div');"></button>
+        </header>
+        <div id="ds_prediction_container" class="section_body"></div>
+    </section>
+
+    <section>
+        <header>Train Classifiers
+            <button class="collapse up_chevron"
+                    onclick="toggle_collapse(this, 'div');"></button>
+        </header>
+        <div id="ds_classification_container" class="section_body"></div>
+    </section>
     {% end %}
-    <button onclick='load_ds_filters()'>Load Dataset(s)</button>
-  </div>
-{% end %}
-<div id='ds_filters_container' class='section_body'></div>
-</div>
-</section>
 
-<section>
-<header>Transform Data
-<button class="collapse up_chevron"
-  onclick="toggle_collapse(this, 'table');"></button>
-</header>
-{% include '_transforms.html' %}
-</section>
+    <section>
+        <header>Match a Spectrum
+            <button class="collapse up_chevron"
+                    onclick="toggle_collapse(this, 'div');"></button>
+        </header>
+        <div id="ds_matching_container" class="section_body"></div>
+    </section>
 
-<section>
-<header>Plot Spectra
-<button class="collapse up_chevron"
-  onclick="toggle_collapse(this, 'div');"></button>
-</header>
-<div id="ds_plotting_container" class="section_body"></div>
-</section>
+    <section>
+        <div id="figure"></div>
 
-<section>
-<header>Plot Compositions
-<button class="collapse up_chevron"
-  onclick="toggle_collapse(this, 'div');"></button>
-</header>
-<div id="ds_compositions_container" class="section_body"></div>
-</section>
+        <div id="figure_controls">
+            <form id="zoom_control" onsubmit="do_zoom(); return false">
+                <table class="aligned_table">
+                    <tr>
+                        <td>X axis</td>
+                        <td>
+                            <input type="text" name="xmin" size=8> to <input type="text" name="xmax" size=8>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Y axis</td>
+                        <td>
+                            <input type="text" name="ymin" size=8> to <input type="text" name="ymax" size=8>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan=2>
+                            <input type="submit" class="needs_plot" disabled value="Update plot bounds"
+                                   style="width: 100%">
+                        </td>
+                    </tr>
+                </table>
+            </form>
 
-{% if logged_in %}
-<section>
-<header>Train Regression Models
-<button class="collapse up_chevron"
-  onclick="toggle_collapse(this, 'div');"></button>
-</header>
-<div id="ds_prediction_container" class="section_body"></div>
-</section>
+            <div>Line/Marker Size (<span id="lw_val">{{default_lw}}</span>)<br>
+                <input id="plt_lw" type="range" min=1 max=20 value={{default_lw}} step=0.5
+                       onchange="$('#lw_val').text((+this.value).toFixed(2));"
+                       oninput="$('#lw_val').text((+this.value).toFixed(2));">
+            </div>
 
-<section>
-<header>Train Classifiers
-<button class="collapse up_chevron"
-  onclick="toggle_collapse(this, 'div');"></button>
-</header>
-<div id="ds_classification_container" class="section_body"></div>
-</section>
-{% end %}
+            <div>Opacity (<span id="alpha_val">1.00</span>)<br>
+                <input id="plt_alpha" type="range" min=0 max=1 value=1 step=0.05
+                       onchange="$('#alpha_val').text((+this.value).toFixed(2));"
+                       oninput="$('#alpha_val').text((+this.value).toFixed(2));">
+            </div>
 
-<section>
-<header>Match a Spectrum
-<button class="collapse up_chevron"
-  onclick="toggle_collapse(this, 'div');"></button>
-</header>
-<div id="ds_matching_container" class="section_body"></div>
-</section>
+            <div>Colormap<a
+                    href="http://matplotlib.org/examples/color/colormaps_reference.html"
+                    class="small">[?]</a>:
+                <select id="plt_cmap">
+                    <option value="_auto" selected>auto</option>
+                    {% for cmap in cmaps %}
+                    <option value="{{cmap}}">{{cmap}}</option>
+                    {% end %}
+                </select>
+            </div>
 
-<section>
-<div id="figure"></div>
+            <div>
+                <label>Show legend:<input id="plt_legend" type="checkbox" checked></label>
+            </div>
 
-<div id="figure_controls">
-<form id="zoom_control" onsubmit="do_zoom(); return false">
-<table class="aligned_table">
-<tr><td>X axis</td><td>
-<input type="text" name="xmin" size=8> to <input type="text" name="xmax" size=8>
-</td></tr>
-<tr><td>Y axis</td><td>
-<input type="text" name="ymin" size=8> to <input type="text" name="ymax" size=8>
-</td></tr>
-<tr><td colspan=2>
-<input type="submit" class="needs_plot" disabled value="Update plot bounds"
-        style="width: 100%">
-</td></tr></table>
-</form>
+            <div id="bg_control">Figure background:
+                <input type="color" value="#ffffff"
+                       onchange="$('#figure').css('background-color', this.value);">
+            </div>
 
-<div>Line/Marker Size (<span id="lw_val">{{default_lw}}</span>)<br>
-<input id="plt_lw" type="range" min=1 max=20 value={{default_lw}} step=0.5
-       onchange="$('#lw_val').text((+this.value).toFixed(2));"
-       oninput="$('#lw_val').text((+this.value).toFixed(2));">
-</div>
-
-<div>Opacity (<span id="alpha_val">1.00</span>)<br>
-<input id="plt_alpha" type="range" min=0 max=1 value=1 step=0.05
-       onchange="$('#alpha_val').text((+this.value).toFixed(2));"
-       oninput="$('#alpha_val').text((+this.value).toFixed(2));">
-</div>
-
-<div>Colormap<a
-  href="http://matplotlib.org/examples/color/colormaps_reference.html"
-  class="small">[?]</a>:
-<select id="plt_cmap">
-  <option value="_auto" selected>auto</option>
-{% for cmap in cmaps %}
-  <option value="{{cmap}}">{{cmap}}</option>
-{% end %}
-</select>
-</div>
-
-<div>
-<label>Show legend:<input id="plt_legend" type="checkbox" checked></label>
-</div>
-
-<div id="bg_control">Figure background:
-  <input type="color" value="#ffffff"
-   onchange="$('#figure').css('background-color', this.value);">
-</div>
-
-</div>
-</section>
+        </div>
+    </section>
 </main>
 {% end %}

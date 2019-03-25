@@ -1,108 +1,126 @@
 {% extends "_common.html" %}
 {% block head_matter %}
-<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet"/>
 <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
 <script type="text/javascript">
-function download_baseline() {
-  window.open('/'+fig.id+'/baseline.txt', '_blank');
-}
-$(document).ready(function(){
-  onready_boilerplate("{{ws_uri}}", {{ fig_id }});
-});
+    function download_baseline() {
+        window.open('/' + fig.id + '/baseline.txt', '_blank');
+    }
+
+    $(document).ready(function () {
+        onready_boilerplate("{{ws_uri}}", {
+        {
+            fig_id
+        }
+    })
+        ;
+    });
 </script>
 <style type="text/css">
-#ds_selector_wrapper { padding: 1em 0; }
-input[type="range"] {
-  width: 17em;
-  margin-bottom: 0.75em;
-  display: block;
-}
-.param { margin: auto; }
-#main_content {
-  display: flex;
-  flex-flow: column;
-}
-#bl_methods_container {
-  display: inline-flex;
-  flex-flow: row wrap;
-  padding: 1em 0 0.5em 0;
-}
-#fig_container {
-  padding: 0.5em 0 1em 0;
-  width: 100%;
-  max-width: 800px;
-  align-self: center;
-}
-#bl_options {
-  display: inline-flex;
-  flex-flow: row wrap;
-  justify-content: space-around;
-  max-width: 600px;
-}
-.bl_chunk {
-  display: inline-flex;
-  flex-flow: column;
-  flex: 1 0 auto;
-  justify-content: flex-end;
-  text-align: center;
-  margin: 0 1em 1em 0;
-  min-width: 15em;
-  padding: 3px;
-  border-radius: 6px;
-  background-color: #f5c2b2;
-}
+    #ds_selector_wrapper {
+        padding: 1em 0;
+    }
+
+    input[type="range"] {
+        width: 17em;
+        margin-bottom: 0.75em;
+        display: block;
+    }
+
+    .param {
+        margin: auto;
+    }
+
+    #main_content {
+        display: flex;
+        flex-flow: column;
+    }
+
+    #bl_methods_container {
+        display: inline-flex;
+        flex-flow: row wrap;
+        padding: 1em 0 0.5em 0;
+    }
+
+    #fig_container {
+        padding: 0.5em 0 1em 0;
+        width: 100%;
+        max-width: 800px;
+        align-self: center;
+    }
+
+    #bl_options {
+        display: inline-flex;
+        flex-flow: row wrap;
+        justify-content: space-around;
+        max-width: 600px;
+    }
+
+    .bl_chunk {
+        display: inline-flex;
+        flex-flow: column;
+        flex: 1 0 auto;
+        justify-content: flex-end;
+        text-align: center;
+        margin: 0 1em 1em 0;
+        min-width: 15em;
+        padding: 3px;
+        border-radius: 6px;
+        background-color: #f5c2b2;
+    }
 </style>
 {% end %}
 
 {% block body_matter %}
 <div id="main_content">
-{% include '_dataset_selector.html' %}
+    {% include '_dataset_selector.html' %}
 
-<div id="bl_options">
-<label>Bounds:
-  <input class="crop_lb" type="number" step="any" placeholder="min"> to
-  <input class="crop_ub" type="number" step="any" placeholder="max">
-</label>
-<label><input type="checkbox" class="blr_segmented">Segmented</label>
-<label><input type="checkbox" class="blr_inverted">Inverted</label>
-<label><input type="checkbox" class="blr_flip">Flipped</label>
-</div>
+    <div id="bl_options">
+        <label>Bounds:
+            <input class="crop_lb" type="number" step="any" placeholder="min"> to
+            <input class="crop_ub" type="number" step="any" placeholder="max">
+        </label>
+        <label><input type="checkbox" class="blr_segmented">Segmented</label>
+        <label><input type="checkbox" class="blr_inverted">Inverted</label>
+        <label><input type="checkbox" class="blr_flip">Flipped</label>
+    </div>
 
-<div id="bl_methods_container">
-{% for key, bl in bl_classes %}
-  <div class="bl_chunk">
-  {% for param, (lb,ub,scale) in list(bl.param_ranges().items()) %}
-    <label class="param {{key}}"}>
-      {{param.replace('_', ' ').strip()}} =
-      <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
-      <input type="range"
-             step={{compute_step(lb,ub,scale)}}
-        {% if scale == 'log' %}
-             min={{log10(lb)}} max={{log10(ub)}}
-             value={{log10(getattr(bl,param))}}
-             oninput="update_1eX(this.value, '.{{key}}_{{param}}', {{str(ub>1e5).lower()}});"
-             onchange="update_1eX(this.value, '.{{key}}_{{param}}', {{str(ub>1e5).lower()}});"
-        {% else %}
-             min={{lb}} max={{ub}}
-             value={{getattr(bl,param)}}
-             oninput="$('.{{key}}_{{param}}').text(this.value);"
-             onchange="$('.{{key}}_{{param}}').text(this.value);"
-        {% end %}>
-    </label>
-  {% end %}
-  <button class="needs_plot bl_heading" disabled
-        onclick="SingleSpectrum.baseline('#main_content', '{{key}}')">
-    {{bl.__class__.__name__}}
-  </button>
-  </div>
-{% end %}
-</div>
-<div id="baseline_messages"></div>
-<div id="fig_container">
-<div id="figure"></div>
-<br />
-<button class="needs_plot" onclick="download_baseline();" disabled>
-Download original &amp; baseline</button>
-</div>
+    <div id="bl_methods_container">
+        {% for key, bl in bl_classes %}
+        <div class="bl_chunk">
+            {% for param, (lb,ub,scale) in list(bl.param_ranges().items()) %}
+            <label class="param {{key}}" }>
+                {{param.replace('_', ' ').strip()}} =
+                <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
+                <input type="range"
+                       step={{compute_step(lb,ub,scale)}}
+                       {% if scale== 'log' %}
+                min={{log10(lb)}} max={{log10(ub)}}
+                value={{log10(getattr(bl,param))}}
+                oninput="update_1eX(this.value, '.{{key}}_{{param}}', {{str(ub>1e5).lower()}});"
+                onchange="update_1eX(this.value, '.{{key}}_{{param}}', {{str(ub>1e5).lower()}});"
+                {% else %}
+                min={{lb}} max={{ub}}
+                value={{getattr(bl,param)}}
+                oninput="$('.{{key}}_{{param}}').text(this.value);"
+                onchange="$('.{{key}}_{{param}}').text(this.value);"
+                {% end %}>
+            </label>
+            {% end %}
+            <button class="needs_plot bl_heading" disabled
+                    onclick="SingleSpectrum.baseline('#main_content', '{{key}}')">
+                {{bl.__class__.__name__}}
+            </button>
+        </div>
+        {% end %}
+    </div>
+    <div id="baseline_messages"></div>
+    <div id="fig_container">
+        <div id="figure"></div>
+        <br/>
+        <button class="needs_plot" onclick="download_baseline();" disabled>
+            Download original &amp; baseline
+        </button>
+    </div>
 </div>
 {% end %}
