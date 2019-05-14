@@ -2,7 +2,9 @@
 
 # Parse result of geoiplookup to fit concisely on a line.
 function ip_info() {
-  geoiplookup $1 | sed 1d | cut -d: -f2 | cut -d' ' -f3- | cut -d, -f2,3 | xargs
+  geoiplookup $1 | sed 1d | cut -d: -f2 | \
+  cut -d' ' -f3- | cut -d, -f2,3 | \
+  tr "'" '^' | xargs
 }
 export -f ip_info
 
