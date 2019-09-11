@@ -1,88 +1,108 @@
 {% extends "_common.html" %}
 {% block head_matter %}
-<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet"/>
 <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
 <script type="text/javascript">
-function do_search() {
-  var form = $('form')[0];
-  var post_data = {
-    query: form.query.value,
-    case_sensitive: +form.case_sensitive.checked,
-    full_text: +form.full_text.checked,
-    ds_kind: multi_val($('#ds_kind option:selected')),
-  };
-  var result_div = $('#search_result'),
-      err_span = $('.err_msg', form).empty(),
-      wait = $('.wait', form).show();
-  $.ajax({
-    url: '/_search_metadata',
-    data: post_data,
-    type: 'POST',
-    error: function(jqXHR, textStatus, errorThrown) {
-      wait.hide();
-      result_div.empty();
-      err_span.text(jqXHR.responseText);
-    },
-    success: function(data) {
-      wait.hide();
-      result_div.html(data);
+    function do_search() {
+        var form = $('form')[0];
+        var post_data = {
+            query: form.query.value,
+            case_sensitive: +form.case_sensitive.checked,
+            full_text: +form.full_text.checked,
+            ds_kind: multi_val($('#ds_kind option:selected')),
+        };
+        var result_div = $('#search_result'),
+            err_span = $('.err_msg', form).empty(),
+            wait = $('.wait', form).show();
+        $.ajax({
+            url: '/_search_metadata',
+            data: post_data,
+            type: 'POST',
+            error: function (jqXHR, textStatus, errorThrown) {
+                wait.hide();
+                result_div.empty();
+                err_span.text(jqXHR.responseText);
+            },
+            success: function (data) {
+                wait.hide();
+                result_div.html(data);
+            }
+        });
     }
-  });
-}
-$(document).ready(function(){
-  $('#ds_kind').select2();
-});
+
+    $(document).ready(function () {
+        $('#ds_kind').select2();
+    });
 </script>
 <style type="text/css">
-#wrapper {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 1000px;
-}
-form {
-  display: flex;
-  flex-flow: column;
-  padding: 1em 0;
-}
-form>div { padding-bottom: 1em; }
-input[type="text"] { width: 15em; }
-#ds_kind { padding-right: 3em; }
-#search_result { padding: 1em 0 0 1em; }
-.no_results { font-style: italic; }
-.ds_result { padding-top: 1em; }
+    #wrapper {
+        display: flex;
+        flex-flow: row wrap;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 1000px;
+    }
+
+    form {
+        display: flex;
+        flex-flow: column;
+        padding: 1em 0;
+    }
+
+    form > div {
+        padding-bottom: 1em;
+    }
+
+    input[type="text"] {
+        width: 15em;
+    }
+
+    #ds_kind {
+        padding-right: 3em;
+    }
+
+    #search_result {
+        padding: 1em 0 0 1em;
+    }
+
+    .no_results {
+        font-style: italic;
+    }
+
+    .ds_result {
+        padding-top: 1em;
+    }
 </style>
 {% end %}
 {% block body_matter %}
 <div id="wrapper">
-<form onsubmit="return false;">
+    <form onsubmit="return false;">
 
-<div><label>Search query:
-<input type="text" name="query" placeholder='mineral OR "dana number"'>
-</label></div>
+        <div><label>Search query:
+            <input type="text" name="query" placeholder='mineral OR "dana number"'>
+        </label></div>
 
-<div><label>Case sensitive:
-<input type="checkbox" name="case_sensitive">
-</label></div>
+        <div><label>Case sensitive:
+            <input type="checkbox" name="case_sensitive">
+        </label></div>
 
-<div><label>Search within metadata:
-<input type="checkbox" name="full_text">
-</label></div>
+        <div><label>Search within metadata:
+            <input type="checkbox" name="full_text">
+        </label></div>
 
-<div><label>Spectrum kind:
-<select id="ds_kind" multiple data-placeholder="any">
-{% for kind in ds_kinds %}
-  <option value="{{kind}}">{{kind}}</option>
-{% end %}
-</select></label></div>
+        <div><label>Spectrum kind:
+            <select id="ds_kind" multiple data-placeholder="any">
+                {% for kind in ds_kinds %}
+                <option value="{{kind}}">{{kind}}</option>
+                {% end %}
+            </select></label></div>
 
-<button onclick="do_search();">
-  Search<span class="wait">ing...</span>
-</button>
-<span class="err_msg"></span>
-</form>
+        <button onclick="do_search();">
+            Search<span class="wait">ing...</span>
+        </button>
+        <span class="err_msg"></span>
+    </form>
 
-<div id="search_result"></div>
+    <div id="search_result"></div>
 </div>
 {% end %}

@@ -1,74 +1,97 @@
 <table class='ds_table nofloat_ds_table' id="resample_options">
-<caption>Crop/Resample x-axis</caption>
-<thead><tr>
-  <th></th><th>min</th><th>max</th><th>step</th>
-</tr><tr style="display: none;">
-  <td><button class="remove_row" onclick="del_resample_row(this)">&times;</button></td>
-  <td><input type="number" step="any" class="crop_lb" placeholder="-&#x221e;"></td>
-  <td><input type="number" step="any" class="crop_ub" placeholder="&#x221e;"></td>
-  <td><input type="number" step="any" class="crop_step"></td>
-</tr></thead>
-<tbody><tr>
-  <td><button class="remove_row" onclick="clear_resample_row(this)">&times;</button></td>
-  <td><input type="number" step="any" class="crop_lb" placeholder="-&#x221e;"></td>
-  <td><input type="number" step="any" class="crop_ub" placeholder="&#x221e;"></td>
-  <td><input type="number" step="any" class="crop_step"></td>
-</tr></tbody>
-<tfoot><tr><td colspan=4>
-  <button onclick="add_resample_row(this);">Add row</button>
-</td></tr></tfoot></table>
+    <caption>Crop/Resample x-axis</caption>
+    <thead>
+    <tr>
+        <th></th>
+        <th>min</th>
+        <th>max</th>
+        <th>step</th>
+    </tr>
+    <tr style="display: none;">
+        <td>
+            <button class="remove_row" onclick="del_resample_row(this)">&times;</button>
+        </td>
+        <td><input type="number" step="any" class="crop_lb" placeholder="-&#x221e;"></td>
+        <td><input type="number" step="any" class="crop_ub" placeholder="&#x221e;"></td>
+        <td><input type="number" step="any" class="crop_step"></td>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>
+            <button class="remove_row" onclick="clear_resample_row(this)">&times;</button>
+        </td>
+        <td><input type="number" step="any" class="crop_lb" placeholder="-&#x221e;"></td>
+        <td><input type="number" step="any" class="crop_ub" placeholder="&#x221e;"></td>
+        <td><input type="number" step="any" class="crop_step"></td>
+    </tr>
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan=4>
+            <button onclick="add_resample_row(this);">Add row</button>
+        </td>
+    </tr>
+    </tfoot>
+</table>
 
 <table class='ds_table nofloat_ds_table' id="blr_options">
-<caption>Baseline Correction</caption>
-<!-- General options -->
-<tr class="uline"><td colspan=4>
-  <label>Segment:<input type="checkbox" class="blr_segmented"></label>
-  <label>Invert:<input type="checkbox" class="blr_inverted"></label>
-  <label>Flip:<input type="checkbox" class="blr_flip"></label>
-</td></tr>
-<!-- param sliders row -->
-<tr><td class="vcenter">Method:</td>
-{% for key, bl in bl_classes %}
-  {% for param, (lb,ub,scale) in bl.param_ranges().items() %}
-    <td class="param {{key}}" style="display: none;">
-      <input type="range"
-             step={{compute_step(lb,ub,scale)}}
-      {% if scale == 'log' %}
-             min={{log10(lb)}} max={{log10(ub)}}
-             value={{log10(getattr(bl,param))}}
-             onchange="update_1eX(this.value, $(this).closest('table').find('.{{key}}_{{param}}'), {{str(ub>1e5).lower()}});"
-             oninput="update_1eX(this.value, $(this).closest('table').find('.{{key}}_{{param}}'), {{str(ub>1e5).lower()}});">
-      {% else %}
-             min={{lb}} max={{ub}}
-             value={{getattr(bl,param)}}
-             onchange="$(this).closest('table').find('.{{key}}_{{param}}').text(this.value);"
-             oninput="$(this).closest('table').find('.{{key}}_{{param}}').text(this.value);">
-      {% end %}
-    </td>
-  {% end %}
-{% end %}
-</tr>
-<!-- param labels row -->
-<tr><td class="vcenter">
-  <select class="blr_method" onchange="change_blr_method(this);">
-    <option value="">none</option>
-  {% for key, bl in bl_classes %}
-    <option value="{{key}}">{{bl.__class__.__name__}}</option>
-  {% end %}
-  </select>
-</td>
-{% for key, bl in bl_classes %}
-  {% for param in bl.param_ranges() %}
-    <td class="param {{key}}" style="display: none;">
-      {{param.replace('_', ' ').strip()}} =
-      <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
-    </td>
-  {% end %}
-{% end %}
-</tr>
+    <caption>Baseline Correction</caption>
+    <!-- General options -->
+    <tr class="uline">
+        <td colspan=4>
+            <label>Segment:<input type="checkbox" class="blr_segmented"></label>
+            <label>Invert:<input type="checkbox" class="blr_inverted"></label>
+            <label>Flip:<input type="checkbox" class="blr_flip"></label>
+        </td>
+    </tr>
+    <!-- param sliders row -->
+    <tr>
+        <td class="vcenter">Method:</td>
+        {% for key, bl in bl_classes %}
+        {% for param, (lb,ub,scale) in bl.param_ranges().items() %}
+        <td class="param {{key}}" style="display: none;">
+            <input type="range"
+                   step={{compute_step(lb,ub,scale)}}
+                   {% if scale== 'log' %}
+            min={{log10(lb)}} max={{log10(ub)}}
+            value={{log10(getattr(bl,param))}}
+            onchange="update_1eX(this.value, $(this).closest('table').find('.{{key}}_{{param}}'),
+            {{str(ub>1e5).lower()}});"
+            oninput="update_1eX(this.value, $(this).closest('table').find('.{{key}}_{{param}}'),
+            {{str(ub>1e5).lower()}});">
+            {% else %}
+            min={{lb}} max={{ub}}
+            value={{getattr(bl,param)}}
+            onchange="$(this).closest('table').find('.{{key}}_{{param}}').text(this.value);"
+            oninput="$(this).closest('table').find('.{{key}}_{{param}}').text(this.value);">
+            {% end %}
+        </td>
+        {% end %}
+        {% end %}
+    </tr>
+    <!-- param labels row -->
+    <tr>
+        <td class="vcenter">
+            <select class="blr_method" onchange="change_blr_method(this);">
+                <option value="">none</option>
+                {% for key, bl in bl_classes %}
+                <option value="{{key}}">{{bl.__class__.__name__}}</option>
+                {% end %}
+            </select>
+        </td>
+        {% for key, bl in bl_classes %}
+        {% for param in bl.param_ranges() %}
+        <td class="param {{key}}" style="display: none;">
+            {{param.replace('_', ' ').strip()}} =
+            <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
+        </td>
+        {% end %}
+        {% end %}
+    </tr>
 </table>
 
 <table class='ds_table nofloat_ds_table' id="pp_options">
-  <caption>Preprocessing</caption>
-  {% include '_pp_rows.html' %}
+    <caption>Preprocessing</caption>
+    {% include '_pp_rows.html' %}
 </table>

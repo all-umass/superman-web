@@ -1,33 +1,34 @@
 <div class="match">{{query_name}}
-{% if query_meta %}
-  <span class="popup">
-    {% for key, val in query_meta.items() %}
-      {{key}}: {{val}}<br />
+    {% if query_meta %}
+    <span class="popup">
+      {% for key, val in query_meta.items() %}
+        {{key}}: {{val}}<br/>
+      {% end %}
+    </span>
     {% end %}
-  </span>
-{% end %}
 </div>
 
 <b>Top Matches</b>
 
 <ol>
-{% for i in range(len(top_sim)) %}
-  <li>
-  {{'%.5f' % top_sim[i]}}
-  <a onclick="Matching.compare({{json_encode(top_pkeys[i])}}, '{{ds_names[i]}}', '{{ds_kind}}');">
-  {% for n in top_names[i] %}
-    <span class="match">{{n}}
-    {% if top_meta[n] %}
-      <span class="popup">
-      {% for key, val in top_meta[n].items() %}
-        {{key}}: {{val}}<br />
-      {% end %}
-      </span>
+    {% for i in range(len(top_sim)) %}
+    <li>
+        {{'%.5f' % top_sim[i]}}
+        <a onclick="Matching.compare({{json_encode(top_pkeys[i])}}, '{{ds_names[i]}}', '{{ds_kind}}');">
+            {% for n in top_names[i] %}
+            <span class="match">{{n}}
+          {% if top_meta[n] %}
+            <span class="popup">
+              {% for key, val in top_meta[n].items() %}
+                {{key}}: {{val}}<br/>
+              {% end %}
+          </span>
+          {% end %}
+        </span>
+            {% end %}
+        </a>
+    </li>
     {% end %}
-    </span>
-  {% end %}
-  </a></li>
-{% end %}
 </ol>
 
 <button onclick="Matching.download()" disabled>Download match data</button>

@@ -1,110 +1,142 @@
 <style>
-.param_slider {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 0.5em;
-}
-#wsm_results { padding: 0 1em; }
-#wsm_results ol { text-align: left; }
-#wsm_results li { display: flex; justify-content: space-between; }
-#wsm_results li a { cursor: pointer; margin-left: 1em; }
-.match >.popup {
-  display: none;
-  position: absolute;
-  border: 1px solid black;
-  border-radius: 0.5em;
-  background-color: bisque;
-  padding: 0.2em 0.4em;
-}
-.match:hover >.popup {
-  display: inline;
-  text-align: left;
-  font-weight: normal;
-}
+    .param_slider {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 0.5em;
+    }
+
+    #wsm_results {
+        padding: 0 1em;
+    }
+
+    #wsm_results ol {
+        text-align: left;
+    }
+
+    #wsm_results li {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #wsm_results li a {
+        cursor: pointer;
+        margin-left: 1em;
+    }
+
+    .match > .popup {
+        display: none;
+        position: absolute;
+        border: 1px solid black;
+        border-radius: 0.5em;
+        background-color: bisque;
+        padding: 0.2em 0.4em;
+    }
+
+    .match:hover > .popup {
+        display: inline;
+        text-align: left;
+        font-weight: normal;
+    }
 </style>
 
 <!-- dataset selector -->
 <div class="flex-column" style="align-items: baseline;">
-<div class="flow">
-  Select a query spectrum:
-  <select onchange="if(this.value.length>0){
+    <div class="flow">
+        Select a query spectrum:
+        <select onchange="if(this.value.length>0){
     SingleSpectrum.select(this.value);
   } else {
     $('#selector').empty();
   }">
-  <option value="">Choose a dataset</option>
-  {% for name in ds_names %}
-    <option value="{{name}},{{ds_kind}}">{{name}}</option>
-  {% end %}
-  </select>
-</div>
-<img id='spinner' src='/static/loading_bar.gif' style='display:none'>
-<div id='selector'></div>
-or upload your own:
-<input type="file" name="query" onchange="SingleSpectrum.upload(this);"/>
-<span class="err_msg"></span>
-<span id="upload_messages"></span>
+            <option value="">Choose a dataset</option>
+            {% for name in ds_names %}
+            <option value="{{name}},{{ds_kind}}">{{name}}</option>
+            {% end %}
+        </select>
+    </div>
+    <img id='spinner' src='/static/loading_bar.gif' style='display:none'>
+    <div id='selector'></div>
+    or upload your own:
+    <input type="file" name="query" onchange="SingleSpectrum.upload(this);"/>
+    <span class="err_msg"></span>
+    <span id="upload_messages"></span>
 </div>
 
 <div id="query_prep">
-<table class='ds_table'>
-  <caption>Prepare Query</caption>
-  {% include '_blr_rows.html' %}
-  {% include '_pp_rows.html' %}
-</table>
+    <table class='ds_table'>
+        <caption>Prepare Query</caption>
+        {% include '_blr_rows.html' %}
+        {% include '_pp_rows.html' %}
+    </table>
 </div>
 
 <!-- match score options -->
 <table class="aligned_table">
-<tr><td class="bold">Match Score</td><td>
-<select id="wsm_metric">
-  <option value='combo'>L1/Cosine mixture (IJCAI 15)</option>
-  <option value='ms'>Min-scaled L1 (JRS 15)</option>
-</select>
-</td></tr>
+    <tr>
+        <td class="bold">Match Score</td>
+        <td>
+            <select id="wsm_metric">
+                <option value='combo'>L1/Cosine mixture (IJCAI 15)</option>
+                <option value='ms'>Min-scaled L1 (JRS 15)</option>
+            </select>
+        </td>
+    </tr>
 
-<tr><td class="bold">Metric<br>Parameter</td>
-<td class="param_slider">
-<input type="range" min=0 max=1 value=0 step=0.01
-       onchange="$('#wsm_param').text(this.value);"
-       oninput="$('#wsm_param').text(this.value);">
-<div>alpha = <span id="wsm_param">0</span></div>
-</td></tr>
+    <tr>
+        <td class="bold">Metric<br>Parameter</td>
+        <td class="param_slider">
+            <input type="range" min=0 max=1 value=0 step=0.01
+                   onchange="$('#wsm_param').text(this.value);"
+                   oninput="$('#wsm_param').text(this.value);">
+            <div>alpha = <span id="wsm_param">0</span></div>
+        </td>
+    </tr>
 
-<tr><td class="bold">Sliding<br>Minimum</td>
-<td class="param_slider">
-<input type="range" min=0 max=100 value=0 step=1
-       onchange="$('#wsm_min_window').text(this.value);"
-       oninput="$('#wsm_min_window').text(this.value);">
-<div>window size = <span id="wsm_min_window">0</span></div>
-</td></tr>
+    <tr>
+        <td class="bold">Sliding<br>Minimum</td>
+        <td class="param_slider">
+            <input type="range" min=0 max=100 value=0 step=1
+                   onchange="$('#wsm_min_window').text(this.value);"
+                   oninput="$('#wsm_min_window').text(this.value);">
+            <div>window size = <span id="wsm_min_window">0</span></div>
+        </td>
+    </tr>
 
-<tr><td class="bold"># Results</td><td>
-<input id="wsm_num_results" type="number" min=1 max=50 value=10 step=1>
-</td></tr>
+    <tr>
+        <td class="bold"># Results</td>
+        <td>
+            <input id="wsm_num_results" type="number" min=1 max=50 value=10 step=1>
+        </td>
+    </tr>
 
-<tr><td class="bold">Endmembers</td><td>
-<input id="wsm_endmembers" type="number" min=1 max=5 value=1 step=1
-       onchange="$('#unmix_row').toggle(this.value>1);">
-</td></tr>
+    <tr>
+        <td class="bold">Endmembers</td>
+        <td>
+            <input id="wsm_endmembers" type="number" min=1 max=5 value=1 step=1
+                   onchange="$('#unmix_row').toggle(this.value>1);">
+        </td>
+    </tr>
 
-<tr id="unmix_row" style="display: none;">
-<td class="bold">Unmixing<br>Threshold</td>
-<td class="param_slider">
-<input type="range" min=1 max=99 value=1 step=1
-       onchange="$('#wsm_score_pct').text(this.value);"
-       oninput="$('#wsm_score_pct').text(this.value);">
-<div><span id="wsm_score_pct">1</span>%</div>
-</td></tr>
+    <tr id="unmix_row" style="display: none;">
+        <td class="bold">Unmixing<br>Threshold</td>
+        <td class="param_slider">
+            <input type="range" min=1 max=99 value=1 step=1
+                   onchange="$('#wsm_score_pct').text(this.value);"
+                   oninput="$('#wsm_score_pct').text(this.value);">
+            <div><span id="wsm_score_pct">1</span>%</div>
+        </td>
+    </tr>
 
-<tr><td colspan=2 style="text-align: center; max-width: 25em;">
-<button class="needs_filter" onclick="Matching.search(this);" disabled>
-  Match<span class="wait">ing...</span>
-  <b class="needs_plot" disabled></b>
-</button>
-<span class="err_msg"></span>
-</td></tr>
+    <tr>
+        <td colspan=2 style="text-align: center; max-width: 25em;">
+            <button class="needs_filter" onclick="Matching.search(this);" disabled>
+                Match<span class="wait">ing...</span>
+                <b class="needs_plot" disabled></b>
+            </button>
+            <span class="err_msg"></span>
+        </td>
+    </tr>
 </table>
 
 <div id="wsm_results" class="flex-column" style="display: none"></div>
