@@ -1,57 +1,52 @@
 <!-- General options -->
-<tr class="uline">
-    <td colspan=2>
-        Crop/resample x-axis:<br>
-        <input class="crop_lb" type="number" step="any" placeholder="min"> to
-        <input class="crop_ub" type="number" step="any" placeholder="max"> by
-        <input class="crop_step" type="number" step="any" placeholder="step">
-    </td>
-    <td colspan=2>
-        <label>Segment: <input type="checkbox" class="blr_segmented"></label>
-        <label>Invert: <input type="checkbox" class="blr_inverted"></label>
-        <label>Flip: <input type="checkbox" class="blr_flip"></label>
-    </td>
-</tr>
+<tr class="uline"><td colspan=2>
+  Crop/resample x-axis:<br>
+  <input class="crop_lb" type="number" step="any" placeholder="min"> to
+  <input class="crop_ub" type="number" step="any" placeholder="max"> by
+  <input class="crop_step" type="number" step="any" placeholder="step">
+</td><td colspan=2>
+  <label>Segment: <input type="checkbox" class="blr_segmented"></label>
+  <label>Invert: <input type="checkbox" class="blr_inverted"></label>
+  <label>Flip: <input type="checkbox" class="blr_flip"></label>
+</td></tr>
 <!-- param sliders row -->
-<tr>
-    <td class="vcenter">Method:</td>
-    {% for key, bl in bl_classes %}
-    {% for param, (lb,ub,scale) in bl.param_ranges().items() %}
+<tr><td class="vcenter">Method:</td>
+{% for key, bl in bl_classes %}
+  {% for param, (lb,ub,scale) in bl.param_ranges().items() %}
     <td class="param {{key}}" style="display: none;">
-        <input type="range"
-               step={{compute_step(lb,ub,scale)}}
-               {% if scale== 'log' %}
-        min={{log10(lb)}} max={{log10(ub)}}
-        value={{log10(getattr(bl,param))}}
-        onchange="update_1eX(this.value, $(this).closest('table').find('.{{key}}_{{param}}'), {{str(ub>1e5).lower()}});"
-        oninput="update_1eX(this.value, $(this).closest('table').find('.{{key}}_{{param}}'), {{str(ub>1e5).lower()}});">
-        {% else %}
-        min={{lb}} max={{ub}}
-        value={{getattr(bl,param)}}
-        onchange="$(this).closest('table').find('.{{key}}_{{param}}').text(this.value);"
-        oninput="$(this).closest('table').find('.{{key}}_{{param}}').text(this.value);">
-        {% end %}
+      <input type="range"
+             step={{compute_step(lb,ub,scale)}}
+      {% if scale == 'log' %}
+             min={{log10(lb)}} max={{log10(ub)}}
+             value={{log10(getattr(bl,param))}}
+             onchange="update_1eX(this.value, $(this).closest('table').find('.{{key}}_{{param}}'), {{str(ub>1e5).lower()}});"
+             oninput="update_1eX(this.value, $(this).closest('table').find('.{{key}}_{{param}}'), {{str(ub>1e5).lower()}});">
+      {% else %}
+             min={{lb}} max={{ub}}
+             value={{getattr(bl,param)}}
+             onchange="$(this).closest('table').find('.{{key}}_{{param}}').text(this.value);"
+             oninput="$(this).closest('table').find('.{{key}}_{{param}}').text(this.value);">
+      {% end %}
     </td>
-    {% end %}
-    {% end %}
+  {% end %}
+{% end %}
 </tr>
 <!-- param labels row -->
-<tr>
-    <td class="vcenter">
-        <select class="blr_method" onchange="$(this).closest('table').find('td.param').hide();
+<tr><td class="vcenter">
+  <select class="blr_method" onchange="$(this).closest('table').find('td.param').hide();
   if(this.value){$(this).closest('table').find('td.param.'+this.value).show();}">
-            <option value="">none</option>
-            {% for key, bl in bl_classes %}
-            <option value="{{key}}">{{bl.__class__.__name__}}</option>
-            {% end %}
-        </select>
-    </td>
-    {% for key, bl in bl_classes %}
-    {% for param in bl.param_ranges() %}
+    <option value="">none</option>
+  {% for key, bl in bl_classes %}
+    <option value="{{key}}">{{bl.__class__.__name__}}</option>
+  {% end %}
+  </select>
+</td>
+{% for key, bl in bl_classes %}
+  {% for param in bl.param_ranges() %}
     <td class="param {{key}}" style="display: none;">
-        {{param.replace('_', ' ').strip()}} =
-        <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
+      {{param.replace('_', ' ').strip()}} =
+      <span class="{{key}}_{{param}}">{{getattr(bl, param)}}</span>
     </td>
-    {% end %}
-    {% end %}
+  {% end %}
+{% end %}
 </tr>

@@ -1,215 +1,175 @@
 {% extends "_common.html" %}
 {% block head_matter %}
-<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet"/>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css" rel="stylesheet" />
 <script src="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js"></script>
 <script type="text/javascript">
-    // XXX hacks! Overwrite generic functions for peakfit-specific logic.
-    var ds_name, ds_kind,
-        old_select = SingleSpectrum.select;
-    upload_cbs['success'] = function (data, status) {
-        var msg = $('#upload_messages');
-        msg.text(msg.text() + " " + status + ".").delay(3000).fadeOut();
-        if (status === 'success' && data.length == 4) {
-            update_zoom_ctrl(data);
-            autofill_peakfit_params();
-        }
-    };
-    SingleSpectrum.select = function (info) {
-        if (info == '') return;
-        old_select(info);
-        var parts = info.split(',');
-        ds_name = parts[0];
-        ds_kind = parts[1];
-        // also load the ds filters
-        $('#ds_filter_container').load('/_dataset_filterer', {
-            name: ds_name, kind: ds_kind
-        });
-    }
+// XXX hacks! Overwrite generic functions for peakfit-specific logic.
+var ds_name, ds_kind,
+    old_select = SingleSpectrum.select;
+upload_cbs['success'] = function(data, status) {
+  var msg = $('#upload_messages');
+  msg.text(msg.text() + " " + status + ".").delay(3000).fadeOut();
+  if (status === 'success' && data.length == 4) {
+    update_zoom_ctrl(data);
+    autofill_peakfit_params();
+  }
+};
+SingleSpectrum.select = function(info) {
+  if (info == '') return;
+  old_select(info);
+  var parts = info.split(',');
+  ds_name = parts[0];
+  ds_kind = parts[1];
+  // also load the ds filters
+  $('#ds_filter_container').load('/_dataset_filterer', {
+    name: ds_name, kind: ds_kind});
+}
 
-    function collect_peakfit_args(alg) {
-        var post_data = {ds_kind: ds_kind, ds_name: ds_name, alg: alg};
-        if (alg === 'manual') {
-            var bounds = $('input[name=peakrange]').map(
-                function (i, e) {
-                    return +e.value;
-                }).toArray();
-            post_data['lb'] = bounds[0];
-            post_data['ub'] = bounds[1];
-            post_data['basetype'] = $('#basetype').val();
-        } else if (alg === 'fit') {
-            post_data['xres'] = +$('#xres').val();
-            post_data['fitloc'] = +$('#peakloc').val();
-            post_data['fitkind'] = $('#peaktype').val();
-            post_data['locfixed'] = +($('label[for=locfixed]').attr('aria-pressed')
-                == "true");
+function collect_peakfit_args(alg) {
+  var post_data = { ds_kind: ds_kind, ds_name: ds_name, alg: alg };
+  if (alg === 'manual') {
+    var bounds = $('input[name=peakrange]').map(
+      function(i,e){return +e.value;}).toArray();
+    post_data['lb'] = bounds[0];
+    post_data['ub'] = bounds[1];
+    post_data['basetype'] = $('#basetype').val();
+  } else if (alg === 'fit') {
+    post_data['xres'] = +$('#xres').val();
+    post_data['fitloc'] = +$('#peakloc').val();
+    post_data['fitkind'] = $('#peaktype').val();
+    post_data['locfixed'] = +($('label[for=locfixed]').attr('aria-pressed')
+                              == "true");
+  } else {
+    post_data['numpeaks'] = +$('#numpeaks').val();
+    post_data['xres'] = +$('#xres2').val();
+    post_data['fitloc'] = $('#peakloc2').val().split(',');
+    post_data['fitkind'] = $('input[name=peaktypes]:checked').map(function(i,x){
+      return x.value;
+    }).toArray();
+  }
+  return post_data;
+}
+function do_batch_download() {
+  var alg = $('input[name=batch_algo]:checked').val();
+  var args = collect_peakfit_args(alg);
+  args['include_metadata'] = +$('#batch_meta').is(':checked');
+  var url = '/'+fig.id+'/peak_area.csv?'+$.param(args);
+  window.open(url, '_blank');
+}
+function fmt_number(x) {
+  if (x == null) {
+    return 'N/A';
+  }
+  var s = x.toFixed(2);
+  if (s === '0.00') {
+    s = x.toExponential(2);
+  }
+  return s;
+}
+function add_peakdata_column(table, heading, area, area_std, height,
+                             center, center_std, fwhm, fwhm_std) {
+  area = fmt_number(area);
+  height = fmt_number(height);
+  center = fmt_number(center);
+  fwhm = fmt_number(fwhm);
+  if (area_std !== undefined) {
+    area += ' ± ' + fmt_number(area_std);
+  }
+  if (center_std !== undefined) {
+    center += ' ± ' + fmt_number(center_std);
+  }
+  if (fwhm_std !== undefined) {
+    fwhm += ' ± ' + fmt_number(fwhm_std);
+  }
+  $('thead tr', table).append('<td>'+heading+'</td>');
+  $('#fit_area', table).append('<td>'+area+'</td>');
+  $('#fit_height', table).append('<td>'+height+'</td>');
+  $('#fit_center', table).append('<td>'+center+'</td>');
+  $('#fit_fwhm', table).append('<td>'+fwhm+'</td>');
+}
+function do_peakfit(alg) {
+  var post_data = collect_peakfit_args(alg);
+  post_data['fignum'] = fig.id;
+  var table = $('#fit_result').hide();
+  var err_span = $('.err_msg').hide();
+  $.ajax({
+    url: '/_peakfit',
+    type: 'POST',
+    data: post_data,
+    dataType: 'json',
+    success: function(data) {
+      if ('axis_limits' in data) {
+        update_zoom_ctrl(data['axis_limits']);
+      }
+      $('td', table).remove();  // clear out any existing peak data
+      var heading;
+      if (alg == 'composite') {
+        for (var i=0; i < post_data['numpeaks']; i++) {
+          heading = 'Peak ' + (i+1) + ' (' + data['fit_kinds'][i] + ')';
+          add_peakdata_column(table, heading, data['area'][i],
+                              data['area_std'][i], data['height'][i],
+                              data['center'][i], data['center_std'][i],
+                              data['fwhm'][i], data['fwhm_std'][i]);
+        }
+      } else {
+        if (alg == 'manual') {
+          heading = 'Selection';
         } else {
-            post_data['numpeaks'] = +$('#numpeaks').val();
-            post_data['xres'] = +$('#xres2').val();
-            post_data['fitloc'] = $('#peakloc2').val().split(',');
-            post_data['fitkind'] = $('input[name=peaktypes]:checked').map(function (i, x) {
-                return x.value;
-            }).toArray();
+          heading = 'Peak 1 (' + post_data['fitkind'] + ')';
         }
-        return post_data;
+        add_peakdata_column(table, heading, data['area'], data['area_std'],
+                            data['height'], data['center'], data['center_std'],
+                            data['fwhm'], data['fwhm_std']);
+      }
+      table.show();
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      err_span.text(jqXHR.responseText).show();
     }
-
-    function do_batch_download() {
-        var alg = $('input[name=batch_algo]:checked').val();
-        var args = collect_peakfit_args(alg);
-        args['include_metadata'] = +$('#batch_meta').is(':checked');
-        var url = '/' + fig.id + '/peak_area.csv?' + $.param(args);
-        window.open(url, '_blank');
-    }
-
-    function fmt_number(x) {
-        if (x == null) {
-            return 'N/A';
-        }
-        var s = x.toFixed(2);
-        if (s === '0.00') {
-            s = x.toExponential(2);
-        }
-        return s;
-    }
-
-    function add_peakdata_column(table, heading, area, area_std, height,
-                                 center, center_std, fwhm, fwhm_std) {
-        area = fmt_number(area);
-        height = fmt_number(height);
-        center = fmt_number(center);
-        fwhm = fmt_number(fwhm);
-        if (area_std !== undefined) {
-            area += ' ± ' + fmt_number(area_std);
-        }
-        if (center_std !== undefined) {
-            center += ' ± ' + fmt_number(center_std);
-        }
-        if (fwhm_std !== undefined) {
-            fwhm += ' ± ' + fmt_number(fwhm_std);
-        }
-        $('thead tr', table).append('<td>' + heading + '</td>');
-        $('#fit_area', table).append('<td>' + area + '</td>');
-        $('#fit_height', table).append('<td>' + height + '</td>');
-        $('#fit_center', table).append('<td>' + center + '</td>');
-        $('#fit_fwhm', table).append('<td>' + fwhm + '</td>');
-    }
-
-    function do_peakfit(alg) {
-        var post_data = collect_peakfit_args(alg);
-        post_data['fignum'] = fig.id;
-        var table = $('#fit_result').hide();
-        var err_span = $('.err_msg').hide();
-        $.ajax({
-            url: '/_peakfit',
-            type: 'POST',
-            data: post_data,
-            dataType: 'json',
-            success: function (data) {
-                if ('axis_limits' in data) {
-                    update_zoom_ctrl(data['axis_limits']);
-                }
-                $('td', table).remove();  // clear out any existing peak data
-                var heading;
-                if (alg == 'composite') {
-                    for (var i = 0; i < post_data['numpeaks']; i++) {
-                        heading = 'Peak ' + (i + 1) + ' (' + data['fit_kinds'][i] + ')';
-                        add_peakdata_column(table, heading, data['area'][i],
-                            data['area_std'][i], data['height'][i],
-                            data['center'][i], data['center_std'][i],
-                            data['fwhm'][i], data['fwhm_std'][i]);
-                    }
-                } else {
-                    if (alg == 'manual') {
-                        heading = 'Selection';
-                    } else {
-                        heading = 'Peak 1 (' + post_data['fitkind'] + ')';
-                    }
-                    add_peakdata_column(table, heading, data['area'], data['area_std'],
-                        data['height'], data['center'], data['center_std'],
-                        data['fwhm'], data['fwhm_std']);
-                }
-                table.show();
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                err_span.text(jqXHR.responseText).show();
-            }
-        });
-    }
-
-    function autofill_peakfit_params() {
-        var bounds = $('input[name=peakrange]');
-        bounds[0].value = $('#zoom_control input[name=xmin]').val();
-        bounds[1].value = $('#zoom_control input[name=xmax]').val();
-        var midpt = bounds[0].value / 2.0 + bounds[1].value / 2.0;
-        $('#peakloc,#peakloc2').val(midpt);
-    }
-
-    $(document).ready(function () {
-        $('#locfixed').button();
-        onready_boilerplate("{{ws_uri}}", {
-        {
-            fig_id
-        }
-    })
-        ;
-        // make the blr/pp interactive
-        var table = $('#blr_pp_steps');
-        table.find('tr').slice(0, 3).find('select,input').change(function () {
-            SingleSpectrum.baseline(table);
-            SingleSpectrum.preprocess(table);
-        });
-        var pp_watcher = new MutationObserver(function () {
-            SingleSpectrum.preprocess(table);
-        });
-        pp_watcher.observe(table.find('.pp_staging')[0],
-            {childList: true, subtree: true});
-        // Also set peakfit params when manual zooming.
-        $('#zoom_control input[type=submit]').click(autofill_peakfit_params);
-    });
+  });
+}
+function autofill_peakfit_params() {
+  var bounds = $('input[name=peakrange]');
+  bounds[0].value = $('#zoom_control input[name=xmin]').val();
+  bounds[1].value = $('#zoom_control input[name=xmax]').val();
+  var midpt = bounds[0].value/2.0 + bounds[1].value/2.0;
+  $('#peakloc,#peakloc2').val(midpt);
+}
+$(document).ready(function(){
+  $('#locfixed').button();
+  onready_boilerplate("{{ws_uri}}", {{ fig_id }});
+  // make the blr/pp interactive
+  var table = $('#blr_pp_steps');
+  table.find('tr').slice(0,3).find('select,input').change(function(){
+    SingleSpectrum.baseline(table);
+    SingleSpectrum.preprocess(table);
+  });
+  var pp_watcher = new MutationObserver(function(){
+    SingleSpectrum.preprocess(table);
+  });
+  pp_watcher.observe(table.find('.pp_staging')[0],
+                     {childList: true, subtree: true});
+  // Also set peakfit params when manual zooming.
+  $('#zoom_control input[type=submit]').click(autofill_peakfit_params);
+});
 </script>
 <style type="text/css">
-    #ds_selector_wrapper {
-        padding-top: 1em;
-    }
-
-    #single_peakfit {
-        display: flex;
-        flex-flow: column nowrap;
-    }
-
-    #single_peakfit_options {
-        display: flex;
-        flex-flow: row wrap;
-        align-items: flex-end;
-    }
-
-    #fit_result th {
-        padding: 0.2em 1em;
-        text-align: right;
-        font-weight: bold;
-    }
-
-    #fit_result td {
-        padding: 0.2em 1em;
-        text-align: left;
-    }
-
-    #peakfit_params td.ralign {
-        text-align: right;
-        padding-right: 0;
-    }
-
-    #peakfit_params td:last-child {
-        text-align: left;
-    }
-
-    label[for=locfixed] > span:after {
-        content: "approx."
-    }
-
-    label[for=locfixed].ui-state-active > span:after {
-        content: "fixed"
-    }
+#ds_selector_wrapper { padding-top: 1em; }
+#single_peakfit {
+  display: flex;
+  flex-flow: column nowrap;
+}
+#single_peakfit_options {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-end;
+}
+#fit_result th { padding: 0.2em 1em; text-align: right; font-weight: bold; }
+#fit_result td { padding: 0.2em 1em; text-align: left; }
+#peakfit_params td.ralign { text-align: right; padding-right: 0; }
+#peakfit_params td:last-child { text-align: left; }
+label[for=locfixed]>span:after { content: "approx." }
+label[for=locfixed].ui-state-active>span:after { content: "fixed" }
 </style>
 {% end %}
 
@@ -217,160 +177,110 @@
 {% include '_dataset_selector.html' %}
 
 <div id="single_peakfit">
-    <div id="single_peakfit_options">
-        <table id='blr_pp_steps' class='ds_table'>
-            <caption>Baseline Correction &amp; Preprocessing</caption>
-            {% include '_blr_rows.html' %}
-            {% include '_pp_rows.html' %}
-        </table>
+<div id="single_peakfit_options">
+<table id='blr_pp_steps' class='ds_table'>
+  <caption>Baseline Correction &amp; Preprocessing</caption>
+  {% include '_blr_rows.html' %}
+  {% include '_pp_rows.html' %}
+</table>
 
-        <table id="peakfit_params" class="pp_table">
-            <thead>
-            <tr class="uline">
-                <th colspan=3>Peak Fitting Algorithms</th>
-            </tr>
-            </thead>
-            <tbody>
-            <!-- manual peak -->
-            <tr>
-                <td class="rline vcenter" rowspan=2>
-                    <button class="needs_plot" onclick="do_peakfit('manual');" disabled>
-                        Manual
-                    </button>
-                </td>
-                <td class="ralign">Peak range</td>
-                <td>
-                    <input type="text" name="peakrange" value="0.0" size=5> -
-                    <input type="text" name="peakrange" value="1000.0" size=5>
-                </td>
-            </tr>
-            <tr class="uline">
-                <td class="ralign">Peak bottom</td>
-                <td>
-                    <select id="basetype">
-                        <option value="endpoint">min(endpoints)</option>
-                        <option value="region">min(region)</option>
-                    </select></td>
-            </tr>
-            <!-- single peak fitting -->
-            <tr>
-                <td class="uline rline vcenter" rowspan=3>
-                    <button class="needs_plot" onclick="do_peakfit('fit');" disabled>
-                        Automatic
-                    </button>
-                    <br>(One peak)
-                </td>
-                <td class="ralign">Peak location</td>
-                <td>
-                    <input type="text" id="peakloc" value="500.0" size=5>
-                    <input type="checkbox" id="locfixed"/><label for="locfixed"></label>
-                </td>
-            </tr>
-            <tr>
-                <td class="ralign">x-axis resolution</td>
-                <td>
-                    <input type="text" id="xres" value="1.0" size=5> (approx.)
-                </td>
-            </tr>
-            <tr class="uline">
-                <td class="ralign">Peak type</td>
-                <td>
-                    <select id="peaktype">
-                        <option value="lorentzian">Lorentzian</option>
-                        <option value="gaussian">Gaussian</option>
-                    </select></td>
-            </tr>
-            <!-- composite peak fitting -->
-            <tr>
-                <td class="uline rline vcenter" rowspan=4>
-                    <button class="needs_plot" onclick="do_peakfit('composite');" disabled>
-                        Automatic
-                    </button>
-                    <br>(Multiple peaks)
-                </td>
-                <td class="ralign">Feature location(s)</td>
-                <td>
-                    <input type="text" id="peakloc2" value="500.0" size=10>
-                </td>
-            </tr>
-            <tr>
-                <td class="ralign">x-axis resolution</td>
-                <td>
-                    <input type="text" id="xres2" value="1.0" size=5> (approx.)
-                </td>
-            </tr>
-            <tr>
-                <td class="ralign">Peak count</td>
-                <td>
-                    <input type="number" id="numpeaks" value=2 min=2 max=5 step=1>
-                </td>
-            </tr>
-            <tr class="uline">
-                <td class="ralign">Peak types</td>
-                <td><label>
-                    <input type="checkbox" name="peaktypes" value="lorentzian" checked>Lorentzian
-                </label><label>
-                    <input type="checkbox" name="peaktypes" value="gaussian" checked>Gaussian
-                </label></td>
-            </tr>
-            </tbody>
-        </table>
+<table id="peakfit_params" class="pp_table">
+<thead>
+<tr class="uline"><th colspan=3>Peak Fitting Algorithms</th></tr>
+</thead>
+<tbody>
+<!-- manual peak -->
+<tr><td class="rline vcenter" rowspan=2>
+<button class="needs_plot" onclick="do_peakfit('manual');" disabled>
+Manual</button></td>
+<td class="ralign">Peak range</td><td>
+<input type="text" name="peakrange" value="0.0" size=5> -
+<input type="text" name="peakrange" value="1000.0" size=5>
+</td></tr>
+<tr class="uline"><td class="ralign">Peak bottom</td><td>
+<select id="basetype">
+  <option value="endpoint">min(endpoints)</option>
+  <option value="region">min(region)</option>
+</select></td></tr>
+<!-- single peak fitting -->
+<tr><td class="uline rline vcenter" rowspan=3>
+<button class="needs_plot" onclick="do_peakfit('fit');" disabled>
+Automatic</button><br>(One peak)</td>
+<td class="ralign">Peak location</td><td>
+<input type="text" id="peakloc" value="500.0" size=5>
+<input type="checkbox" id="locfixed" /><label for="locfixed"></label>
+</td></tr>
+<tr><td class="ralign">x-axis resolution</td><td>
+<input type="text" id="xres" value="1.0" size=5> (approx.)
+</td></tr>
+<tr class="uline"><td class="ralign">Peak type</td><td>
+<select id="peaktype">
+  <option value="lorentzian">Lorentzian</option>
+  <option value="gaussian">Gaussian</option>
+</select></td></tr>
+<!-- composite peak fitting -->
+<tr><td class="uline rline vcenter" rowspan=4>
+<button class="needs_plot" onclick="do_peakfit('composite');" disabled>
+Automatic</button><br>(Multiple peaks)</td>
+<td class="ralign">Feature location(s)</td><td>
+<input type="text" id="peakloc2" value="500.0" size=10>
+</td>
+</tr>
+<tr><td class="ralign">x-axis resolution</td><td>
+<input type="text" id="xres2" value="1.0" size=5> (approx.)
+</td></tr>
+<tr><td class="ralign">Peak count</td><td>
+<input type="number" id="numpeaks" value=2 min=2 max=5 step=1>
+</td></tr>
+<tr class="uline"><td class="ralign">Peak types</td><td><label>
+<input type="checkbox" name="peaktypes" value="lorentzian" checked>Lorentzian
+</label><label>
+<input type="checkbox" name="peaktypes" value="gaussian" checked>Gaussian
+</label></td></tr>
+</tbody></table>
 
-        <div class="err_msg"></div>
+<div class="err_msg"></div>
 
-        <table id='fit_result' style='display: none'>
-            <!-- <caption class='bold'>Peak Parameters</caption> -->
-            <thead>
-            <tr class='uline'>
-                <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr id='fit_height'>
-                <th class='rline'>Height</th>
-            </tr>
-            <tr id='fit_center'>
-                <th class='rline'>Center</th>
-            </tr>
-            <tr id='fit_fwhm'>
-                <th class='rline'>FWHM</th>
-            </tr>
-            <tr id='fit_area'>
-                <th class='rline'>Area</th>
-            </tr>
-            </tbody>
-        </table>
-    </div>  <!-- single_peakfit_options -->
+<table id='fit_result' style='display: none'>
+<!-- <caption class='bold'>Peak Parameters</caption> -->
+<thead><tr class='uline'><th></th></tr></thead>
+<tbody>
+<tr id='fit_height'><th class='rline'>Height</th></tr>
+<tr id='fit_center'><th class='rline'>Center</th></tr>
+<tr id='fit_fwhm'><th class='rline'>FWHM</th></tr>
+<tr id='fit_area'><th class='rline'>Area</th></tr>
+</tbody>
+</table>
+</div>  <!-- single_peakfit_options -->
 
-    <div>
-        <div id="figure"></div>
-        {% include '_zoom_control.html' %}
-    </div>
+<div>
+  <div id="figure"></div>
+  {% include '_zoom_control.html' %}
+</div>
 
 </div>  <!-- single_peakfit -->
 
 <!-- batch mode -->
 <div id="batch_peakfit">
-    <b>Batch Mode</b>
-    <p>
-        Download all peak data for the filtered subset using the settings above.
-    </p>
-    <div id='ds_filter_container'></div>
+<b>Batch Mode</b>
+<p>
+Download all peak data for the filtered subset using the settings above.
+</p>
+<div id='ds_filter_container'></div>
 
-    <div>
-        Algorithm type:
-        <label>
-            <input type="radio" name="batch_algo" value="manual" checked>Manual
-        </label>
-        <label>
-            <input type="radio" name="batch_algo" value="fit">Automatic (single peak)
-        </label>
-        <br/>
-        <label>Include metadata: <input type="checkbox" id="batch_meta"></label>
-        <br/>
-        <button class="needs_filter" onclick="do_batch_download();" disabled>
-            Download peak data
-        </button>
-    </div>
+<div>
+Algorithm type:
+<label>
+  <input type="radio" name="batch_algo" value="manual" checked>Manual
+</label>
+<label>
+  <input type="radio" name="batch_algo" value="fit">Automatic (single peak)
+</label>
+<br />
+<label>Include metadata: <input type="checkbox" id="batch_meta"></label>
+<br />
+<button class="needs_filter" onclick="do_batch_download();" disabled>
+Download peak data</button>
+</div>
 
-    {% end %}
+{% end %}

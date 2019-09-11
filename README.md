@@ -27,7 +27,7 @@ While 2.7 and 3.4+ are supported, I've only tested with 3.4+
 Python (3.4+) is the main requirement for running the server.
 Several Python packages are needed, available from PyPI via `pip`:
 
-    pip3 install matplotlib tornado pyyaml h5py pandas pywt sklearn
+    pip3 install matplotlib tornado==4.4.2 pyyaml h5py pandas pywt sklearn
     
 It will complain about `xylib` and `metakit`, but will only disable the ability to parse specific file types.
 Neither of these packages are available on pip3 at the moment.

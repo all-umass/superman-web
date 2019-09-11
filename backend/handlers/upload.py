@@ -220,6 +220,8 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
 
 
 def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample, description):
+    # I'm not 100% sure what is happening here, but I assume we want to check to make sure we can properly import the
+    #  data in the correct order
     try:
         pkey = np.array(next(fh).strip().split(b',')[1:])
         data = np.genfromtxt(fh, dtype=np.float32, delimiter=b',', unpack=True)
@@ -247,19 +249,14 @@ def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample, descript
     # make sure there's no whitespace sticking to the pkeys
     pkey = np.char.strip(pkey)
 
+    # Check length and see if the original arrays are the same
     if len(meta_pkeys) > 0 and not np.array_equal(meta_pkeys, pkey):
         if len(meta_pkeys) != len(pkey):
             return 415, 'Spectrum and metadata names mismatch.', 'wrong number of meta_pkeys for vector data'
 
-        meta_order = np.argsort(meta_pkeys)
-        data_order = np.argsort(pkey)
-        if not np.array_equal(meta_order, data_order):
+        # Order arrays and check those
+        if not np.array_equal(np.argsort(meta_pkeys), np.argsort(pkey)):
             return 415, 'Spectrum and metadata names mismatch.'
-
-        # convert data to meta order
-        order = np.zeros_like(data_order)
-        order[data_order[meta_order]] = np.arange(len(order))
-        assert np.array_equal(meta_pkeys, pkey[order])
 
     try:
         pkey = PrimaryKeyMetadata(pkey)
@@ -292,8 +289,8 @@ def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample, descript
             wave = wave[lb_idx:ub_idx]
 
     # async loading machinery automatically registers us with DATASETS
-    _load = _make_loader_function(description, wave, spectra, pkey=pkey,
-                                  **meta_kwargs)
+    _load = _make_loader_function(description, wave, spectra, pkey=pkey, **meta_kwargs)
+
     if ds_kind == 'LIBS':
         WebLIBSDataset(ds_name, _load)
     else:

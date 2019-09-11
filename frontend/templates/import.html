@@ -1,236 +1,123 @@
 {% extends "_common.html" %}
 {% block head_matter %}
 <script type="text/javascript">
-    function upload_dataset() {
-        var msg = $('#import_result').empty();
-        var form = $('form')[0];
-        if (!form.checkValidity()) {
-            return;
-        }
-        var post_data = new FormData(form);
-        post_data.append('ds_kind', $('#ds_kind option:selected', form).val());
-        var wait = $('.wait', form).show();
-        $.ajax({
-            url: '/_upload_dataset',
-            data: post_data,
-            processData: false,
-            contentType: false,
-            type: 'POST',
-            error: function (jqXHR, textStatus, errorThrown) {
-                wait.hide();
-                msg.html(jqXHR.responseText);
-            },
-            success: function (url) {
-                wait.hide();
-                $('input', form).val(''); // reset the form inputs
-                msg.html('Dataset imported. <a href="' + url + '">Explore</a>.');
-            }
-        });
+function upload_dataset() {
+  var msg = $('#import_result').empty();
+  var form = $('form')[0];
+  if (!form.checkValidity()) {
+    return;
+  }
+  var post_data = new FormData(form);
+  post_data.append('ds_kind', $('#ds_kind option:selected', form).val());
+  var wait = $('.wait', form).show();
+  $.ajax({
+    url: '/_upload_dataset',
+    data: post_data,
+    processData: false,
+    contentType: false,
+    type: 'POST',
+    error: function(jqXHR, textStatus, errorThrown) {
+      wait.hide();
+      msg.html(jqXHR.responseText);
+    },
+    success: function(url) {
+      wait.hide();
+      $('input', form).val(''); // reset the form inputs
+      msg.html('Dataset imported. <a href="' + url + '">Explore</a>.');
     }
-
-    $(document).ready(function () {
-        var si = $('#spectrum_instructions'),
-            mi = $('#metadata_instructions');
-        $('#spectrum_row').mouseenter(function () {
-            si.show();
-            mi.hide();
-        });
-        $('#metadata_row').mouseenter(function () {
-            mi.show();
-            si.hide();
-        });
-    });
+  });
+}
+$(document).ready(function(){
+  var si = $('#spectrum_instructions'),
+      mi = $('#metadata_instructions');
+  $('#spectrum_row').mouseenter(function(){si.show(); mi.hide();});
+  $('#metadata_row').mouseenter(function(){mi.show(); si.hide();});
+});
 </script>
 <style type="text/css">
-    p {
-        padding: 1em 0;
-    }
-
-    .instructions {
-        border-radius: 5px;
-        padding: 0.5em;
-        background-color: lightgreen;
-    }
-
-    .instructions caption {
-        font-style: italic;
-    }
-
-    .instructions th {
-        font-weight: bold;
-        border-bottom: 1px solid;
-        padding: 0 0.25em;
-    }
-
-    .instructions td {
-        padding: 0 0.25em;
-        text-align: right;
-    }
-
-    .csv th::after {
-        content: ",";
-    }
-
-    .csv th:last-child::after {
-        content: "";
-    }
-
-    .csv td::after {
-        content: ",";
-    }
-
-    .csv td:last-child::after {
-        content: "";
-    }
+p { padding: 1em 0; }
+.instructions {
+  border-radius: 5px;
+  padding: 0.5em;
+  background-color: lightgreen;
+}
+.instructions caption { font-style: italic; }
+.instructions th { font-weight: bold; border-bottom: 1px solid; padding: 0 0.25em; }
+.instructions td { padding: 0 0.25em; text-align: right; }
+.csv th::after { content: ","; }
+.csv th:last-child::after { content: ""; }
+.csv td::after { content: ","; }
+.csv td:last-child::after { content: ""; }
 </style>
 {% end %}
 {% block body_matter %}
 <p>
-    Upload a new dataset by providing files for spectrum data and
-    (optionally) associated metadata.
+Upload a new dataset by providing files for spectrum data and
+(optionally) associated metadata.
 </p>
 
 <form enctype="multipart/form-data" onsubmit="return false;" class="flow">
-    <table class="aligned_table">
-        <tr>
-            <td>Dataset name</td>
-            <td><input type="text" name="ds_name" required/></td>
-        </tr>
-        <tr>
-            <td>Spectrum kind</td>
-            <td><select id="ds_kind">
-                {% for kind in ds_kinds %}
-                <option value="{{kind}}">{{kind}}</option>
-                {% end %}
-            </select></td>
-        </tr>
-        <tr id="spectrum_row">
-            <td>Spectrum data</td>
-            <td><input type="file" name="spectra" required/></td>
-        </tr>
-        <tr>
-            <td>Resample (optional)</td>
-            <td><input type="number" name="lb" placeholder="min" step="any"> to
-                <input type="number" name="ub" placeholder="max" step="any"> by
-                <input type="number" name="step" placeholder="step" step="any">
-            </td>
-        </tr>
-        <tr id="metadata_row">
-            <td>Metadata</td>
-            <td><input type="file" name="metadata"/></td>
-        </tr>
-        <tr>
-            <td>Description</td>
-            <td>
-                <textarea name="desc">Added using the Dataset Import tool.</textarea>
-            </td>
-        </tr>
-        <tr>
-            <td colspan=2>
-                <button onclick="upload_dataset();">
-                    Upload<span class="wait">ing...</span>
-                </button>
-                <div id="import_result"></div>
-            </td>
-        </tr>
-    </table>
-</form>
+<table class="aligned_table">
+<tr><td>Dataset name</td>
+    <td><input type="text" name="ds_name" required /></td></tr>
+<tr><td>Spectrum kind</td><td><select id="ds_kind">
+{% for kind in ds_kinds %}
+  <option value="{{kind}}">{{kind}}</option>
+{% end %}
+</select></td></tr>
+<tr id="spectrum_row">
+    <td>Spectrum data</td>
+    <td><input type="file" name="spectra" required /></td></tr>
+<tr><td>Resample (optional)</td>
+<td><input type="number" name="lb" placeholder="min" step="any"> to
+    <input type="number" name="ub" placeholder="max" step="any"> by
+    <input type="number" name="step" placeholder="step" step="any">
+</td></tr>
+<tr id="metadata_row">
+    <td>Metadata</td>
+    <td><input type="file" name="metadata" /></td></tr>
+<tr><td>Description</td><td>
+  <textarea name="desc">Added using the Dataset Import tool.</textarea>
+</td></tr>
+<tr><td colspan=2>
+<button onclick="upload_dataset();">
+  Upload<span class="wait">ing...</span>
+</button>
+<div id="import_result"></div>
+</td></tr></table></form>
 
 <div id="spectrum_instructions" class="flow">
-    Upload either a CSV file of spectrum intensities sampled at shared wavelengths,
-    or a ZIP archive of individual spectrum files.<br/>
-    <table class="csv instructions flow">
-        <caption>CSV format for spectrum data</caption>
-        <tr>
-            <th>wave</th>
-            <th>sample1</th>
-            <th>sample2</th>
-            <th>sample3</th>
-        </tr>
-        <tr>
-            <td>23.0</td>
-            <td>3</td>
-            <td>1</td>
-            <td>2</td>
-        </tr>
-        <tr>
-            <td>23.5</td>
-            <td>1</td>
-            <td>5.3</td>
-            <td>2</td>
-        </tr>
-        <tr>
-            <td>24.0</td>
-            <td>3</td>
-            <td>2.2</td>
-            <td>0.3</td>
-        </tr>
-        <tr>
-            <td>24.5</td>
-            <td>5.3</td>
-            <td>9</td>
-            <td>1</td>
-        </tr>
-        <tr>
-            <td>25.0</td>
-            <td>5.1</td>
-            <td>0</td>
-            <td>1</td>
-        </tr>
-        <tr>
-            <td>25.5</td>
-            <td>4</td>
-            <td>5</td>
-            <td>4</td>
-        </tr>
-    </table>
-    <span style="line-height: 8em;">&mdash; OR &mdash;</span>
-    <table class="instructions flow">
-        <caption>ZIP archive of spectrum files</caption>
-        <tr>
-            <th>Filename</th>
-            <th>File Type</th>
-        </tr>
-        <tr>
-            <td>sample1</td>
-            <td>[OPUS file]</td>
-        </tr>
-        <tr>
-            <td>sample2</td>
-            <td>[ASCII file]</td>
-        </tr>
-        <tr>
-            <td>sample3</td>
-            <td>[any other valid format]</td>
-        </tr>
-    </table>
+Upload either a CSV file of spectrum intensities sampled at shared wavelengths,
+or a ZIP archive of individual spectrum files.<br />
+<table class="csv instructions flow">
+<caption>CSV format for spectrum data</caption>
+<tr><th>wave</th><th>sample1</th><th>sample2</th><th>sample3</th></tr>
+<tr><td>23.0</td><td>3</td><td>1</td><td>2</td></tr>
+<tr><td>23.5</td><td>1</td><td>5.3</td><td>2</td></tr>
+<tr><td>24.0</td><td>3</td><td>2.2</td><td>0.3</td></tr>
+<tr><td>24.5</td><td>5.3</td><td>9</td><td>1</td></tr>
+<tr><td>25.0</td><td>5.1</td><td>0</td><td>1</td></tr>
+<tr><td>25.5</td><td>4</td><td>5</td><td>4</td></tr>
+</table>
+<span style="line-height: 8em;">&mdash; OR &mdash;</span>
+<table class="instructions flow">
+<caption>ZIP archive of spectrum files</caption>
+<tr><th>Filename</th><th>File Type</th></tr>
+<tr><td>sample1</td><td>[OPUS file]</td></tr>
+<tr><td>sample2</td><td>[ASCII file]</td></tr>
+<tr><td>sample3</td><td>[any other valid format]</td></tr>
+</table>
 </div>
 
 <div id="metadata_instructions" class="flow" style="display: none;">
-    Optionally upload a CSV file of metadata, with one row per spectrum.<br/>
-    The first column must correspond exactly with the spectrum names.<br/>
-    <table class="csv instructions flow">
-        <caption>CSV format for metadata</caption>
-        <tr>
-            <th>pkey</th>
-            <th>% pure</th>
-            <th>treatment</th>
-        </tr>
-        <tr>
-            <td>sample1</td>
-            <td>34.5</td>
-            <td>A</td>
-        </tr>
-        <tr>
-            <td>sample2</td>
-            <td>32.0</td>
-            <td>B</td>
-        </tr>
-        <tr>
-            <td>sample3</td>
-            <td>52.2</td>
-            <td>A</td>
-        </tr>
-    </table>
+Optionally upload a CSV file of metadata, with one row per spectrum.<br />
+The first column must correspond exactly with the spectrum names.<br />
+<table class="csv instructions flow">
+<caption>CSV format for metadata</caption>
+<tr><th>pkey</th><th>% pure</th><th>treatment</th></tr>
+<tr><td>sample1</td><td>34.5</td><td>A</td></tr>
+<tr><td>sample2</td><td>32.0</td><td>B</td></tr>
+<tr><td>sample3</td><td>52.2</td><td>A</td></tr>
+</table>
 </div>
 {% end %}

@@ -1,30 +1,30 @@
 <div id='ds_selector_wrapper'>
-    <!-- dataset selector -->
-    <div class="flow">
-        Select a spectrum:
-        <select onchange="if(this.value.length>0){
-        $('#upload').hide();
-        SingleSpectrum.select(this.value);
-        $('#selector').show();
-      } else {
-        $('#selector,#upload').toggle();
-      }"
-        >
-            <option value="">Choose a dataset</option>
-            {% for ds in sorted(datasets, key=str) %}
-            <option value="{{ds.name}},{{ds.kind}}">{{ds}}</option>
-            {% end %}
-        </select>
 
-        <div id='upload' class="flow">
-            or upload your own:
-            <input type="file" name="query" onchange="SingleSpectrum.upload(this);"/>
-            <span class="err_msg"></span>
-            <span id="upload_messages"></span>
-        </div>
+<!-- dataset selector -->
+<div class="flow">
+  Select a spectrum:
+  <select onchange="if(this.value.length>0){
+    $('#upload').hide();
+    SingleSpectrum.select(this.value);
+    $('#selector').show();
+  } else {
+    $('#selector,#upload').toggle();
+  }">
+  <option value="">Choose a dataset</option>
+  {% for ds in sorted(datasets, key=str) %}
+    <option value="{{ds.name}},{{ds.kind}}">{{ds}}</option>
+  {% end %}
+  </select>
 
-        <img id='spinner' src='/static/loading_bar.gif' style='display:none'>
-        <div id='selector' style='display:none'></div>
+  <div id='upload' class="flow">
+    or upload your own:
+    <input type="file" name="query" onchange="SingleSpectrum.upload(this);"/>
+    <span class="err_msg"></span>
+    <span id="upload_messages"></span>
+  </div>
 
-    </div>
+  <img id='spinner' src='/static/loading_bar.gif' style='display:none'>
+  <div id='selector' style='display:none'></div>
+
+</div>
 </div>

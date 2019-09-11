@@ -1,114 +1,106 @@
 <table class="ds_table nofloat_ds_table aligned_table">
-    <tr>
-        <td class='bold'>X axis</td>
-        <td><select id="xaxis" onchange='Plot.changed(this.value, "x")'>
-            <option value='cardinal'>cardinal</option>
-            <option value='default' selected>channels</option>
-            <option value='metadata'>metadata</option>
-            <option value='line_ratio'>line ratio</option>
-            <option value='computed'>computed</option>
-        </select></td>
-        <td class='x cardinal' style='display:none'></td>
-        <td class='x default'>
-            {% if is_libs %}
-            Masking:<input id="chan_mask" type="checkbox" checked>
-            {% end %}
-        </td>
-        <td class='x metadata' style='display:none'>
-            <select>
-                {% for key,name in metadata_names %}
-                <option value="{{key}}">{{name}}</option>
-                {% end %}
-            </select>
-        </td>
-        <td class='x line_ratio' style='display:none'>
-            (<input type='text' size=5 value='633'>:<input type='text' size=5 value='635.5'>) /
-            (<input type='text' size=5 value='288'>:<input type='text' size=5 value='288.5'>)
-        </td>
-        <td class='x computed' style='display:none'>
-            f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
-        </td>
-    </tr>
+<tr><td class='bold'>X axis</td>
+<td><select id="xaxis" onchange='Plot.changed(this.value, "x")'>
+  <option value='cardinal'>cardinal</option>
+  <option value='default' selected>channels</option>
+  <option value='metadata'>metadata</option>
+  <option value='line_ratio'>line ratio</option>
+  <option value='computed'>computed</option>
+</select></td>
+<td class='x cardinal' style='display:none'></td>
+<td class='x default'>
+{% if is_libs %}
+  Masking:<input id="chan_mask" type="checkbox" checked>
+{% end %}
+</td>
+<td class='x metadata' style='display:none'>
+<select>
+{% for key,name in metadata_names %}
+  <option value="{{key}}">{{name}}</option>
+{% end %}
+</select>
+</td>
+<td class='x line_ratio' style='display:none'>
+(<input type='text' size=5 value='633'>:<input type='text' size=5 value='635.5'>) /
+(<input type='text' size=5 value='288'>:<input type='text' size=5 value='288.5'>)
+</td>
+<td class='x computed' style='display:none'>
+f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
+</td></tr>
 
-    <tr>
-        <td class='bold'>Y axis</td>
-        <td><select id="yaxis" onchange='Plot.changed(this.value, "y")'>
-            <option value='cardinal'>cardinal</option>
-            <option value='default' selected>intensities</option>
-            <option value='metadata'>metadata</option>
-            <option value='line_ratio'>line ratio</option>
-            <option value='computed'>computed</option>
-        </select></td>
-        <td class='y cardinal' style='display:none'></td>
-        <td class='y default'></td>
-        <td class='y metadata' style='display:none'>
-            <select>
-                {% for key,name in metadata_names %}
-                <option value="{{key}}">{{name}}</option>
-                {% end %}
-            </select>
-        </td>
-        <td class='y line_ratio' style='display:none'>
-            (<input type='text' size=5 value='633'>:<input type='text' size=5 value='635.5'>) /
-            (<input type='text' size=5 value='288'>:<input type='text' size=5 value='288.5'>)
-        </td>
-        <td class='y computed' style='display:none'>
-            f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
-        </td>
-    </tr>
+<tr><td class='bold'>Y axis</td>
+<td><select id="yaxis" onchange='Plot.changed(this.value, "y")'>
+  <option value='cardinal'>cardinal</option>
+  <option value='default' selected>intensities</option>
+  <option value='metadata'>metadata</option>
+  <option value='line_ratio'>line ratio</option>
+  <option value='computed'>computed</option>
+</select></td>
+<td class='y cardinal' style='display:none'></td>
+<td class='y default'></td>
+<td class='y metadata' style='display:none'>
+<select>
+{% for key,name in metadata_names %}
+  <option value="{{key}}">{{name}}</option>
+{% end %}
+</select>
+</td>
+<td class='y line_ratio' style='display:none'>
+(<input type='text' size=5 value='633'>:<input type='text' size=5 value='635.5'>) /
+(<input type='text' size=5 value='288'>:<input type='text' size=5 value='288.5'>)
+</td>
+<td class='y computed' style='display:none'>
+f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
+</td></tr>
 
-    <tr>
-        <td class='bold'>Color</td>
-        <td><select id="color" onchange='Plot.changed(this.value, "color")'>
-            <option value='default'>fixed</option>
-            <option value='cycled'>cycled</option>
-            <option value='metadata'>metadata</option>
-            <option value='line_ratio'>line ratio</option>
-            <option value='computed'>computed</option>
-        </select></td>
-        <td class='color default'>
-            <input type="color" id="plt_color" value='#0000FF'>
-        </td>
-        <td class='color cycled' style='display:none'></td>
-        <td class='color metadata' style='display:none'>
-            <select>
-                {% for key,name in metadata_names %}
-                <option value="{{key}}">{{name}}</option>
-                {% end %}
-            </select>
-        </td>
-        <td class='color line_ratio' style='display:none'>
-            (<input type='text' size=5 value='633'>:<input type='text' size=5 value='635.5'>) /
-            (<input type='text' size=5 value='288'>:<input type='text' size=5 value='288.5'>)
-        </td>
-        <td class='color computed' style='display:none'>
-            f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
-        </td>
-    </tr>
+<tr><td class='bold'>Color</td>
+<td><select id="color" onchange='Plot.changed(this.value, "color")'>
+  <option value='default'>fixed</option>
+  <option value='cycled'>cycled</option>
+  <option value='metadata'>metadata</option>
+  <option value='line_ratio'>line ratio</option>
+  <option value='computed'>computed</option>
+</select></td>
+<td class='color default'>
+<input type="color" id="plt_color" value='#0000FF'>
+</td>
+<td class='color cycled' style='display:none'></td>
+<td class='color metadata' style='display:none'>
+<select>
+{% for key,name in metadata_names %}
+  <option value="{{key}}">{{name}}</option>
+{% end %}
+</select>
+</td>
+<td class='color line_ratio' style='display:none'>
+(<input type='text' size=5 value='633'>:<input type='text' size=5 value='635.5'>) /
+(<input type='text' size=5 value='288'>:<input type='text' size=5 value='288.5'>)
+</td>
+<td class='color computed' style='display:none'>
+f(x,y) = <input type='text' value='sqrt(sum(y**2))'>
+</td></tr>
 
-    <tr>
-        <td colspan=3>
-            <button id="plot_button" class="needs_filter" onclick="Plot.plot(this);" disabled>
-                Plot<span class='wait'>ting...</span></button>
-            <div class="err_msg"></div>
-        </td>
-    </tr>
+<tr><td colspan=3>
+  <button id="plot_button" class="needs_filter" onclick="Plot.plot(this);" disabled>
+  Plot<span class='wait'>ting...</span></button>
+  <div class="err_msg"></div>
+</td></tr>
 </table>
 
 <div class="flex-column">
-    <b>Download plot data</b>
-    <div>Format:
-        <label><input type="radio" name="dl_type" checked>trajectory</label>
-        <label><input type="radio" name="dl_type" id="dl_vector">matrix</label>
-    </div>
-    {% if len(metadata_names) > 0 %}
-    <select id='dl_metadata' data-placeholder='with metadata' multiple>
-        {% for key,name in metadata_names %}
-        {% if key != '_ds' %}
-        <option value="{{key}}">{{name}}</option>
-        {% end %}
-        {% end %}
-    </select>
-    {% end %}
-    <button class="needs_plot" disabled onclick="Plot.download()">Download</button>
+<b>Download plot data</b>
+<div>Format:
+  <label><input type="radio" name="dl_type" checked>trajectory</label>
+  <label><input type="radio" name="dl_type" id="dl_vector">matrix</label>
+</div>
+{% if len(metadata_names) > 0 %}
+<select id='dl_metadata' data-placeholder='with metadata' multiple>
+{% for key,name in metadata_names %}
+  {% if key != '_ds' %}
+    <option value="{{key}}">{{name}}</option>
+  {% end %}
+{% end %}
+</select>
+{% end %}
+<button class="needs_plot" disabled onclick="Plot.download()">Download</button>
 </div>

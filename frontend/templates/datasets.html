@@ -2,85 +2,78 @@
 {% block head_matter %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.25.7/js/jquery.tablesorter.min.js"></script>
 <script type="text/javascript">
-    function toggle_extra(elt) {
-        $(elt).parents('tr.dataset').nextUntil('tr.dataset')
-            .find('.hideme').slideToggle();
-        return false;
-    }
-
-    $(document).ready(function () {
-        $('#datasets').tablesorter();
-    })
+function toggle_extra(elt) {
+  $(elt).parents('tr.dataset').nextUntil('tr.dataset')
+        .find('.hideme').slideToggle();
+  return false;
+}
+$(document).ready(function() {
+  $('#datasets').tablesorter();
+})
 </script>
 {% end %}
 
 {% block body_matter %}
 <table class='tablesorter' id='datasets'>
-    <caption>
-        A listing of all available datasets.
-        Click a heading to sort by that column.
-    </caption>
-    <thead>
-    <tr>
-        <th>Dataset</th>
-        <th>Type</th>
-        <th># Spectra</th>
-        <th># Channels</th>
-        <th>Unique Keys?</th>
-        <th>Last Updated</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for d in sorted(datasets, key=str) %}
-    <tr class='dataset {%if not d.is_public %}private{%end%} tablesorter-hasChildRow'>
-        <td class='ds_title'>
-            <a href="#" onclick="return toggle_extra(this)">{{d.name}}</a>
-            {%if d.user_added %}
-            <form action='/_remove_dataset' method='POST'>
-                <input type="hidden" name="name" value="{{d.name}}">
-                <input type="hidden" name="kind" value="{{d.kind}}">
-                <button type="submit" class='remove_row'>&times;</button>
-            </form>
-            {% end %}
-        </td>
-        <td>{{d.kind}}</td>
-        <td class='numeric'>{{d.num_spectra()}}</td>
-        {% if d.num_dimensions() is None %}
-        <td>&mdash;</td>
-        {% else %}
-        <td class='numeric'>{{d.num_dimensions()}}</td>
-        {% end %}
-        {% if d.pkey is None %}
-        <td>&#x2718;</td>
-        {% else %}
-        <td>&#x2714;</td>
-        {% end %}
-        <td>{{dt(int(d.load_time)).strftime("%Y-%m-%d %H:%M")}}</td>
-    </tr>
-    <tr class='extra tablesorter-childRow'>
-        <td colspan=6>
-            <div class='hideme' style="display: none;">
-                <a class='explore_btn'
-                   href="/explorer?ds_kind={{url_escape(d.kind)}}&ds_name={{url_escape(d.name)}}">
-                    Explore</a>
-                <div class='ds_info'>
-                    <b>Metadata:</b>
-                    <ul class='metadata'>
-                        {% for name in sorted(m.display_name(k) for k,m in d.metadata.items()) %}
-                        <li>{{name}}</li>
-                        {% end %}
-                    </ul>
-                    <br/>
-                    <b>Description:</b> {{d.description}}<br/>
-                    {% for url in d.urls %}
-                    <a href="{{url}}">{{url}}</a><br/>
-                    {% end %}
-                </div>
-            </div>
-        </td>
-    </tr>
+  <caption>
+    A listing of all available datasets.
+    Click a heading to sort by that column.
+  </caption>
+  <thead><tr>
+    <th>Dataset</th>
+    <th>Type</th>
+    <th># Spectra</th>
+    <th># Channels</th>
+    <th>Unique Keys?</th>
+    <th>Last Updated</th>
+  </tr></thead>
+  <tbody>
+{% for d in sorted(datasets, key=str) %}
+  <tr class='dataset {%if not d.is_public %}private{%end%} tablesorter-hasChildRow'>
+    <td class='ds_title'>
+      <a href="#" onclick="return toggle_extra(this)">{{d.name}}</a>
+      {%if d.user_added %}
+      <form action='/_remove_dataset' method='POST'>
+        <input type="hidden" name="name" value="{{d.name}}">
+        <input type="hidden" name="kind" value="{{d.kind}}">
+        <button type="submit" class='remove_row'>&times;</button>
+      </form>
+      {% end %}
+    </td>
+    <td>{{d.kind}}</td>
+    <td class='numeric'>{{d.num_spectra()}}</td>
+    {% if d.num_dimensions() is None %}
+      <td>&mdash;</td>
+    {% else %}
+      <td class='numeric'>{{d.num_dimensions()}}</td>
     {% end %}
-    </tbody>
+    {% if d.pkey is None %}
+      <td>&#x2718;</td>
+    {% else %}
+      <td>&#x2714;</td>
+    {% end %}
+    <td>{{dt(int(d.load_time)).strftime("%Y-%m-%d %H:%M")}}</td>
+  </tr>
+  <tr class='extra tablesorter-childRow'><td colspan=6>
+   <div class='hideme' style="display: none;">
+    <a class='explore_btn'
+ href="/explorer?ds_kind={{url_escape(d.kind)}}&ds_name={{url_escape(d.name)}}">
+    Explore</a>
+    <div class='ds_info'>
+      <b>Metadata:</b>
+      <ul class='metadata'>
+      {% for name in sorted(m.display_name(k) for k,m in d.metadata.items()) %}
+        <li>{{name}}</li>
+      {% end %}
+      </ul><br />
+      <b>Description:</b> {{d.description}}<br />
+      {% for url in d.urls %}
+        <a href="{{url}}">{{url}}</a><br />
+      {% end %}
+    </div>
+  </div></td></tr>
+{% end %}
+  </tbody>
 </table>
 
 {% end %}
