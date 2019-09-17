@@ -17,7 +17,7 @@ Easy Guide:
 	cd superman
 	pip3 install -e .
 	cd ../superman-web
-	pip3 install matplotlib tornado pyyaml h5py pandas pywt sklearn
+	pip3 install matplotlib tornado==4.4.2 pyyaml h5py pandas pywt sklearn
 	
 
 ### 1: Install Dependencies
