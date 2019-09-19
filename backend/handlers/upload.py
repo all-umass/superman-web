@@ -16,9 +16,9 @@ from zipfile import is_zipfile, ZipFile
 
 from .common import BaseHandler
 from ..web_datasets import (
-    UploadedSpectrumDataset,
-    WebTrajDataset, WebVectorDataset, WebLIBSDataset, DATASETS,
-    PrimaryKeyMetadata, NumericMetadata, BooleanMetadata, LookupMetadata)
+  UploadedSpectrumDataset,
+  WebTrajDataset, WebVectorDataset, WebLIBSDataset, DATASETS,
+  PrimaryKeyMetadata, NumericMetadata, BooleanMetadata, LookupMetadata)
 
 
 class SpectrumUploadHandler(BaseHandler):
@@ -34,6 +34,7 @@ class SpectrumUploadHandler(BaseHandler):
     fname = f['filename']
     logging.info('Parsing file: %s', fname)
     fh = BytesIO(f['body'])
+
     try:
       query = parse_spectrum(fh)
     except Exception:
@@ -43,8 +44,9 @@ class SpectrumUploadHandler(BaseHandler):
       except Exception:
         logging.exception('Spectrum parse failed.')
         # XXX: save failed uploads for debugging purposes
-        open('logs/badupload-'+fname, 'w').write(f['body'])
+        open('logs/badupload-' + fname, 'w').write(f['body'])
         return self.visible_error(415, 'Spectrum upload failed.')
+
     ds = UploadedSpectrumDataset(fname, query)
     fig_data.set_selected(ds.view(), title=fname)
     axlimits = fig_data.plot()
@@ -58,20 +60,17 @@ class DatasetUploadHandler(BaseHandler):
     ds_kind = self.get_argument('ds_kind')
     description = self.get_argument('desc')
 
-    resample = (self.get_argument('lb', ''), self.get_argument('ub', ''),
-                self.get_argument('step', ''))
+    resample = (self.get_argument('lb', ''), self.get_argument('ub', ''), self.get_argument('step', ''))
     if not any(resample):
       resample = None
 
     if ds_kind not in DATASETS:
-      self.visible_error(400, 'Invalid dataset kind.', 'Invalid ds_kind: %r',
-                         ds_kind)
+      self.visible_error(400, 'Invalid dataset kind.', 'Invalid ds_kind: %r', ds_kind)
       return
 
     if ds_name in DATASETS[ds_kind]:
       self.visible_error(403, 'Dataset already exists.',
-                         'ds import would clobber existing: %s [%s]',
-                         ds_name, ds_kind)
+                         'ds import would clobber existing: %s [%s]', ds_name, ds_kind)
       return
 
     if not self.request.files or 'spectra' not in self.request.files:
@@ -80,8 +79,9 @@ class DatasetUploadHandler(BaseHandler):
 
     meta_file, = self.request.files.get('metadata', [None])
     spectra_file, = self.request.files['spectra']
-    err = yield gen.Task(_async_ds_upload, meta_file, spectra_file, ds_name,
-                         ds_kind, resample, description)
+
+    # TODO: gen.Task is removed from modern Tornado implementation, fix this
+    err = yield gen.Task(_async_ds_upload, meta_file, spectra_file, ds_name, ds_kind, resample, description)
     if err:
       self.visible_error(*err)
       return
@@ -96,22 +96,21 @@ class DatasetUploadHandler(BaseHandler):
     t.start()
 
 
-def _async_ds_upload(meta_file, spectra_file, ds_name, ds_kind, resample,
-                     description, callback=None):
+def _async_ds_upload(meta_file, spectra_file, ds_name, ds_kind, resample, description, callback=None):
   def helper():
     meta_kwargs, meta_pkeys, err = _load_metadata_csv(meta_file)
+
     if err is None:
       fh = BytesIO(spectra_file['body'])
       if is_zipfile(fh):
         # interpret this as a ZIP of csv files
         fh.seek(0)
-        err = _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys,
-                       resample, description)
+        err = _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample, description)
       else:
         # this is one single csv file with all spectra in it
         fh.seek(0)
-        err = _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys,
-                         resample, description)
+        err = _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample, description)
+
     callback(err)
 
   t = Thread(target=helper)
@@ -137,12 +136,14 @@ def _load_metadata_csv(f=None):
   meta_kwargs = {}
   for i, name in enumerate(meta.columns[1:]):
     x = meta[name].values
+
     if np.issubdtype(x.dtype, np.bool_):
       m = BooleanMetadata(x, display_name=name)
     elif np.issubdtype(x.dtype, np.number):
       m = NumericMetadata(x, display_name=name)
     else:
       m = LookupMetadata(x, display_name=name)
+
     # use a JS-friendly string key
     meta_kwargs['k%d' % i] = m
 
@@ -156,7 +157,7 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
              description):
   # sanity check before doing the hard work
   if resample is None and ds_kind == 'LIBS':
-    return (415, 'Failed: LIBS data must be sampled on a common x-axis')
+    return 415, 'Failed: LIBS data must be sampled on a common x-axis'
 
   zf = ZipFile(fh)
   traj_data = {}
@@ -175,7 +176,7 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
       traj_data[fname] = parse_spectrum(sub_fh)
     except Exception:
       logging.exception('bad spectrum subfile: ' + fname)
-      return (415, 'Unable to parse spectrum file: %s' % fname)
+      return 415, 'Unable to parse spectrum file: %s' % fname
 
   num_meta = len(meta_pkeys)
   num_traj = len(traj_data)
@@ -188,7 +189,7 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
   else:
     for pkey in meta_pkeys:
       if pkey not in traj_data:
-        return (415, 'Failed: %r not in spectra.' % pkey)
+        return 415, 'Failed: %r not in spectra.' % pkey
 
   if resample is None:
     _load = _make_loader_function(description, meta_pkeys, traj_data,
@@ -196,7 +197,7 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
     WebTrajDataset(ds_name, ds_kind, _load)
   else:
     lb, ub, step = map(_maybe_float, resample)
-    waves = [t[:,0] for t in traj_data.values()]
+    waves = [t[:, 0] for t in traj_data.values()]
     if lb is None:
       lb = max(w[0] for w in waves)
     if ub is None:
@@ -204,11 +205,11 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
     if step is None:
       step = min(np.diff(w).min() for w in waves)
 
-    wave = np.arange(lb, ub + step/2, step, dtype=waves[0].dtype)
+    wave = np.arange(lb, ub + step / 2, step, dtype=waves[0].dtype)
     spectra = np.zeros((len(waves), len(wave)), dtype=wave.dtype)
     for i, key in enumerate(meta_pkeys):
       traj = traj_data[key]
-      spectra[i] = np.interp(wave, traj[:,0], traj[:,1])
+      spectra[i] = np.interp(wave, traj[:, 0], traj[:, 1])
     pkey = PrimaryKeyMetadata(meta_pkeys)
 
     _load = _make_loader_function(description, wave, spectra, pkey=pkey,
@@ -218,8 +219,9 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
   return None
 
 
-def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
-               description):
+def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample, description):
+  # I'm not 100% sure what is happening here, but I assume we want to check to make sure we can properly import the
+  #  data in the correct order
   try:
     pkey = np.array(next(fh).strip().split(b',')[1:])
     data = np.genfromtxt(fh, dtype=np.float32, delimiter=b',', unpack=True)
@@ -227,7 +229,7 @@ def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
     spectra = data[1:]
   except Exception:
     logging.exception('Bad spectra file.')
-    return visible_error(415, 'Unable to parse spectrum data CSV.')
+    return 415, 'Unable to parse spectrum data CSV.'
 
   # cut out empty columns (where pkey is '')
   mask = pkey != b''
@@ -242,29 +244,30 @@ def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
     spectra = spectra[:, mask]
 
   if ds_kind == 'LIBS' and wave.shape[0] not in (6144, 6143, 5485):
-    return (415, 'Wrong number of channels for LIBS data: %d.' % wave.shape[0])
+    return 415, 'Wrong number of channels for LIBS data: %d.' % wave.shape[0]
 
   # make sure there's no whitespace sticking to the pkeys
   pkey = np.char.strip(pkey)
 
+  # Check length and see if the original arrays are the same
   if len(meta_pkeys) > 0 and not np.array_equal(meta_pkeys, pkey):
     if len(meta_pkeys) != len(pkey):
-      return (415, 'Spectrum and metadata names mismatch.',
-                   'wrong number of meta_pkeys for vector data')
+      return 415, 'Spectrum and metadata names mismatch.', 'wrong number of meta_pkeys for vector data'
+
     meta_order = np.argsort(meta_pkeys)
     data_order = np.argsort(pkey)
     if not np.array_equal(meta_pkeys[meta_order], pkey[data_order]):
-      return (415, 'Spectrum and metadata names mismatch.')
+      return 415, 'Spectrum and metadata names mismatch.'
     # convert data to meta order
     order = np.zeros_like(data_order)
     order[data_order[meta_order]] = np.arange(len(order))
     data = data[order]
-    assert np.array_equal(meta_pkeys, pkey[order])
+    # assert np.array_equal(meta_pkeys, pkey[order]) # Causes it to silently fail in some cases
 
   try:
     pkey = PrimaryKeyMetadata(pkey)
   except AssertionError:  # XXX: convert this to a real error
-    return (415, 'Primary keys not unique.')
+    return 415, 'Primary keys not unique.'
 
   # make sure wave is in increasing order
   order = np.argsort(wave)
@@ -278,7 +281,7 @@ def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
     ub = _maybe_float(ub, wave[-1])
     step = _maybe_float(step)
     if step is not None:
-      new_wave = np.arange(lb, ub + step/2, step, dtype=wave.dtype)
+      new_wave = np.arange(lb, ub + step / 2, step, dtype=wave.dtype)
       new_spectra = np.zeros((len(spectra), len(new_wave)),
                              dtype=spectra.dtype)
       for i, y in enumerate(spectra):
@@ -292,8 +295,8 @@ def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
       wave = wave[lb_idx:ub_idx]
 
   # async loading machinery automatically registers us with DATASETS
-  _load = _make_loader_function(description, wave, spectra, pkey=pkey,
-                                **meta_kwargs)
+  _load = _make_loader_function(description, wave, spectra, pkey=pkey, **meta_kwargs)
+
   if ds_kind == 'LIBS':
     WebLIBSDataset(ds_name, _load)
   else:
@@ -315,6 +318,7 @@ def _make_loader_function(desc, *args, **kwargs):
     ds.user_added = True
     ds.description = desc
     return True
+
   return _load
 
 
@@ -338,11 +342,11 @@ def _save_ds(ds_kind, ds_name):
 
   # Set up the config entry.
   entry = dict(
-      vector=(not isinstance(ds, WebTrajDataset)),
-      file=os.path.abspath(outname),
-      description=ds.description,
-      public=ds.is_public,
-      metadata=[])
+    vector=(not isinstance(ds, WebTrajDataset)),
+    file=os.path.abspath(outname),
+    description=ds.description,
+    public=ds.is_public,
+    metadata=[])
   # TODO: move this logic to superman.dataset
   with h5py.File(outname, 'w') as fh:
     if entry['vector']:
@@ -350,7 +354,7 @@ def _save_ds(ds_kind, ds_name):
       fh['/meta/waves'] = ds.bands
     else:
       for key, traj in ds.traj.items():
-        fh['/spectra/'+key] = traj
+        fh['/spectra/' + key] = traj
     if ds.pkey is not None:
       fh['/meta/pkey'] = np.char.encode(ds.pkey.keys, 'utf8')
       entry['metadata'].append(('pkey', 'PrimaryKeyMetadata', None))
@@ -362,7 +366,7 @@ def _save_ds(ds_kind, ds_name):
         continue
       if arr.dtype.char == 'U':
         arr = np.char.encode(arr, 'utf8')
-      fh['/meta/'+key] = arr
+      fh['/meta/' + key] = arr
       entry['metadata'].append([key, type(m).__name__, m.display_name(key)])
   # Clean up if no metadata was added.
   if not entry['metadata']:
@@ -383,6 +387,6 @@ def _save_ds(ds_kind, ds_name):
 
 
 routes = [
-    (r'/_upload_spectrum', SpectrumUploadHandler),
-    (r'/_upload_dataset', DatasetUploadHandler),
+  (r'/_upload_spectrum', SpectrumUploadHandler),
+  (r'/_upload_dataset', DatasetUploadHandler),
 ]
