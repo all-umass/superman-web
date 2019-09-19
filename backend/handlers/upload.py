@@ -220,8 +220,6 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
 
 
 def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample, description):
-  # I'm not 100% sure what is happening here, but I assume we want to check to make sure we can properly import the
-  #  data in the correct order
   try:
     pkey = np.array(next(fh).strip().split(b',')[1:])
     data = np.genfromtxt(fh, dtype=np.float32, delimiter=b',', unpack=True)
