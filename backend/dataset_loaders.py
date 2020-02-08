@@ -90,7 +90,7 @@ def _generic_traj_loader(meta_mapping):
         continue
       m = meta[key]
       if cls is DateMetadata:
-        m = pd.to_datetime(np.array(m))
+        m = pd.to_datetime(np.array(m).astype(str, copy=False))
       elif cls is PrimaryKeyMetadata:
         assert key == 'pkey'
         continue
