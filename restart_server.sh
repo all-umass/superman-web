@@ -1,20 +1,12 @@
 #!/usr/bin/env bash
 
-# Parse result of geoiplookup to fit concisely on a line.
-function ip_info() {
-  geoiplookup $1 | sed 1d | cut -d: -f2 | \
-  cut -d' ' -f3- | cut -d, -f2,3 | \
-  tr "'" '^' | xargs
-}
-export -f ip_info
-
 function find_server_pid() {
   pgrep -f 'superman_server.py' | head -1
 }
 
 function start_server() {
   echo "Starting new server..."
-  nohup python superman_server.py &>logs/errors.out &
+  nohup python3 superman_server.py &>logs/errors.out &
   $follow_log || echo "Use 'tail -f logs/server.log' to check on it"
   sleep 1
   if [[ -z "$(find_server_pid)" ]]; then
@@ -85,7 +77,7 @@ BEGIN {
  | sort -n | sort -u -k2,2 | sort -rn | $AWK '
 {
   mins = sprintf("%8.2f", $1/60);
-  ("/usr/bin/env bash -c \"ip_info " $2 "\"") | getline info;
+  ("./ip_info " $2) | getline info;
   lines = (lines mins " | " sprintf("%15s",$2) " | " info "\n");
 }
 END {
