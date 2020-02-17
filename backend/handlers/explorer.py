@@ -8,6 +8,7 @@ from ..web_datasets import (
     DATASETS, CompositionMetadata, NumericMetadata, LookupMetadata,
     BooleanMetadata
 )
+from six.moves import map
 
 
 class FilterBoxHandler(BaseHandler):
@@ -59,7 +60,7 @@ class FilterHandler(BaseHandler):
 class PlotOptionsHandler(BaseHandler):
   def post(self):
     all_ds = self.request_many_ds('kind[]', 'name[]')
-    logging.info('Generating plot options HTML for: %s', map(str, all_ds))
+    logging.info('Generating plot options HTML for: %s', list(map(str, all_ds)))
     is_libs = any(ds.kind == 'LIBS' for ds in all_ds)
     meta_names = sorted(set.intersection(*[set(ds.metadata_names())
                                            for ds in all_ds]))
@@ -89,7 +90,7 @@ class CompositionOptionsHandler(BaseHandler):
 class PredictionOptionsHandler(BaseHandler):
   def post(self):
     all_ds = self.request_many_ds('kind[]', 'name[]')
-    logging.info('Generating prediction options HTML for: %s', map(str,all_ds))
+    logging.info('Generating prediction options HTML for: %s', list(map(str,all_ds)))
 
     pred_pairs, strat_pairs = [], []
     for ds in all_ds:
@@ -109,7 +110,7 @@ class PredictionOptionsHandler(BaseHandler):
 class ClassificationOptionsHandler(BaseHandler):
   def post(self):
     all_ds = self.request_many_ds('kind[]', 'name[]')
-    logging.info('Generating prediction options HTML for: %s', map(str,all_ds))
+    logging.info('Generating prediction options HTML for: %s', list(map(str,all_ds)))
 
     pairs = [set(ds.metadata_names((LookupMetadata, BooleanMetadata)))
              for ds in all_ds]

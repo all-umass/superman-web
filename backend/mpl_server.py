@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function, division
 import matplotlib
+from six.moves import range
 matplotlib.use('WebAgg')
 matplotlib.rc('axes', facecolor='none')
 matplotlib.rc('legend', facecolor='w')
@@ -60,7 +61,7 @@ class FigData(object):
   def get_trans(self, key='pp'):
     idx = _key2idx[key]
     trans = {}
-    for t in filter(None, self._transformations[:idx+1]):
+    for t in [_f for _f in self._transformations[:idx+1] if _f]:
       trans.update(t)
     return trans
 

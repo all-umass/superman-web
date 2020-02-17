@@ -19,6 +19,8 @@ from ..web_datasets import (
     UploadedSpectrumDataset,
     WebTrajDataset, WebVectorDataset, WebLIBSDataset, DATASETS,
     PrimaryKeyMetadata, NumericMetadata, BooleanMetadata, LookupMetadata)
+from six.moves import map
+from six.moves import range
 
 
 class SpectrumUploadHandler(BaseHandler):
@@ -181,7 +183,7 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
   num_traj = len(traj_data)
 
   if num_meta == 0:
-    meta_pkeys = traj_data.keys()
+    meta_pkeys = list(traj_data.keys())
   elif num_meta != num_traj:
     return (415, 'Failed: %d metadata entries for %d spectra' % (num_meta,
                                                                  num_traj))
@@ -195,7 +197,7 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
                                   **meta_kwargs)
     WebTrajDataset(ds_name, ds_kind, _load)
   else:
-    lb, ub, step = map(_maybe_float, resample)
+    lb, ub, step = list(map(_maybe_float, resample))
     waves = [t[:,0] for t in traj_data.values()]
     if lb is None:
       lb = max(w[0] for w in waves)
@@ -245,7 +247,7 @@ def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
     return (415, 'Wrong number of channels for LIBS data: %d.' % wave.shape[0])
 
   # make sure there's no whitespace sticking to the pkeys
-  pkey = np.char.strip(pkey)
+  pkey = np.char.strip(pkey).astype(str, copy=False)
 
   if len(meta_pkeys) > 0 and not np.array_equal(meta_pkeys, pkey):
     if len(meta_pkeys) != len(pkey):
@@ -321,7 +323,7 @@ def _make_loader_function(desc, *args, **kwargs):
 def _save_ds(ds_kind, ds_name):
   # Wait for the new dataset to finish registering.
   time.sleep(1)
-  for _ in xrange(60):
+  for _ in range(60):
     if ds_name in DATASETS[ds_kind]:
       break
     logging.info('Waiting for %s [%s] to register...', ds_name, ds_kind)

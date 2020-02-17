@@ -8,6 +8,7 @@ from threading import Thread, Lock
 from tornado import gen
 
 from .common import BaseHandler
+from six.moves import map
 
 # leastsq is not thread-safe, so we have to lock it.
 leastsq_lock = Lock()
@@ -129,7 +130,7 @@ class PeakHandler(BaseHandler):
     elif alg == 'composite':
       num_peaks = int(self.get_argument('numpeaks'))
       kinds = self.get_arguments('fitkind[]')
-      locs = map(float, self.get_arguments('fitloc[]'))
+      locs = list(map(float, self.get_arguments('fitloc[]')))
       xres = float(self.get_argument('xres'))
       if len(locs) not in (1, num_peaks):
         self.visible_error(403, "Peak locations don't match # peaks")

@@ -9,11 +9,12 @@ from matplotlib.ticker import NullLocator
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from threading import Thread
 from tornado.escape import xhtml_escape
-from six import BytesIO, string_types
+from six import BytesIO, string_types, ensure_str
 
 from superman.dataset import (
     VectorDataset, TrajDataset, NumericMetadata, BooleanMetadata, DateMetadata,
     PrimaryKeyMetadata, LookupMetadata, CompositionMetadata, TagMetadata)
+from six.moves import map
 
 __all__ = [
     'WebTrajDataset', 'WebVectorDataset', 'WebLIBSDataset',
@@ -196,7 +197,7 @@ def _generate_histogram(m):
   # save it as a base64 encoded string
   img_data = BytesIO()
   fig.savefig(img_data, format='png', bbox_inches='tight', pad_inches=0)
-  return b64encode(img_data.getvalue())
+  return ensure_str(b64encode(img_data.getvalue()))
 
 
 def _get_filter_js(m, full_key):
@@ -247,7 +248,7 @@ def _get_filter_html(m, key, full_key):
             'url(data:img/png;base64,%s);"></div>') % (
                 disp, full_key, lb, ub, full_key, m.hist_image)
   if isinstance(m, DateMetadata):
-    lb, ub = map(str, np.array(m.bounds, dtype='datetime64[D]'))
+    lb, ub = list(map(str, np.array(m.bounds, dtype='datetime64[D]')))
     lb_input = '<input type="date" id="%s_lb" value="%s">' % (full_key, lb)
     ub_input = '<input type="date" id="%s_ub" value="%s">' % (full_key, ub)
     return '%s:<div>%s to %s</div>' % (disp, lb_input, ub_input)

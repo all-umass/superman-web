@@ -4,6 +4,7 @@ import numpy as np
 import os
 
 from .common import BaseHandler
+from six.moves import zip
 
 
 class SelectorHandler(BaseHandler):

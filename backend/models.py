@@ -9,6 +9,7 @@ from sklearn.model_selection import GridSearchCV, KFold, GroupKFold
 from sklearn.linear_model import (
     LassoLars, LassoLarsCV, Lars, LogisticRegression)
 from superman.distance import pairwise_within, pairwise_dists
+from six.moves import zip
 
 __all__ = ['GenericModel', 'REGRESSION_MODELS', 'CLASSIFICATION_MODELS']
 
@@ -57,14 +58,14 @@ class GenericModel(object):
 
 class _Classifier(GenericModel):
   def train(self, X, variables):
-    key, = variables.keys()
+    key, = list(variables.keys())
     y, name = variables[key]
     self.var_keys = [key]
     self.var_names = [name]
     self._train(X, y)
 
   def predict(self, X, variables):
-    key, = variables.keys()
+    key, = list(variables.keys())
     preds = {key: None}
     if key != self.var_keys[0]:
       logging.warning('No trained model for variable: %r', key)
@@ -88,7 +89,7 @@ class Logistic(_Classifier):
     else:
       cv = GroupKFold(n_splits=num_folds)
 
-    key, = variables.keys()
+    key, = list(variables.keys())
     y, name = variables[key]
     # TODO: use LogisticRegressionCV here instead?
     model = GridSearchCV(LogisticRegression(fit_intercept=False), dict(C=Cs),
@@ -161,7 +162,7 @@ class KNN(_Classifier):
     else:
       cv = GroupKFold(n_splits=num_folds)
 
-    key, = variables.keys()
+    key, = list(variables.keys())
     y, name = variables[key]
     y = np.array(y)
 
@@ -281,7 +282,7 @@ class _MultivariateRegression(_RegressionModel):
     pls = GridSearchCV(cls._cv_construct(), grid, cv=cv,
                        scoring='neg_mean_squared_error',
                        return_train_score=False, n_jobs=1)
-    Y, names = zip(*variables.values())
+    Y, names = list(zip(*list(variables.values())))
     _try_to_fit(pls, X, np.column_stack(Y), groups=labels)
     mse_mean = -pls.cv_results_['mean_test_score']
     mse_stdv = pls.cv_results_['std_test_score']

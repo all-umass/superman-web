@@ -7,10 +7,8 @@ from superman.baseline import BL_CLASSES
 from superman.baseline.common import Baseline
 from superman.dataset import MultiDatasetView
 from tornado.escape import json_encode
-try:
-  from itertools import izip_longest as zip_longest
-except ImportError:
-  from itertools import zip_longest
+from six.moves import zip_longest
+from six.moves import zip
 
 from ..web_datasets import DATASETS
 
@@ -65,16 +63,17 @@ class BaseHandler(tornado.web.RequestHandler):
     return None
 
   def dataset_kinds(self):
-    return DATASETS.keys()
+    return list(DATASETS.keys())
 
   def request_one_ds(self, kind_arg='ds_kind', name_arg='ds_name'):
     return self.get_dataset(self.get_argument(kind_arg),
                             self.get_argument(name_arg))
 
   def request_many_ds(self, kind_arg='ds_kind[]', name_arg='ds_name[]'):
-    return filter(None, [self.get_dataset(k, n) for k, n in
-                         zip(self.get_arguments(kind_arg),
-                             self.get_arguments(name_arg))])
+    many_ds = [self.get_dataset(k, n) for k, n in
+               zip(self.get_arguments(kind_arg),
+                   self.get_arguments(name_arg))]
+    return [ds for ds in many_ds if ds]
 
   def visible_error(self, status, msg, *log_args):
     if not log_args:

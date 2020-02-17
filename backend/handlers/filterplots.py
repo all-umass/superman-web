@@ -15,6 +15,9 @@ from threading import Thread
 from tornado import gen
 
 from .common import MultiDatasetHandler
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 # old matplotlib used a different key
 if 'axes.prop_cycle' not in rcParams:
@@ -52,7 +55,7 @@ class FilterPlotHandler(MultiDatasetHandler):
       return
 
     as_matrix = bool(int(self.get_argument('as_matrix', '0')))
-    pkeys = map(_sanitize_csv, ds_views.get_primary_keys())
+    pkeys = list(map(_sanitize_csv, ds_views.get_primary_keys()))
 
     if download_type == 'metadata':
       meta_rows = self._prep_metadata(pkeys, ds_views)
@@ -129,7 +132,7 @@ class FilterPlotHandler(MultiDatasetHandler):
 
     # transpose into rows
     rows = [header]
-    for i in xrange(len(pkeys)):
+    for i in range(len(pkeys)):
       rows.append([text_type(col[i]) for col in meta_columns])
     return rows
 

@@ -10,6 +10,7 @@ from tornado import gen
 from threading import Thread
 
 from .common import BaseHandler, MultiDatasetHandler
+from six.moves import zip
 
 
 class SpectrumMatchingHandler(MultiDatasetHandler):

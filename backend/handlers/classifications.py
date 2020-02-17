@@ -7,6 +7,8 @@ from tornado import gen
 
 from .generic_models import GenericModelHandler, async_crossval
 from ..models import CLASSIFICATION_MODELS, KNN
+from six.moves import map
+from six.moves import zip
 
 
 class ClassificationModelHandler(GenericModelHandler):
@@ -106,8 +108,8 @@ class ClassificationModelHandler(GenericModelHandler):
                                     int(self.get_argument('cv_max_k')) + 1)
         plot_kwargs['xlabel'] = '# neighbors'
       else:
-        start, stop = map(int, (self.get_argument('cv_min_logC'),
-                                self.get_argument('cv_max_logC')))
+        start, stop = list(map(int, (self.get_argument('cv_min_logC'),
+                                self.get_argument('cv_max_logC'))))
         cv_kwargs['Cs'] = np.logspace(start, stop, num=20, endpoint=True)
         plot_kwargs['xlabel'] = 'C'
         plot_kwargs['logx'] = True
@@ -166,7 +168,7 @@ def _plot_confusion(preds, fig, variables):
   fig.clf(keep_observers=True)
   ax = fig.add_subplot(1, 1, 1)
 
-  key, = variables.keys()
+  key, = list(variables.keys())
   p = preds[key].ravel()
   y, name = variables[key]
   ax.set_title(name)

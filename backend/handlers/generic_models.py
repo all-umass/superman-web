@@ -7,6 +7,8 @@ from threading import Thread
 
 from .common import BaseHandler, MultiDatasetHandler
 from ..models import GenericModel, REGRESSION_MODELS
+from six.moves import range
+from six.moves import zip
 
 __all__ = [
     'GenericModelHandler', 'async_crossval', 'axes_grid'
