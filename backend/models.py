@@ -33,7 +33,7 @@ class GenericModel(object):
     var_names = _parse_literal(fh)
     var_keys = _parse_literal(fh)
     wave_len = _parse_literal(fh, parser=int)
-    wave = np.fromstring(fh.read(wave_len * 8))
+    wave = np.frombuffer(fh.read(wave_len * 8))
     model = cls(param, ds_kind, wave)
     model.var_names = var_names
     model.var_keys = var_keys
@@ -107,7 +107,7 @@ class Logistic(_Classifier):
     self.clf.classes_ = np.array(classes)
     self.clf.intercept_ = 0.0
     n = int(np.prod(coef_shape)) * 8
-    self.clf.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
+    self.clf.coef_ = np.frombuffer(fh.read(n)).reshape(coef_shape)
 
   def save(self, fh):
     GenericModel.save(self, fh)
@@ -316,12 +316,12 @@ class _PLS(object):
     params = _parse_literal(fh)
     coef_shape = _parse_literal(fh)
     pls = PLSRegression().set_params(**params)
-    pls.x_mean_ = np.fromstring(fh.read(coef_shape[0] * 8))
-    pls.y_mean_ = np.fromstring(fh.read(coef_shape[1] * 8))
+    pls.x_mean_ = np.frombuffer(fh.read(coef_shape[0] * 8))
+    pls.y_mean_ = np.frombuffer(fh.read(coef_shape[1] * 8))
     pls.x_std_ = np.ones(coef_shape[0])
     pls.y_std_ = np.ones(coef_shape[1])
     n = coef_shape[0] * coef_shape[1] * 8
-    pls.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
+    pls.coef_ = np.frombuffer(fh.read(n)).reshape(coef_shape)
     return pls
 
 
@@ -342,7 +342,7 @@ class _Lasso(object):
     m = LassoLars().set_params(**params)
     m.intercept_ = 0.0
     n = int(np.prod(coef_shape)) * 8
-    m.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
+    m.coef_ = np.frombuffer(fh.read(n)).reshape(coef_shape)
     m.active_ = active
     return m
 
@@ -368,7 +368,7 @@ class _Lars(object):
     m = Lars().set_params(**params)
     m.intercept_ = 0.0
     n = int(np.prod(coef_shape)) * 8
-    m.coef_ = np.fromstring(fh.read(n)).reshape(coef_shape)
+    m.coef_ = np.frombuffer(fh.read(n)).reshape(coef_shape)
     m.active_ = active
     return m
 
