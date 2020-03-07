@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import os
 import pandas as pd
+import re
 import time
 import yaml
 from io import BytesIO, StringIO
@@ -320,6 +321,11 @@ def _make_loader_function(desc, *args, **kwargs):
   return _load
 
 
+def _hdf5_filename(ds_kind, ds_name):
+  safe_name = re.sub(r'(?u)[^-\w.]', '_', ds_name)
+  return '%s_%s.hdf5' % (ds_kind, safe_name)
+
+
 def _save_ds(ds_kind, ds_name):
   # Wait for the new dataset to finish registering.
   time.sleep(1)
@@ -334,8 +340,7 @@ def _save_ds(ds_kind, ds_name):
   # XXX: this path manipulation is pretty hacky
   outdir = os.path.normpath(os.path.join(os.path.dirname(__file__),
                                          '../../uploads'))
-  outname = os.path.join(outdir, '%s_%s.hdf5' % (ds_kind,
-                                                 ds_name.replace(' ', '_')))
+  outname = os.path.join(outdir, _hdf5_filename(ds_kind, ds_name))
   logging.info('Writing %s to disk: %s', ds, outname)
 
   # Set up the config entry.
