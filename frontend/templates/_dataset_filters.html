@@ -14,6 +14,34 @@
 </fieldset>
 
 <script type="text/javascript">
+function slider_init(id, min, max, step) {
+	var slider_sel = '#' + id;
+	var label_sel = slider_sel + '_label';
+	$(slider_sel).slider({
+		min: min, max: max, step: step, range: true, values: [min, max],
+		slide: function(e, ui) { slider_update(label_sel, ui); }
+	});
+	$(label_sel).children('span').click(function(){
+		$(this).attr('contentEditable', true);
+	}).blur(function(){
+		var label = $(this).attr('contentEditable', false);
+		var x = +label.text();
+		label.text(x);
+		var vals = $(slider_sel).slider("values");
+		vals[+label.is(':last-child')] = x;
+    $(slider_sel).slider('values', vals);
+	});
+}
+function slider_update(label_selector, ui) {
+  var ends = $(label_selector).children('span');
+	ends.first().text(ui.values[0]);
+	ends.last().text(ui.values[1]);
+}
+function slider_values(label_selector) {
+	return $(label_selector).children('span').map(function(){
+		return +this.innerText;
+	}).get();
+}
 // Initialize filters
 {% for js in init_js %}
   {% raw js %}

@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function, division
 import logging
 import numpy as np
 import os
+import re
 import time
 from base64 import b64encode
 from matplotlib.figure import Figure
@@ -204,13 +205,10 @@ def _get_filter_js(m, full_key):
   if isinstance(m, BooleanMetadata):
     return '', '$("#%s").val()' % full_key
   if isinstance(m, NumericMetadata):
-    elt = '$("#%s")' % full_key
     lb, ub = m.bounds
-    init_js = ('%s.slider({min: %.17f, max: %.17f, step: %.17f, range: true, '
-               'values: [%.17f,%.17f], slide: function(e,ui){'
-               '$("#%s_label").text(ui.values[0]+" to "+ui.values[1]);}});') % (
-                   elt, lb, ub, m.step, lb, ub, full_key)
-    collect_js = elt + '.slider("values")'
+    init_js = ('slider_init("%s", %.17f, %.17f, %.17f);' % (
+               full_key, lb, ub, m.step))
+    collect_js = 'slider_values("#%s_label")' % full_key
     return init_js, collect_js
   if isinstance(m, DateMetadata):
     return '', '[$("#%s_lb").val(),$("#%s_ub").val()]' % (full_key, full_key)
@@ -232,6 +230,21 @@ def _get_filter_js(m, full_key):
   return init_js, collect_js
 
 
+def _numeric_filter_html(display_name, full_key, lb, ub, hist_image):
+  # TODO: convert this to a Jinja template.
+  html = '''
+  <div>{display_name}:
+    <span id="{full_key}_label">
+      <span>{lb}</span> to <span>{ub}</span>
+    </span>
+  </div>
+  <div class="slider" id="{full_key}"
+       style="background-image: url(data:img/png;base64,{hist_image});">
+  </div>
+  '''.format(**locals())
+  return re.sub(r'\s+', ' ', html)
+
+
 def _get_filter_html(m, key, full_key):
   disp = m.display_name(key)
   if isinstance(m, BooleanMetadata):
@@ -243,10 +256,7 @@ def _get_filter_html(m, key, full_key):
     # lazy load histogram
     if not hasattr(m, 'hist_image'):
       m.hist_image = _generate_histogram(m)
-    return ('<div>%s: <span id="%s_label">%s to %s</span></div>'
-            '<div class="slider" id="%s" style="background-image: '
-            'url(data:img/png;base64,%s);"></div>') % (
-                disp, full_key, lb, ub, full_key, m.hist_image)
+    return _numeric_filter_html(disp, full_key, lb, ub, m.hist_image)
   if isinstance(m, DateMetadata):
     lb, ub = list(map(str, np.array(m.bounds, dtype='datetime64[D]')))
     lb_input = '<input type="date" id="%s_lb" value="%s">' % (full_key, lb)
