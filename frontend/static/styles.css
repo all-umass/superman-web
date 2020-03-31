@@ -158,6 +158,11 @@ button.remove_row {
   flex-flow: column nowrap;
   padding: 0.1em 1em;
 }
+.ds_filters .filter .exclude-nan {
+	text-size: smaller;
+	vertical-align: text-top;
+	margin-left: 1em;
+}
 .ds_filters .filter .slider {
   margin: 0.1em auto 0.5em auto;
   height: 36px;

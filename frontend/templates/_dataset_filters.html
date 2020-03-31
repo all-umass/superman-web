@@ -14,7 +14,7 @@
 </fieldset>
 
 <script type="text/javascript">
-function slider_init(id, min, max, step) {
+function slider_init(id, min, max, step, has_nan) {
 	var slider_sel = '#' + id;
 	var label_sel = slider_sel + '_label';
 	$(slider_sel).slider({
@@ -31,6 +31,10 @@ function slider_init(id, min, max, step) {
 		vals[+label.is(':last-child')] = x;
     $(slider_sel).slider('values', vals);
 	});
+	if (has_nan) {
+		$('<label>').appendTo($(label_sel)).addClass('exclude-nan')
+			  .text('Exclude missing').prepend('<input type=checkbox>');
+	}
 }
 function slider_update(label_selector, ui) {
   var ends = $(label_selector).children('span');
@@ -38,9 +42,12 @@ function slider_update(label_selector, ui) {
 	ends.last().text(ui.values[1]);
 }
 function slider_values(label_selector) {
-	return $(label_selector).children('span').map(function(){
+	var label = $(label_selector);
+	var bounds = label.children('span').map(function(){
 		return +this.innerText;
 	}).get();
+	bounds.push(label.find('input:checked').length);
+	return bounds;
 }
 // Initialize filters
 {% for js in init_js %}

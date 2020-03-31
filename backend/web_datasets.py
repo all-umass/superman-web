@@ -184,12 +184,15 @@ def _generate_histogram(m):
   ax = fig.add_subplot(1,1,1)
   vrange = float(m.bounds[1] - m.bounds[0])
   num_bins = np.ceil(vrange / m.step) + 1
+  arr = m.arr
+  if m.has_nan:
+    arr = arr[np.isfinite(arr)]
   if np.isnan(num_bins):
-    ax.hist(m.arr)
+    ax.hist(arr)
   elif num_bins > 300:
-    ax.hist(m.arr, 300, range=m.bounds)
+    ax.hist(arr, 300, range=m.bounds)
   else:
-    ax.hist(m.arr, int(num_bins), range=m.bounds)
+    ax.hist(arr, int(num_bins), range=m.bounds)
   ax.axis('off')
   fig.subplots_adjust(top=1,bottom=0,right=1,left=0,hspace=0,wspace=0)
   ax.margins(0, 0)
@@ -206,8 +209,10 @@ def _get_filter_js(m, full_key):
     return '', '$("#%s").val()' % full_key
   if isinstance(m, NumericMetadata):
     lb, ub = m.bounds
-    init_js = ('slider_init("%s", %.17f, %.17f, %.17f);' % (
-               full_key, lb, ub, m.step))
+    # note that %.17g is a no-go here, because scientific formatted floats
+    # break the jqueryui slider lib we're using.
+    init_js = ('slider_init("%s", %.17f, %.17f, %.17f, %d);' % (
+               full_key, lb, ub, m.step, m.has_nan))
     collect_js = 'slider_values("#%s_label")' % full_key
     return init_js, collect_js
   if isinstance(m, DateMetadata):
