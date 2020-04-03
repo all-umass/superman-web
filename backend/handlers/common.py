@@ -1,12 +1,12 @@
 from __future__ import absolute_import, print_function, division
 import ast
+import json
 import logging
 import numpy as np
 import tornado.web
 from superman.baseline import BL_CLASSES
 from superman.baseline.common import Baseline
 from superman.dataset import MultiDatasetView
-from tornado.escape import json_encode
 from six.moves import zip_longest
 from six.moves import zip
 
@@ -28,6 +28,18 @@ def _make_blr_kwargs():
 
 # make a singleton for use in various page handlers
 BLR_KWARGS = _make_blr_kwargs()
+
+
+# See https://stackoverflow.com/a/57915246/10601
+class NumpyEncoder(json.JSONEncoder):
+  def default(self, obj):
+    if isinstance(obj, np.integer):
+      return int(obj)
+    if isinstance(obj, np.floating):
+      return float(obj)
+    if isinstance(obj, np.ndarray):
+      return obj.tolist()
+    return super(NumpyEncoder, self).default(obj)
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -124,10 +136,10 @@ class BaseHandler(tornado.web.RequestHandler):
         blr_segmented=segmented, flip=flip, crop=tuple(crops), **extra_kwargs)
 
   def write_json(self, obj):
-    """Essentially self.write(json_encode(obj)),
+    """Essentially self.write(json.dumps(obj)),
     but with some fixes to avoid invalid JSON (NaN, Infinity, etc).
     """
-    s = json_encode(obj)
+    s = json.dumps(obj, cls=NumpyEncoder).replace('</', '<\\/')
     s = s.replace('NaN', 'null').replace('Infinity', 'null')
     self.write(s)
 
