@@ -127,7 +127,7 @@ class GenericModelHandler(MultiDatasetHandler):
       wave, X = ds_views.get_vector_data()
     except ValueError as e:
       logging.exception("Failed to get vector data from %s", ds_views.ds_views)
-      self.visible_error(400, e.message)
+      self.visible_error(400, str(e))
       return None, None, None
     return ds_views.ds_kind, wave, X
 

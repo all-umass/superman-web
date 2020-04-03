@@ -64,7 +64,7 @@ class FilterPlotHandler(MultiDatasetHandler):
         try:
           bands, ints = self._prep_vector_spectra(fig_data)
         except ValueError as e:
-          self.write(e.message)
+          self.write(str(e))
           return
       else:
         lines, xlabel, ylabel = self._prep_traj_spectra(fig_data)
@@ -243,7 +243,7 @@ class FilterPlotHandler(MultiDatasetHandler):
         trajs = ds_views.get_trajectories()
       except ValueError as e:
         logging.exception('Failed to get trajectories')
-        self.visible_error(400, e.message)
+        self.visible_error(400, str(e))
         return None
       return PlotData(scatter=False, trajs=trajs,
                       xlabel=ds_views.x_axis_units(), ylabel='Intensity',
@@ -254,7 +254,7 @@ class FilterPlotHandler(MultiDatasetHandler):
       ydata, ylabel, yticks = _get_axis_data(ds_views, yaxis)
     except Exception as e:
       logging.exception('Failed to get axis data.')
-      self.visible_error(400, e.message)
+      self.visible_error(400, str(e))
       return None
 
     if xdata is None or ydata is None:
