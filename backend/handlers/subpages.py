@@ -111,6 +111,7 @@ class BaselinePage(Subpage):
     fig = fig_data.figure
     ax1 = fig.add_subplot(211)
     fig.add_subplot(212, sharex=ax1)
+    fig_data.last_plot = 'baseline-page'
     self.render(datasets=self.all_datasets(), fig_id=fignum, **BLR_KWARGS)
 
 

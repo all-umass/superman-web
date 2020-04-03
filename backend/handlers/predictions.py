@@ -130,7 +130,12 @@ class RegressionModelHandler(GenericModelHandler):
       model = model_cls(params[regress_kind], ds_kind, wave)
       logging.info('Training %s on %d inputs, predicting %d vars',
                    model, X.shape[0], len(variables))
-      model.train(X, variables)
+      try:
+        model.train(X, variables)
+      except ValueError as e:
+        logging.exception('Model training failed.')
+        self.visible_error(400, 'Model training failed: ' + str(e))
+        return
       fig_data.pred_model = model
     else:
       # use existing model

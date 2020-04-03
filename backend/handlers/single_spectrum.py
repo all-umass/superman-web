@@ -84,11 +84,11 @@ class BaselineHandler(BaseHandler):
     logging.info('Running BLR: %r', trans)
     try:
       bands, corrected = fig_data.get_trajectory('baseline-corrected').T
-    except Exception:
+    except Exception as e:
       logging.exception('BLR failed.')
-      return self.visible_error(400, 'Baseline correction failed.')
+      return self.visible_error(400, 'Baseline correction failed: ' + str(e))
 
-    if len(fig_data.figure.axes) == 2:
+    if fig_data.last_plot == 'baseline-page':
       # comparison view for the baseline page
       ax1, ax2 = fig_data.figure.axes
       fig_data.plot('upload', ax=ax1)
