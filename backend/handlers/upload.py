@@ -24,6 +24,15 @@ from six.moves import map
 from six.moves import range
 
 
+# This hack is required to work around a strange bug in superman.file_io
+# where pandas.read_excel will call .close() on the file object, even if
+# parsing as an excel file fails.
+class UncloseableBytesIO(BytesIO):
+  """Wraps BytesIO and prevents the file from being closed."""
+  def close(self):
+    pass
+
+
 class SpectrumUploadHandler(BaseHandler):
   def post(self):
     fig_data = self.get_fig_data()
@@ -36,7 +45,7 @@ class SpectrumUploadHandler(BaseHandler):
     f = self.request.files['query'][0]
     fname = f['filename']
     logging.info('Parsing file: %s', fname)
-    fh = BytesIO(f['body'])
+    fh = UncloseableBytesIO(f['body'])
     try:
       query = parse_spectrum(fh)
     except Exception:
@@ -172,7 +181,7 @@ def _traj_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
     if fname.startswith('.'):
       continue
     # read and wrap, because the ZipExtFile object isn't seekable
-    sub_fh = BytesIO(zf.open(subfile).read())
+    sub_fh = UncloseableBytesIO(zf.open(subfile).read())
     try:
       # TODO: ensure each traj has wavelengths in increasing order
       traj_data[fname] = parse_spectrum(sub_fh)
