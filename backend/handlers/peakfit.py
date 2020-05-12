@@ -4,10 +4,11 @@ import numpy as np
 import os
 import scipy.integrate
 from superman.peaks.bump_fit import fit_single_peak, fit_composite_peak
-from threading import Thread, Lock
+from threading import Lock
 from tornado import gen
 
 from .common import BaseHandler
+from ..thread_pool import run_cpu_bound
 from six.moves import map
 
 # leastsq is not thread-safe, so we have to lock it.
@@ -170,9 +171,7 @@ def _async_peakfit(func, *args, **kwargs):
   def helper():
     with leastsq_lock:
       return callback(func(*args, **kwargs))
-  t = Thread(target=helper)
-  t.daemon = True
-  t.start()
+  run_cpu_bound(helper)
 
 
 def _manual_peak_area(spectrum, bounds, base_type='region'):

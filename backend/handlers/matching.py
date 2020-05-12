@@ -7,9 +7,9 @@ from collections import defaultdict
 from superman.preprocess import preprocess
 from superman.dataset import LookupMetadata
 from tornado import gen
-from threading import Thread
 
 from .common import BaseHandler, MultiDatasetHandler
+from ..thread_pool import run_cpu_bound
 from six.moves import zip
 
 
@@ -103,10 +103,8 @@ class SpectrumMatchingHandler(MultiDatasetHandler):
 
 
 def _async_wsm(ds_views, query, wsm_kwargs, callback=None):
-  t = Thread(target=lambda: callback(
+  run_cpu_bound(target=lambda: callback(
       ds_views.whole_spectrum_search(query, **wsm_kwargs)))
-  t.daemon = True
-  t.start()
 
 
 def _lookup_metas(ds_view):

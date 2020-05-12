@@ -11,9 +11,9 @@ from matplotlib.gridspec import GridSpec
 from matplotlib.patches import Patch
 from six import text_type
 from six.moves import xrange
-from threading import Thread
 from tornado import gen
 
+from ..thread_pool import run_cpu_bound
 from .common import MultiDatasetHandler
 from six.moves import map
 from six.moves import range
@@ -280,9 +280,7 @@ def _async_draw_plot(fig_data, plot_data, color_data, plot_kwargs, do_legend,
     fig_data.last_plot = 'filterplot'
     callback(ax)
 
-  t = Thread(target=helper)
-  t.daemon = True
-  t.start()
+  run_cpu_bound(target=helper)
 
 
 def _get_color_data(ds_views, caxis):

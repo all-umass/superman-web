@@ -6,6 +6,7 @@ function find_server_pid() {
 
 function start_server() {
   echo "Starting new server..."
+  source /opt/superman-venv/bin/activate
   nohup python3 superman_server.py &>logs/errors.out &
   $follow_log || echo "Use 'tail -f logs/server.log' to check on it"
   sleep 1

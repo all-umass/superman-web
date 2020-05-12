@@ -3,10 +3,10 @@ import logging
 import numpy as np
 import os
 from io import BytesIO
-from threading import Thread
 
 from .common import BaseHandler, MultiDatasetHandler
 from ..models import GenericModel, REGRESSION_MODELS
+from ..thread_pool import run_cpu_bound
 from six.moves import range
 from six.moves import zip
 
@@ -173,9 +173,7 @@ def async_crossval(fig_data, model_cls, num_vars, cv_args, cv_kwargs,
     fig_data.last_plot = '%s_crossval' % model_cls.__name__
     callback()
 
-  t = Thread(target=helper)
-  t.daemon = True
-  t.start()
+  run_cpu_bound(helper)
 
 
 def axes_grid(fig, n, xlabel, ylabel):
