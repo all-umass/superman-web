@@ -49,7 +49,21 @@ class RemovalHandler(BaseHandler):
       yaml.safe_dump(config, open(config_path, 'w'), allow_unicode=True)
 
 
+class NightlyRefreshHandler(BaseHandler):
+  @gen.coroutine
+  def post(self):
+    ip = self.request.remote_ip
+    # TODO: move IP to config.yml
+    if ip is not '172.16.87.93':
+      self.redirect('/login?next=%2Frefresh')
+    logging.info('Refreshing datasets after nightly load')
+    for ds in self.all_datasets():
+      yield gen.Task(RefreshHandler._reload, ds)
+    return
+
+
 routes = [
     (r'/_remove_dataset', RemovalHandler),
     (r'/refresh', RefreshHandler),
+    (r'/nightly-refresh', NightlyRefreshHandler),
 ]
