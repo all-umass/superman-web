@@ -29,7 +29,8 @@ def _load_metadata_csv(fh):
     elif np.issubdtype(x.dtype, np.number):
       m = NumericMetadata(x, display_name=name)
     else:
-      m = LookupMetadata(x, display_name=name)
+      y = [str(i) for i in x]
+      m = LookupMetadata(y, display_name=name)
     # use a JS-friendly string key
     meta_kwargs['k%d' % i] = m
 
@@ -90,7 +91,6 @@ def main():
   # TODO: use a more standalone version of this function
   _save_ds(args.ds_kind, args.ds_name)
   print('Updated uploads/user_data.yml')
-
 
 
 if __name__ == '__main__':

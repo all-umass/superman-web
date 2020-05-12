@@ -286,11 +286,7 @@ def _get_filter_html(m, key, full_key):
 
 
 def _get_composition_filter_html(m, key, full_key):
-  comp_name = m.display_name(key)
   html_parts = []
   for k, m in m.comps.items():
-    html = _get_filter_html(m, key + '-' + k, full_key + '-' + k)
-    # HACK: insert composition name just inside the existing <div>
-    prefix, suffix = html.split('>', 1)
-    html_parts.append('%s>%s %s' % (prefix, comp_name, suffix))
+    html_parts.append(_get_filter_html(m, key + '-' + k, full_key + '-' + k))
   return html_parts

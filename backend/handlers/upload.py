@@ -254,7 +254,7 @@ def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
     spectra = spectra[:, mask]
 
   if ds_kind == 'LIBS' and wave.shape[0] not in (6144, 6143, 5485):
-    return (415, 'Wrong number of channels for LIBS data: %d.' % wave.shape[0])
+    logging.info('wave.shape[0]: {}'.format(wave.shape[0]))
 
   # make sure there's no whitespace sticking to the pkeys
   pkey = np.char.strip(pkey).astype(str, copy=False)
@@ -268,8 +268,7 @@ def _vector_ds(fh, ds_name, ds_kind, meta_kwargs, meta_pkeys, resample,
     if not np.array_equal(meta_pkeys[meta_order], pkey[data_order]):
       return (415, 'Spectrum and metadata names mismatch.')
     # convert data to meta order
-    order = np.zeros_like(data_order)
-    order[data_order[meta_order]] = np.arange(len(order))
+    order = data_order[meta_order]
     data = data[order]
     assert np.array_equal(meta_pkeys, pkey[order])
 

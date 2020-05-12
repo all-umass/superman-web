@@ -41,7 +41,8 @@ def load_datasets(config_fh, custom_loaders, public_only=False, user_added=False
         else:
           loader_fn = _generic_traj_loader(meta_mapping)
 
-      if kind == 'LIBS':
+      # MHC SuperLIBS 5120 is trajectory, not vector.
+      if kind == 'LIBS' and info.get('vector', True):
         ds = WebLIBSDataset(name, loader_fn, *files)
       elif info.get('vector', False):
         ds = WebVectorDataset(name, kind, loader_fn, *files)
