@@ -18,7 +18,7 @@ class MainPage(BaseHandler):
     # tuples of (title, relative_url, description) for subpages
     subpage_info = [(p.title, link[1:], p.description) for link, p in routes
                     if issubclass(p, Subpage) and (logged_in or p.public)]
-    self.render('index.html', page_title='Project Superman: Web Interface',
+    self.render('index.html', page_title='Data Exploration, Visualization, and Analysis for Spectroscopy',
                 subpage_info=subpage_info, mpl_js=MPL_JS, logged_in=logged_in)
 
 

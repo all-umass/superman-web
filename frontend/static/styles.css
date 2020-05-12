@@ -1,7 +1,7 @@
 body { padding: 0.7em; }
 body > header { display: flex; align-items: center; }
 body > header .title { font: 3em bold; padding-left: 0.1em; }
-body > header #logo { display: block; width: 100px; height: 100px; }
+body > header #logo { display: block; height: 100px; }
 input[type="number"] { width: 4em; }
 
 /* Explorer page layout */
