@@ -323,8 +323,9 @@ def _add_plot(fig, ax, plot_data, color_data, pkeys, lw=1, cmap='_auto',
     artist.set_pickradius(5)
     ax.add_collection(artist, autolim=True)
     ax.autoscale_view()
-    # Force ymin -> 0
-    ax.set_ylim((0, ax.get_ylim()[1]))
+    # Force ymin -> 0 or lower if necessary
+    ymin = min(0, ax.get_ylim()[0])
+    ax.set_ylim((ymin, ax.get_ylim()[1]))
 
   def on_pick(event):
     if event.artist is not artist:
