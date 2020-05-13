@@ -53,10 +53,12 @@ class NightlyRefreshHandler(BaseHandler):
   @gen.coroutine
   def post(self):
     ip = self.request.remote_ip
-    # TODO: move IP to config.yml
-    if ip is not '172.16.87.93':
+    allowed_ips = self.application.settings['nightly_refresh_ips']
+    if ip not in allowed_ips:
+      logging.info('Invalid remote ip {} for nightly refresh'.format(ip))
       self.redirect('/login?next=%2Frefresh')
-    logging.info('Refreshing datasets after nightly load')
+      return
+    logging.info('Refreshing datasets for ip {} after nightly'.format(ip))
     for ds in self.all_datasets():
       yield gen.Task(RefreshHandler._reload, ds)
     return

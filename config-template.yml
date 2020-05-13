@@ -26,3 +26,8 @@ password: mypassword123
 # NOTE: Don't specify this unless you know what you're doing!
 # cookie_secret: "<some random string>"
 
+# Allowed IP addresses for nightly refresh.
+# If provided, the IP address(es) listed may request a data
+# refresh without authenticating. 
+# NOTE: Don't specify this unless you know what you're doing!
+# nightly_refresh_ips: []

@@ -60,12 +60,16 @@ def main():
     cookie_secret = base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes)
     logging.info('Using fresh cookie_secret: %s', cookie_secret)
 
+  nightly_refresh_ips = config.get('nightly_refresh_ips', [])
+  if type(nightly_refresh_ips) is not list:
+    nightly_refresh_ips = [nightly_refresh_ips]
+
   logging.info('Starting server...')
   server = MatplotlibServer(
       all_routes, password=password, login_url=r'/login',
       template_path=os.path.join(webserver_dir, 'frontend', 'templates'),
       static_path=os.path.join(webserver_dir, 'frontend', 'static'),
-      cookie_secret=cookie_secret)
+      cookie_secret=cookie_secret, nightly_refresh_ips=nightly_refresh_ips)
   server.run_forever(int(config.get('port', 54321)))
 
 
