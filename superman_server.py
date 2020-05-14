@@ -19,65 +19,69 @@ import custom_datasets
 
 
 def main():
-  webserver_dir = os.path.dirname(__file__)
-  ap = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
-  ap.add_argument('--config', type=open,
-                  default=os.path.join(webserver_dir, 'config.yml'),
-                  help='YAML file with configuration options.')
-  ap.add_argument('--debug', action='store_true',
-                  help='Start an IPython shell instead of starting the server.')
-  args = ap.parse_args()
-  config = yaml.safe_load(args.config)
+    webserver_dir = os.path.dirname(__file__)
+    ap = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+    ap.add_argument('--config', type=open,
+                    default=os.path.join(webserver_dir, 'config.yml'),
+                    help='YAML file with configuration options.')
+    ap.add_argument(
+        '--debug',
+        action='store_true',
+        help='Start an IPython shell instead of starting the server.')
+    args = ap.parse_args()
+    config = yaml.safe_load(args.config)
 
-  if not args.debug:
-    logfile = os.path.join(webserver_dir,
-                           config.get('logfile', 'logs/server.log'))
-    if os.path.isfile(logfile):
-      shutil.move(logfile, '%s.%d' % (logfile, time.time()))
-    logging.basicConfig(filename=logfile,
-                        format='[%(asctime)s] %(levelname)s: %(message)s',
-                        filemode='w',
-                        level=logging.INFO)
+    if not args.debug:
+        logfile = os.path.join(webserver_dir,
+                               config.get('logfile', 'logs/server.log'))
+        if os.path.isfile(logfile):
+            shutil.move(logfile, '%s.%d' % (logfile, time.time()))
+        logging.basicConfig(filename=logfile,
+                            format='[%(asctime)s] %(levelname)s: %(message)s',
+                            filemode='w',
+                            level=logging.INFO)
 
-  ds_config = config.get('datasets', 'datasets.yml')
-  password = config.get('password', None)
-  with open(os.path.join(webserver_dir, ds_config)) as datasets_fh:
-    load_datasets(datasets_fh, custom_datasets, public_only=(password is None))
+    ds_config = config.get('datasets', 'datasets.yml')
+    password = config.get('password', None)
+    with open(os.path.join(webserver_dir, ds_config)) as datasets_fh:
+        load_datasets(datasets_fh, custom_datasets,
+                      public_only=(password is None))
 
-  user_datasets = os.path.join(webserver_dir, 'uploads/user_data.yml')
-  if password is not None and os.path.exists(user_datasets):
-    with open(user_datasets) as datasets_fh:
-      load_datasets(datasets_fh, None, user_added=True)
+    user_datasets = os.path.join(webserver_dir, 'uploads/user_data.yml')
+    if password is not None and os.path.exists(user_datasets):
+        with open(user_datasets) as datasets_fh:
+            load_datasets(datasets_fh, None, user_added=True)
 
-  if args.debug:
-    return debug()
+    if args.debug:
+        return debug()
 
-  if password is None:
-    BaseHandler.is_public = True
+    if password is None:
+        BaseHandler.is_public = True
 
-  cookie_secret = config.get('cookie_secret', None)
-  if cookie_secret is None:
-    cookie_secret = base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes)
-    logging.info('Using fresh cookie_secret: %s', cookie_secret)
+    cookie_secret = config.get('cookie_secret', None)
+    if cookie_secret is None:
+        cookie_secret = base64.b64encode(
+            uuid.uuid4().bytes + uuid.uuid4().bytes)
+        logging.info('Using fresh cookie_secret: %s', cookie_secret)
 
-  nightly_refresh_ips = config.get('nightly_refresh_ips', [])
-  if type(nightly_refresh_ips) is not list:
-    nightly_refresh_ips = [nightly_refresh_ips]
+    nightly_refresh_ips = config.get('nightly_refresh_ips', [])
+    if not isinstance(nightly_refresh_ips, list):
+        nightly_refresh_ips = [nightly_refresh_ips]
 
-  logging.info('Starting server...')
-  server = MatplotlibServer(
-      all_routes, password=password, login_url=r'/login',
-      template_path=os.path.join(webserver_dir, 'frontend', 'templates'),
-      static_path=os.path.join(webserver_dir, 'frontend', 'static'),
-      cookie_secret=cookie_secret, nightly_refresh_ips=nightly_refresh_ips)
-  server.run_forever(int(config.get('port', 54321)))
+    logging.info('Starting server...')
+    server = MatplotlibServer(
+        all_routes, password=password, login_url=r'/login',
+        template_path=os.path.join(webserver_dir, 'frontend', 'templates'),
+        static_path=os.path.join(webserver_dir, 'frontend', 'static'),
+        cookie_secret=cookie_secret, nightly_refresh_ips=nightly_refresh_ips)
+    server.run_forever(int(config.get('port', 54321)))
 
 
 def debug():
-  import IPython
-  IPython.embed(header=('Note: Datasets are still loading asynchronously.\n'
-                        'They will appear in DATASETS: %s' % DATASETS))
+    import IPython
+    IPython.embed(header=('Note: Datasets are still loading asynchronously.\n'
+                          'They will appear in DATASETS: %s' % DATASETS))
 
 
 if __name__ == '__main__':
-  main()
+    main()

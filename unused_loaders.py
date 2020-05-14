@@ -1,6 +1,7 @@
 # These loader functions should be moved to custom_datasets.py if/when we have
 # permanent datasets that need them.
 
+
 def load_mhc_hydrogen(ds, filepath):
     hdf5 = try_load(filepath, str(ds))
     if hdf5 is None:
@@ -86,4 +87,3 @@ def load_mhc_xrf(ds, data_file, meta_file):
         raise
     logging.info('%s Finished setup.', log_prefix)
     return True
-
