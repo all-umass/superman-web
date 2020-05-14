@@ -135,7 +135,7 @@ class PeakFitPage(Subpage):
 class DatasetImportPage(Subpage):
     template = 'import.html'
     title = 'Dataset Import'
-    description = 'Upload new datasets to Superman.'
+    description = 'Upload new datasets to DEVAS.'
     public = False
 
     @tornado.web.authenticated
