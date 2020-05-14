@@ -1,6 +1,6 @@
 # superman-web
 
-A web interface to the superman tools.
+A web interface to the [Superman](https://github.com/all-umass/superman) tools.
 
 
 ## Quick Start
