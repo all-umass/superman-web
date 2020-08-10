@@ -29,6 +29,7 @@ var Plot = (function() {
         ds_kind: ds_info.kind,
         ds_name: ds_info.name,
         fignum: fig.id,
+        figindp: $("#ind_plt_option").is(":checked")
       };
       GetArgs.plot(post_data);
       GetArgs.resample($('#resample_options'), post_data);
