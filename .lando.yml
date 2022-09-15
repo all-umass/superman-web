@@ -1,17 +1,13 @@
-name: my-lando-app
+name: devas
 services:
   appserver:
-    type: python
+    type: python:3.7
     build_as_root:
+      - apt update && apt install libhdf5-dev --yes
+    build:
       - pip install --upgrade pip
-      - pip install h5py==3.4.0 numpy==1.20.1 openpyxl==3.0.6 pyyaml==5.4.1
+      - pip install superman==0.1.2 matplotlib==3.1.3 tornado==4.4.2 pyyaml==5.3 h5py==2.10.0 pandas==1.0.0
 tooling:
-  process:
-    service: appserver
-    cmd: /app/process_all.py
   python:
     service: appserver
     cmd: /usr/local/bin/python
-recipe: symfony
-config:
-  webroot: lando stop

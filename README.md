@@ -69,3 +69,21 @@ To generate a nice code coverage report:
 
     coverage run --source backend -m pytest
     coverage html
+
+
+
+## Developing in Lando
+
+You will need a reasonably current version of [Lando](https://lando.dev/) (this was developed in version 3.6.4) and whichever version of Docker it prefers.
+
+The first time you run `lando start` it will download a Python container and install the relevant packages. Subsequent `start`s will go much faster.
+
+Once the container is running, `lando python` will execute Python inside the container. 
+
+**TODO:** Start the service when the container starts
+
+**TODO:** Include some small bit of example data
+
+**TODO:** Update versions of dependencies to be (more) current. And describe how to do that again in the future.
+
+**TODO:** Either prefer `apt` packages for dependencies (this may be how we’d like to run the server) _or_ use Pythonic methods of managing them (`venv` and `pip freeze` and such).
