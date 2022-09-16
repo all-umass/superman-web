@@ -3,11 +3,17 @@ services:
   appserver:
     type: python:3.7
     build_as_root:
-      - apt update && apt install libhdf5-dev --yes
+      - apt update && apt install libhdf5-dev libomp-dev python-dev --yes
     build:
-      - pip install --upgrade pip
-      - pip install superman==0.1.2 matplotlib==3.1.3 tornado==4.4.2 pyyaml==5.3 h5py==2.10.0 pandas==1.0.0
+      - /app/container-build.sh
+    # TODO: Make the service start automatically!
+proxy:
+  appserver:
+    - devas.lndo.site:54321
 tooling:
   python:
     service: appserver
     cmd: /usr/local/bin/python
+  run:
+    service: appserver
+    cmd: /app/container-start.sh

@@ -76,14 +76,33 @@ To generate a nice code coverage report:
 
 You will need a reasonably current version of [Lando](https://lando.dev/) (this was developed in version 3.6.4) and whichever version of Docker it prefers.
 
+
+### Preparation
+
+1. Make a copy of `config-template.yml` named `config.yml`. For dev work, the defaults are all sufficient.
+1. Add a dataset to the `data/` directory, and create a file `datasets.yml` that has an entry for it.
+
+**TODO:** Include a sample dataset?
+
+
+### First run
+
 The first time you run `lando start` it will download a Python container and install the relevant packages. Subsequent `start`s will go much faster.
+
+After the container starts, `lando run` starts the webservice. **TODO:** that should be handled by a `run` key in the service definition in the Landofile, but it doesn’t seem to work there. 
+
+**TODO:** Update versions of dependencies to be consistent with what’s available via `apt` in Ubuntu 22.04 and switch to those for both dev container and production server.
+| package    | current | available `apt`  |
+|------------|---------|------------------|
+| h5py       | 2.10.0  | 3.6.0-2build1    |
+| matplotlib | 3.1.3   | 3.5.1-2build1    |
+| pandas     | 1.0.0   | 1.3.5+dfsg-3     |
+| pywavelets | 1.1.1   | 1.1.1-1ubuntu2   |
+| pyyaml     | 5.3     | 5.4.1-1ubuntu1   |
+| tornado    | 4.4.2   | 6.1.0-3build1    |
+
+
+### Working in the dev environment
 
 Once the container is running, `lando python` will execute Python inside the container. 
 
-**TODO:** Start the service when the container starts
-
-**TODO:** Include some small bit of example data
-
-**TODO:** Update versions of dependencies to be (more) current. And describe how to do that again in the future.
-
-**TODO:** Either prefer `apt` packages for dependencies (this may be how we’d like to run the server) _or_ use Pythonic methods of managing them (`venv` and `pip freeze` and such).
